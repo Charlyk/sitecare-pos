@@ -10,7 +10,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Foundation** - Working Tauri + Vite scaffold with all 7 prototype screens converted to ES modules, design tokens wired, and CSP configured
+- [x] **Phase 1: Foundation** - Working Tauri + Vite scaffold with all 7 prototype screens converted to ES modules, design tokens wired, and CSP configured
 - [ ] **Phase 2: Authentication** - Staff can log in with username + password, stay logged in across restarts, and be redirected to login when their session expires
 - [ ] **Phase 3: Shell + Data Foundation** - App shell renders from real Zustand state, data hooks connect to live API, SSE connection established, offline banner works
 - [ ] **Phase 4: Core Screens** - All 7 screens render live API data with full UX — orders, KDS timers/urgency/sound/bump, POS checkout flow, menu toggles, settings persistence
@@ -37,7 +37,7 @@ Plans:
 - [x] 01-02-PLAN.md — Install packages (@charlyk/admin-client, plugins, zustand), configure tauri.conf.json CSP, wire lib.rs
 - [x] 01-03-PLAN.md — Migrate CSS design system (colors_and_type.css, styles.css, fonts) and create Zustand store
 - [x] 01-04-PLAN.md — Convert 9 prototype files to ES modules (i18n → icons → data → screen-orders → leaf screens → screen-detail)
-- [ ] 01-05-PLAN.md — Convert shell.jsx + screen-printer.jsx, write app.jsx + main.jsx, human verify all 7 screens
+- [x] 01-05-PLAN.md — Convert shell.jsx + screen-printer.jsx, write app.jsx + main.jsx, human verify all 7 screens
 **UI hint**: yes
 
 ### Phase 2: Authentication
@@ -102,7 +102,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 4/5 | In progress | - |
+| 1. Foundation | 5/5 | Complete | 2026-04-22 |
 | 2. Authentication | 0/? | Not started | - |
 | 3. Shell + Data Foundation | 0/? | Not started | - |
 | 4. Core Screens | 0/? | Not started | - |
@@ -163,4 +163,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-04-22 — Phase 1 planning complete (5 plans, 3 waves)*
+*Last updated: 2026-04-22 — Phase 1 complete (all 5 plans executed and human-verified)*

@@ -15,14 +15,14 @@
 
 ## Current Position
 
-**Current Phase:** 1 — Foundation
-**Current Plan:** 01-05 (awaiting human verification checkpoint — Task 3)
-**Phase Status:** In progress — 5/5 plans executed, human verify pending
-**Overall Status:** Phase 1 complete pending approval
+**Current Phase:** 2 — Authentication
+**Current Plan:** 02-01 (not started)
+**Phase Status:** Phase 1 complete — all 5 plans executed and human-verified
+**Overall Status:** Phase 1 complete; ready for Phase 2
 
 ```
-Progress: [#####.............................................] 10%
-Phase 1 of 6 — Plan 5/5 (checkpoint: human-verify)
+Progress: [########..........................................] 17%
+Phase 2 of 6 — Plan 0/? (not started)
 ```
 
 ---
@@ -31,7 +31,7 @@ Phase 1 of 6 — Plan 5/5 (checkpoint: human-verify)
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Foundation | Awaiting human verify (Plan 05 checkpoint) |
+| 1 | Foundation | Complete — all 5 plans done, human-verified 2026-04-22 |
 | 2 | Authentication | Not started |
 | 3 | Shell + Data Foundation | Not started |
 | 4 | Core Screens | Not started |
@@ -44,10 +44,10 @@ Phase 1 of 6 — Plan 5/5 (checkpoint: human-verify)
 
 | Metric | Value |
 |--------|-------|
-| Phases completed | 0 / 6 (Phase 1 pending human verify) |
+| Phases completed | 1 / 6 |
 | Requirements done | 8 / 41 |
-| Plans complete | 5 / 5 (Phase 1 auto tasks done) |
-| Sessions | 5 |
+| Plans complete | 5 / 5 (Phase 1 all done) |
+| Sessions | 6 |
 
 ---
 
@@ -102,9 +102,9 @@ Phase 1 of 6 — Plan 5/5 (checkpoint: human-verify)
 
 ## Session Continuity
 
-**Last session:** 2026-04-22 — Phase 1 Plan 01-05 executed. shell.jsx and screen-printer.jsx converted to ES modules (custom titlebar div removed per D-01). app.jsx built from Zustand store (20 selectors, no localStorage, no letterbox, no TweaksPanel). main.jsx wired with CSS token import order and QueryClientProvider. Vite build: 95 modules compiled, 264KB JS bundle. Zero window.* module globals in any src/*.jsx file.
-**Stopped at:** Phase 1 Plan 01-05 Task 3 — checkpoint:human-verify. Auto tasks 1+2 committed. Awaiting human browser verification before Phase 1 is marked complete.
-**Next action:** Human runs `npm run dev`, verifies 7 screens render, checks --sc-primary CSS token, fonts 200, CSP passes, Zustand persistence survives restart. On approval: Phase 2 (Authentication) can begin.
+**Last session:** 2026-04-22 — Phase 1 Plan 01-05 human verification approved. All 7 screens render correctly, design tokens active (--sc-primary: hsl(120 14% 49%)), layout correct. Two post-task fixes applied: (1) @import moved before @font-face in colors_and_type.css (PostCSS order fix, commit 57252e5); (2) titlebar grid row removed from .win CSS and nested .win wrapper removed from app.jsx (layout fix, commit c1c527b). Phase 1 is complete.
+**Stopped at:** Phase 1 complete — all 5 plans done and human-verified.
+**Next action:** Begin Phase 2 (Authentication) — `/gsd-plan-phase 2` to plan the auth flow using `@charlyk/admin-client`.
 
 ---
 *State initialized: 2026-04-22*
