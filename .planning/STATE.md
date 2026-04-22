@@ -16,13 +16,13 @@
 ## Current Position
 
 **Current Phase:** 1 — Foundation
-**Current Plan:** 01-04 (2 plans remaining)
-**Phase Status:** In progress — 3/5 plans complete
+**Current Plan:** 01-05 (1 plan remaining)
+**Phase Status:** In progress — 4/5 plans complete
 **Overall Status:** Executing Phase 1
 
 ```
-Progress: [###...............................................] 6%
-Phase 1 of 6 — Plan 3/5
+Progress: [####..............................................] 8%
+Phase 1 of 6 — Plan 4/5
 ```
 
 ---
@@ -46,8 +46,8 @@ Phase 1 of 6 — Plan 3/5
 |--------|-------|
 | Phases completed | 0 / 6 |
 | Requirements done | 5 / 41 |
-| Plans complete | 3 / 5 |
-| Sessions | 3 |
+| Plans complete | 4 / 5 |
+| Sessions | 4 |
 
 ---
 
@@ -68,6 +68,8 @@ Phase 1 of 6 — Plan 3/5
 - **Font path strategy:** @font-face uses absolute `/fonts/` paths (not relative `./fonts/`) so fonts resolve correctly when CSS lives in `src/` but font files live in `public/fonts/`.
 - **Zustand partialize:** 6 persisted keys (screen, role, lang, accent, density, sidebarCollapsed); 3 session-only keys excluded (selectedOrder, toasts, acceptDialog).
 - **store.js localStorage comments are documentation only** — comments explain migration provenance; no functional `localStorage.` API calls exist in production code.
+- **Fragment import in screen-detail.jsx** — prototype used `React.Fragment` from CDN global; production uses named `Fragment` import from 'react'. JSX shorthand `<>` would also work.
+- **shield icon added to icons.jsx** — screen-settings.jsx uses `<Icon name="shield" />` for fiscal register display; icon was missing from prototype's icons.jsx; added to production version.
 
 ### Open Questions (from research)
 
@@ -96,9 +98,9 @@ Phase 1 of 6 — Plan 3/5
 
 ## Session Continuity
 
-**Last session:** 2026-04-22 — Phase 1 Plan 01-03 executed. CSS design system migrated (colors_and_type.css with absolute font paths, styles.css verbatim from index.html), fonts bundled to public/fonts/, Zustand store created with plugin-store persistence adapter.
-**Stopped at:** Phase 1 Plan 01-03 complete — SUMMARY at `.planning/phases/01-foundation/01-03-SUMMARY.md`
-**Next action:** Execute Plan 01-04 — ES module conversion of prototype window.* globals to named imports/exports.
+**Last session:** 2026-04-22 — Phase 1 Plan 01-04 executed. All 9 prototype utility and screen files converted from window.* CDN globals to ES module imports/exports in strict dependency order. Zero window.* module assignments remain in converted files. npm run build: 26 modules compiled without errors.
+**Stopped at:** Phase 1 Plan 01-04 complete — SUMMARY at `.planning/phases/01-foundation/01-04-SUMMARY.md`
+**Next action:** Execute Plan 01-05 — Convert shell.jsx + screen-printer.jsx, write app.jsx + main.jsx, human verify all 7 screens.
 
 ---
 *State initialized: 2026-04-22*
