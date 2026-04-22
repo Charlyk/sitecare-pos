@@ -7,12 +7,12 @@
 
 ### Foundation
 
-- [ ] **FOUND-01**: Tauri v2 + React 18 + Vite 6 scaffold builds successfully on macOS and Windows
-- [ ] **FOUND-02**: @charlyk/admin-client installs from GitHub Package Registry in local dev and CI environments
+- [x] **FOUND-01**: Tauri v2 + React 18 + Vite 6 scaffold builds successfully on macOS and Windows
+- [x] **FOUND-02**: @charlyk/admin-client installs from GitHub Package Registry in local dev and CI environments
 - [ ] **FOUND-03**: All 7 prototype screens converted from `window.*` globals to ES module imports/exports
 - [ ] **FOUND-04**: Zustand store manages UI state (screen, role, lang, accent, density, sidebar, toasts) with @tauri-apps/plugin-store persistence
 - [ ] **FOUND-05**: CSS design tokens from prototype (`colors_and_type.css`) imported and working in Vite without modification
-- [ ] **FOUND-06**: Tauri CSP configured to allow API domain in `connect-src` (blocks SSE and fetches if missing)
+- [x] **FOUND-06**: Tauri CSP configured to allow API domain in `connect-src` (blocks SSE and fetches if missing)
 
 ### Authentication
 
@@ -122,12 +122,12 @@
 
 | Requirement | Phase | Phase Name | Status |
 |-------------|-------|------------|--------|
-| FOUND-01 | Phase 1 | Foundation | Pending |
-| FOUND-02 | Phase 1 | Foundation | Pending |
+| FOUND-01 | Phase 1 | Foundation | Complete (01-01) |
+| FOUND-02 | Phase 1 | Foundation | Complete (01-02) |
 | FOUND-03 | Phase 1 | Foundation | Pending |
 | FOUND-04 | Phase 1 | Foundation | Pending |
 | FOUND-05 | Phase 1 | Foundation | Pending |
-| FOUND-06 | Phase 1 | Foundation | Pending |
+| FOUND-06 | Phase 1 | Foundation | Complete (01-02) |
 | AUTH-01 | Phase 2 | Authentication | Pending |
 | AUTH-02 | Phase 2 | Authentication | Pending |
 | AUTH-03 | Phase 2 | Authentication | Pending |

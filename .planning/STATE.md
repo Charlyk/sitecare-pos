@@ -16,13 +16,13 @@
 ## Current Position
 
 **Current Phase:** 1 — Foundation
-**Current Plan:** 01-02 (4 plans remaining)
-**Phase Status:** In progress — 1/5 plans complete
+**Current Plan:** 01-03 (3 plans remaining)
+**Phase Status:** In progress — 2/5 plans complete
 **Overall Status:** Executing Phase 1
 
 ```
-Progress: [#.................................................] 3%
-Phase 1 of 6 — Plan 1/5
+Progress: [##................................................] 5%
+Phase 1 of 6 — Plan 2/5
 ```
 
 ---
@@ -45,9 +45,9 @@ Phase 1 of 6 — Plan 1/5
 | Metric | Value |
 |--------|-------|
 | Phases completed | 0 / 6 |
-| Requirements done | 1 / 41 |
-| Plans complete | 1 / 5 |
-| Sessions | 1 |
+| Requirements done | 3 / 41 |
+| Plans complete | 2 / 5 |
+| Sessions | 2 |
 
 ---
 
@@ -58,9 +58,13 @@ Phase 1 of 6 — Plan 1/5
 - **Window chrome:** `decorations: true` (native OS chrome). Custom macOS titlebar from prototype NOT used. Avoids `@tauri-apps/plugin-window-state` bug #14822.
 - **Scaffold location:** Tauri+Vite at repo root. Prototype archived to `_prototype/`.
 - **CSS migration:** `index.html` `<style>` block → `src/styles.css`. `colors_and_type.css` unchanged. Both imported in `main.jsx`.
-- **API domain:** `https://api.restaurant.sitecare.ro` — configure in `tauri.conf.json` `connect-src` and `event-src` on day 1.
+- **API domain:** `https://api.restaurant.sitecare.ro` — configured in `tauri.conf.json` `connect-src` and `event-src` (done in Plan 01, confirmed in Plan 02).
 - **Vite pinned to ^6.4.2, React ^18.3.1** — Tauri v2 validated against these versions; jumping to Vite 7/8 or React 19 introduces unvalidated risk.
 - **Prototype kept in _prototype/** — Plans 04-05 read these files during ES module conversion; removing would require git archaeology.
+- **Tauri plugins installed via `tauri add` CLI** — handles npm, Cargo, and capabilities atomically; requires `cargo` in PATH (source `~/.cargo/env` before running).
+- **window-state in desktop.json + default.json** — `tauri add` auto-creates `desktop.json` (platform-scoped); plan also requires `default.json` entry; Tauri merges both at runtime, no conflict.
+- **@charlyk/admin-client has zero peer dependencies** — no additional installs needed; installed from GitHub Package Registry with `NODE_AUTH_TOKEN` env var.
+- **Cargo.lock committed** — ensures reproducible Rust builds in CI and on other machines.
 
 ### Open Questions (from research)
 
@@ -89,9 +93,9 @@ Phase 1 of 6 — Plan 1/5
 
 ## Session Continuity
 
-**Last session:** 2026-04-22 — Phase 1 Plan 01-01 executed. Rust installed (cargo 1.95.0), prototype archived to _prototype/, Tauri+Vite+React scaffold created at repo root, first Rust compile succeeded, native macOS window verified by human.
-**Stopped at:** Phase 1 Plan 01-01 complete — SUMMARY at `.planning/phases/01-foundation/01-01-SUMMARY.md`
-**Next action:** Execute Plan 01-02 — install npm packages (@charlyk/admin-client, plugins, zustand), configure tauri.conf.json CSP, wire lib.rs.
+**Last session:** 2026-04-22 — Phase 1 Plan 01-02 executed. @charlyk/admin-client installed from GitHub Package Registry, zustand@5 + @tanstack/react-query@5 installed, tauri-plugin-store + tauri-plugin-window-state installed and wired in lib.rs and capabilities, tauri.conf.json CSP confirmed complete.
+**Stopped at:** Phase 1 Plan 01-02 complete — SUMMARY at `.planning/phases/01-foundation/01-02-SUMMARY.md`
+**Next action:** Execute Plan 01-03 — CSS migration (colors_and_type.css + index.html inline styles → src/styles.css, imported in main.jsx).
 
 ---
 *State initialized: 2026-04-22*
