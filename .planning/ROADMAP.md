@@ -31,7 +31,13 @@
   3. The SiteCare sage/terracotta color palette and Outfit font are visible — design tokens are active, not broken
   4. Zustand store persists UI preferences (role, language, accent, density) across app restarts via @tauri-apps/plugin-store
   5. Making a test API call from the renderer does not fail with a CSP violation — network requests reach the API domain
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+- [ ] 01-01-PLAN.md — Install Rust, archive prototype, scaffold Tauri + Vite + React at repo root
+- [ ] 01-02-PLAN.md — Install packages (@charlyk/admin-client, plugins, zustand), configure tauri.conf.json CSP, wire lib.rs
+- [ ] 01-03-PLAN.md — Migrate CSS design system (colors_and_type.css, styles.css, fonts) and create Zustand store
+- [ ] 01-04-PLAN.md — Convert 9 prototype files to ES modules (i18n → icons → data → screen-orders → leaf screens → screen-detail)
+- [ ] 01-05-PLAN.md — Convert shell.jsx + screen-printer.jsx, write app.jsx + main.jsx, human verify all 7 screens
 **UI hint**: yes
 
 ### Phase 2: Authentication
@@ -96,7 +102,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 0/5 | Planned | - |
 | 2. Authentication | 0/? | Not started | - |
 | 3. Shell + Data Foundation | 0/? | Not started | - |
 | 4. Core Screens | 0/? | Not started | - |
@@ -157,4 +163,4 @@
 
 ---
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-04-22 after initial creation*
+*Last updated: 2026-04-22 — Phase 1 planning complete (5 plans, 3 waves)*
