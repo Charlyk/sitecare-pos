@@ -87,8 +87,8 @@ Phase 1 of 6
 
 ## Session Continuity
 
-**Last session:** 2026-04-22 — Phase 1 context gathered. Key decisions: native OS chrome, scaffold at root, single styles.css, API domain confirmed.
-**Stopped at:** Phase 1 context gathered — see `.planning/phases/01-foundation/01-CONTEXT.md`
+**Last session:** 2026-04-22 — Phase 1 UI design contract approved. Migration exemptions declared for type scale and spacing (prototype-verbatim values frozen).
+**Stopped at:** Phase 1 UI-SPEC approved — see `.planning/phases/01-foundation/01-UI-SPEC.md`
 **Next action:** Run `/gsd-plan-phase 1` to plan Phase 1: Foundation.
 
 ---
