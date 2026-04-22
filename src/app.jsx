@@ -56,7 +56,7 @@ function App() {
   const orderCount = { live: 0, new: 0, active: 0 };
 
   return (
-    <div className="win" style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
       <Shell lang={lang} setLang={setLang} role={role} setRole={setRole}
              screen={screen} setScreen={setScreen} accent={accent} density={density}
              orderCount={orderCount} sidebarCollapsed={sidebarCollapsed}

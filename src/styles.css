@@ -23,7 +23,7 @@
     overflow: hidden;
     box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 8px 30px rgba(0,0,0,0.4);
     display: grid;
-    grid-template-rows: 38px 1fr;
+    grid-template-rows: 1fr;
   }
   .titlebar {
     background: linear-gradient(180deg, #f3eee4 0%, #ece6d7 100%);
