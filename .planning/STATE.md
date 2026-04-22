@@ -55,12 +55,15 @@ Phase 1 of 6
 
 ### Key Decisions Logged
 
-*(None yet — decisions logged here at phase transitions)*
+- **Window chrome:** `decorations: true` (native OS chrome). Custom macOS titlebar from prototype NOT used. Avoids `@tauri-apps/plugin-window-state` bug #14822.
+- **Scaffold location:** Tauri+Vite at repo root. Prototype archived to `_prototype/`.
+- **CSS migration:** `index.html` `<style>` block → `src/styles.css`. `colors_and_type.css` unchanged. Both imported in `main.jsx`.
+- **API domain:** `https://api.restaurant.sitecare.ro` — configure in `tauri.conf.json` `connect-src` and `event-src` on day 1.
 
 ### Open Questions (from research)
 
 - Does `@charlyk/admin-client` manage SSE auth internally (cookies) or expose a raw URL requiring Bearer? Inspect SDK source in Phase 2 before wiring KDS-01.
-- `decorations: false` has a known macOS bug with `@tauri-apps/plugin-window-state` (issue #14822) — decide in Phase 1 whether to keep native chrome or manage window state manually.
+- ~~`decorations: false` has a known macOS bug~~ — RESOLVED: using `decorations: true` (native chrome).
 - Tax calculation bug in `screen-pos.jsx` (total excludes tax) — confirm in Phase 4 whether API returns a server-calculated total (preferred) or the client must apply Romanian VAT rates (5%/9%/19%).
 - Which thermal printer model(s) are targeted? Needed before Phase 5 plugin validation.
 
@@ -84,7 +87,8 @@ Phase 1 of 6
 
 ## Session Continuity
 
-**Last session:** 2026-04-22 — Roadmap and STATE.md created, no implementation started.
+**Last session:** 2026-04-22 — Phase 1 context gathered. Key decisions: native OS chrome, scaffold at root, single styles.css, API domain confirmed.
+**Stopped at:** Phase 1 context gathered — see `.planning/phases/01-foundation/01-CONTEXT.md`
 **Next action:** Run `/gsd-plan-phase 1` to plan Phase 1: Foundation.
 
 ---
