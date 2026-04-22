@@ -16,13 +16,13 @@
 ## Current Position
 
 **Current Phase:** 1 — Foundation
-**Current Plan:** 01-05 (1 plan remaining)
-**Phase Status:** In progress — 4/5 plans complete
-**Overall Status:** Executing Phase 1
+**Current Plan:** 01-05 (awaiting human verification checkpoint — Task 3)
+**Phase Status:** In progress — 5/5 plans executed, human verify pending
+**Overall Status:** Phase 1 complete pending approval
 
 ```
-Progress: [####..............................................] 8%
-Phase 1 of 6 — Plan 4/5
+Progress: [#####.............................................] 10%
+Phase 1 of 6 — Plan 5/5 (checkpoint: human-verify)
 ```
 
 ---
@@ -31,7 +31,7 @@ Phase 1 of 6 — Plan 4/5
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Foundation | Ready to execute (5 plans) |
+| 1 | Foundation | Awaiting human verify (Plan 05 checkpoint) |
 | 2 | Authentication | Not started |
 | 3 | Shell + Data Foundation | Not started |
 | 4 | Core Screens | Not started |
@@ -44,10 +44,10 @@ Phase 1 of 6 — Plan 4/5
 
 | Metric | Value |
 |--------|-------|
-| Phases completed | 0 / 6 |
-| Requirements done | 5 / 41 |
-| Plans complete | 4 / 5 |
-| Sessions | 4 |
+| Phases completed | 0 / 6 (Phase 1 pending human verify) |
+| Requirements done | 8 / 41 |
+| Plans complete | 5 / 5 (Phase 1 auto tasks done) |
+| Sessions | 5 |
 
 ---
 
@@ -70,6 +70,10 @@ Phase 1 of 6 — Plan 4/5
 - **store.js localStorage comments are documentation only** — comments explain migration provenance; no functional `localStorage.` API calls exist in production code.
 - **Fragment import in screen-detail.jsx** — prototype used `React.Fragment` from CDN global; production uses named `Fragment` import from 'react'. JSX shorthand `<>` would also work.
 - **shield icon added to icons.jsx** — screen-settings.jsx uses `<Icon name="shield" />` for fiscal register display; icon was missing from prototype's icons.jsx; added to production version.
+- **App.jsx scaffold renamed to app.jsx** — used `git mv` on macOS case-insensitive filesystem; production entry is lowercase `app.jsx`; git history preserved.
+- **AcceptDialog local state** — `picked`, `custom`, `useCustom` are dialog-only ephemeral values; kept in component `useState`, not in global Zustand store.
+- **orders=[] stub in Phase 1 screen router** — `orderCount` hardcoded to `{live:0, new:0, active:0}`; Phase 3 derives these from TanStack Query cache via `useOrders()`.
+- **ES module migration complete** — all 12 prototype files migrated; zero `window.*` module globals remain in any `src/*.jsx` file (verified by grep audit after Plan 05).
 
 ### Open Questions (from research)
 
@@ -98,9 +102,9 @@ Phase 1 of 6 — Plan 4/5
 
 ## Session Continuity
 
-**Last session:** 2026-04-22 — Phase 1 Plan 01-04 executed. All 9 prototype utility and screen files converted from window.* CDN globals to ES module imports/exports in strict dependency order. Zero window.* module assignments remain in converted files. npm run build: 26 modules compiled without errors.
-**Stopped at:** Phase 1 Plan 01-04 complete — SUMMARY at `.planning/phases/01-foundation/01-04-SUMMARY.md`
-**Next action:** Execute Plan 01-05 — Convert shell.jsx + screen-printer.jsx, write app.jsx + main.jsx, human verify all 7 screens.
+**Last session:** 2026-04-22 — Phase 1 Plan 01-05 executed. shell.jsx and screen-printer.jsx converted to ES modules (custom titlebar div removed per D-01). app.jsx built from Zustand store (20 selectors, no localStorage, no letterbox, no TweaksPanel). main.jsx wired with CSS token import order and QueryClientProvider. Vite build: 95 modules compiled, 264KB JS bundle. Zero window.* module globals in any src/*.jsx file.
+**Stopped at:** Phase 1 Plan 01-05 Task 3 — checkpoint:human-verify. Auto tasks 1+2 committed. Awaiting human browser verification before Phase 1 is marked complete.
+**Next action:** Human runs `npm run dev`, verifies 7 screens render, checks --sc-primary CSS token, fonts 200, CSP passes, Zustand persistence survives restart. On approval: Phase 2 (Authentication) can begin.
 
 ---
 *State initialized: 2026-04-22*
