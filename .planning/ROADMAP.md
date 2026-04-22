@@ -33,7 +33,7 @@
   5. Making a test API call from the renderer does not fail with a CSP violation — network requests reach the API domain
 **Plans**: 5 plans
 Plans:
-- [ ] 01-01-PLAN.md — Install Rust, archive prototype, scaffold Tauri + Vite + React at repo root
+- [x] 01-01-PLAN.md — Install Rust, archive prototype, scaffold Tauri + Vite + React at repo root
 - [ ] 01-02-PLAN.md — Install packages (@charlyk/admin-client, plugins, zustand), configure tauri.conf.json CSP, wire lib.rs
 - [ ] 01-03-PLAN.md — Migrate CSS design system (colors_and_type.css, styles.css, fonts) and create Zustand store
 - [ ] 01-04-PLAN.md — Convert 9 prototype files to ES modules (i18n → icons → data → screen-orders → leaf screens → screen-detail)
@@ -102,7 +102,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/5 | Planned | - |
+| 1. Foundation | 1/5 | In progress | - |
 | 2. Authentication | 0/? | Not started | - |
 | 3. Shell + Data Foundation | 0/? | Not started | - |
 | 4. Core Screens | 0/? | Not started | - |

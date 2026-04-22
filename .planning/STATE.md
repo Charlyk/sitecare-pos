@@ -16,13 +16,13 @@
 ## Current Position
 
 **Current Phase:** 1 — Foundation
-**Current Plan:** Ready to execute (5 plans)
-**Phase Status:** Ready to execute
-**Overall Status:** Planning complete
+**Current Plan:** 01-02 (4 plans remaining)
+**Phase Status:** In progress — 1/5 plans complete
+**Overall Status:** Executing Phase 1
 
 ```
-Progress: [..................................................] 0%
-Phase 1 of 6
+Progress: [#.................................................] 3%
+Phase 1 of 6 — Plan 1/5
 ```
 
 ---
@@ -45,9 +45,9 @@ Phase 1 of 6
 | Metric | Value |
 |--------|-------|
 | Phases completed | 0 / 6 |
-| Requirements done | 0 / 41 |
-| Plans complete | 0 / 5 |
-| Sessions | 0 |
+| Requirements done | 1 / 41 |
+| Plans complete | 1 / 5 |
+| Sessions | 1 |
 
 ---
 
@@ -59,6 +59,8 @@ Phase 1 of 6
 - **Scaffold location:** Tauri+Vite at repo root. Prototype archived to `_prototype/`.
 - **CSS migration:** `index.html` `<style>` block → `src/styles.css`. `colors_and_type.css` unchanged. Both imported in `main.jsx`.
 - **API domain:** `https://api.restaurant.sitecare.ro` — configure in `tauri.conf.json` `connect-src` and `event-src` on day 1.
+- **Vite pinned to ^6.4.2, React ^18.3.1** — Tauri v2 validated against these versions; jumping to Vite 7/8 or React 19 introduces unvalidated risk.
+- **Prototype kept in _prototype/** — Plans 04-05 read these files during ES module conversion; removing would require git archaeology.
 
 ### Open Questions (from research)
 
@@ -87,9 +89,9 @@ Phase 1 of 6
 
 ## Session Continuity
 
-**Last session:** 2026-04-22 — Phase 1 planned. 5 plans created in 3 waves. Verification passed (12/12 dimensions). Key research finding: Rust not installed — Plan 01 installs it before scaffold.
-**Stopped at:** Phase 1 fully planned — see `.planning/phases/01-foundation/01-{01-05}-PLAN.md`
-**Next action:** Run `/gsd-execute-phase 1` to execute Phase 1: Foundation.
+**Last session:** 2026-04-22 — Phase 1 Plan 01-01 executed. Rust installed (cargo 1.95.0), prototype archived to _prototype/, Tauri+Vite+React scaffold created at repo root, first Rust compile succeeded, native macOS window verified by human.
+**Stopped at:** Phase 1 Plan 01-01 complete — SUMMARY at `.planning/phases/01-foundation/01-01-SUMMARY.md`
+**Next action:** Execute Plan 01-02 — install npm packages (@charlyk/admin-client, plugins, zustand), configure tauri.conf.json CSP, wire lib.rs.
 
 ---
 *State initialized: 2026-04-22*
