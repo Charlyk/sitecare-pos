@@ -24,8 +24,8 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 
 ### Active
 
-- [ ] Tauri app shell with macOS + Windows build targets
-- [ ] React + Vite frontend replacing CDN/Babel-standalone prototype
+- [x] Tauri app shell with macOS + Windows build targets — Validated in Phase 1: Tauri + Vite scaffold at repo root, native window opens
+- [x] React + Vite frontend replacing CDN/Babel-standalone prototype — Validated in Phase 1: all 12 prototype files converted to ES modules, Vite 6 + React 18
 - [ ] Username + password authentication via @charlyk/admin-client
 - [ ] Live order data from SiteCare API (replacing mock window.ORDERS)
 - [ ] SSE integration for real-time kitchen display order updates
