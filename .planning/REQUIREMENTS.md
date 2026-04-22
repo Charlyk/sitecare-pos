@@ -120,51 +120,51 @@
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| FOUND-01 | Phase 1 | Pending |
-| FOUND-02 | Phase 1 | Pending |
-| FOUND-03 | Phase 1 | Pending |
-| FOUND-04 | Phase 1 | Pending |
-| FOUND-05 | Phase 1 | Pending |
-| FOUND-06 | Phase 1 | Pending |
-| AUTH-01 | Phase 2 | Pending |
-| AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
-| AUTH-04 | Phase 2 | Pending |
-| AUTH-05 | Phase 2 | Pending |
-| ORD-01 | Phase 4 | Pending |
-| ORD-02 | Phase 4 | Pending |
-| ORD-03 | Phase 4 | Pending |
-| ACT-01 | Phase 4 | Pending |
-| ACT-02 | Phase 4 | Pending |
-| ACT-03 | Phase 4 | Pending |
-| ACT-04 | Phase 5 | Pending |
-| KDS-01 | Phase 3 | Pending |
-| KDS-02 | Phase 4 | Pending |
-| KDS-03 | Phase 4 | Pending |
-| KDS-04 | Phase 4 | Pending |
-| KDS-05 | Phase 4 | Pending |
-| POS-01 | Phase 4 | Pending |
-| POS-02 | Phase 4 | Pending |
-| POS-03 | Phase 4 | Pending |
-| POS-04 | Phase 4 | Pending |
-| POS-05 | Phase 4 | Pending |
-| MENU-01 | Phase 4 | Pending |
-| MENU-02 | Phase 4 | Pending |
-| PRNT-01 | Phase 5 | Pending |
-| PRNT-02 | Phase 5 | Pending |
-| PRNT-03 | Phase 5 | Pending |
-| SET-01 | Phase 4 | Pending |
-| SET-02 | Phase 4 | Pending |
-| SET-03 | Phase 4 | Pending |
-| OFF-01 | Phase 3 | Pending |
-| OFF-02 | Phase 3 | Pending |
-| OFF-03 | Phase 3 | Pending |
-| BILD-01 | Phase 6 | Pending |
-| BILD-02 | Phase 6 | Pending |
-| BILD-03 | Phase 6 | Pending |
-| BILD-04 | Phase 6 | Pending |
+| Requirement | Phase | Phase Name | Status |
+|-------------|-------|------------|--------|
+| FOUND-01 | Phase 1 | Foundation | Pending |
+| FOUND-02 | Phase 1 | Foundation | Pending |
+| FOUND-03 | Phase 1 | Foundation | Pending |
+| FOUND-04 | Phase 1 | Foundation | Pending |
+| FOUND-05 | Phase 1 | Foundation | Pending |
+| FOUND-06 | Phase 1 | Foundation | Pending |
+| AUTH-01 | Phase 2 | Authentication | Pending |
+| AUTH-02 | Phase 2 | Authentication | Pending |
+| AUTH-03 | Phase 2 | Authentication | Pending |
+| AUTH-04 | Phase 2 | Authentication | Pending |
+| AUTH-05 | Phase 2 | Authentication | Pending |
+| KDS-01 | Phase 3 | Shell + Data Foundation | Pending |
+| OFF-01 | Phase 3 | Shell + Data Foundation | Pending |
+| OFF-02 | Phase 3 | Shell + Data Foundation | Pending |
+| OFF-03 | Phase 3 | Shell + Data Foundation | Pending |
+| ORD-01 | Phase 4 | Core Screens | Pending |
+| ORD-02 | Phase 4 | Core Screens | Pending |
+| ORD-03 | Phase 4 | Core Screens | Pending |
+| ACT-01 | Phase 4 | Core Screens | Pending |
+| ACT-02 | Phase 4 | Core Screens | Pending |
+| ACT-03 | Phase 4 | Core Screens | Pending |
+| KDS-02 | Phase 4 | Core Screens | Pending |
+| KDS-03 | Phase 4 | Core Screens | Pending |
+| KDS-04 | Phase 4 | Core Screens | Pending |
+| KDS-05 | Phase 4 | Core Screens | Pending |
+| POS-01 | Phase 4 | Core Screens | Pending |
+| POS-02 | Phase 4 | Core Screens | Pending |
+| POS-03 | Phase 4 | Core Screens | Pending |
+| POS-04 | Phase 4 | Core Screens | Pending |
+| POS-05 | Phase 4 | Core Screens | Pending |
+| MENU-01 | Phase 4 | Core Screens | Pending |
+| MENU-02 | Phase 4 | Core Screens | Pending |
+| SET-01 | Phase 4 | Core Screens | Pending |
+| SET-02 | Phase 4 | Core Screens | Pending |
+| SET-03 | Phase 4 | Core Screens | Pending |
+| ACT-04 | Phase 5 | Native Integration | Pending |
+| PRNT-01 | Phase 5 | Native Integration | Pending |
+| PRNT-02 | Phase 5 | Native Integration | Pending |
+| PRNT-03 | Phase 5 | Native Integration | Pending |
+| BILD-01 | Phase 6 | Build Pipeline | Pending |
+| BILD-02 | Phase 6 | Build Pipeline | Pending |
+| BILD-03 | Phase 6 | Build Pipeline | Pending |
+| BILD-04 | Phase 6 | Build Pipeline | Pending |
 
 **Coverage:**
 - v1 requirements: 41 total
@@ -173,4 +173,4 @@
 
 ---
 *Requirements defined: 2026-04-22*
-*Last updated: 2026-04-22 after initial definition*
+*Last updated: 2026-04-22 after roadmap creation — phase names added to traceability*
