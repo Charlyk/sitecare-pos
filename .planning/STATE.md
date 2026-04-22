@@ -16,13 +16,13 @@
 ## Current Position
 
 **Current Phase:** 1 — Foundation
-**Current Plan:** 01-03 (3 plans remaining)
-**Phase Status:** In progress — 2/5 plans complete
+**Current Plan:** 01-04 (2 plans remaining)
+**Phase Status:** In progress — 3/5 plans complete
 **Overall Status:** Executing Phase 1
 
 ```
-Progress: [##................................................] 5%
-Phase 1 of 6 — Plan 2/5
+Progress: [###...............................................] 6%
+Phase 1 of 6 — Plan 3/5
 ```
 
 ---
@@ -45,9 +45,9 @@ Phase 1 of 6 — Plan 2/5
 | Metric | Value |
 |--------|-------|
 | Phases completed | 0 / 6 |
-| Requirements done | 3 / 41 |
-| Plans complete | 2 / 5 |
-| Sessions | 2 |
+| Requirements done | 5 / 41 |
+| Plans complete | 3 / 5 |
+| Sessions | 3 |
 
 ---
 
@@ -65,6 +65,9 @@ Phase 1 of 6 — Plan 2/5
 - **window-state in desktop.json + default.json** — `tauri add` auto-creates `desktop.json` (platform-scoped); plan also requires `default.json` entry; Tauri merges both at runtime, no conflict.
 - **@charlyk/admin-client has zero peer dependencies** — no additional installs needed; installed from GitHub Package Registry with `NODE_AUTH_TOKEN` env var.
 - **Cargo.lock committed** — ensures reproducible Rust builds in CI and on other machines.
+- **Font path strategy:** @font-face uses absolute `/fonts/` paths (not relative `./fonts/`) so fonts resolve correctly when CSS lives in `src/` but font files live in `public/fonts/`.
+- **Zustand partialize:** 6 persisted keys (screen, role, lang, accent, density, sidebarCollapsed); 3 session-only keys excluded (selectedOrder, toasts, acceptDialog).
+- **store.js localStorage comments are documentation only** — comments explain migration provenance; no functional `localStorage.` API calls exist in production code.
 
 ### Open Questions (from research)
 
@@ -93,9 +96,9 @@ Phase 1 of 6 — Plan 2/5
 
 ## Session Continuity
 
-**Last session:** 2026-04-22 — Phase 1 Plan 01-02 executed. @charlyk/admin-client installed from GitHub Package Registry, zustand@5 + @tanstack/react-query@5 installed, tauri-plugin-store + tauri-plugin-window-state installed and wired in lib.rs and capabilities, tauri.conf.json CSP confirmed complete.
-**Stopped at:** Phase 1 Plan 01-02 complete — SUMMARY at `.planning/phases/01-foundation/01-02-SUMMARY.md`
-**Next action:** Execute Plan 01-03 — CSS migration (colors_and_type.css + index.html inline styles → src/styles.css, imported in main.jsx).
+**Last session:** 2026-04-22 — Phase 1 Plan 01-03 executed. CSS design system migrated (colors_and_type.css with absolute font paths, styles.css verbatim from index.html), fonts bundled to public/fonts/, Zustand store created with plugin-store persistence adapter.
+**Stopped at:** Phase 1 Plan 01-03 complete — SUMMARY at `.planning/phases/01-foundation/01-03-SUMMARY.md`
+**Next action:** Execute Plan 01-04 — ES module conversion of prototype window.* globals to named imports/exports.
 
 ---
 *State initialized: 2026-04-22*
