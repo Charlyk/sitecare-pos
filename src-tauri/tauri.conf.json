@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "SiteCare POS",
+  "version": "0.1.0",
+  "identifier": "ro.sitecare.pos",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "SiteCare POS",
+        "width": 1440,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self' ipc: http://ipc.localhost asset: http://asset.localhost",
+        "connect-src": "ipc: http://ipc.localhost https://api.restaurant.sitecare.ro",
+        "style-src": "'unsafe-inline' 'self' https://fonts.googleapis.com",
+        "font-src": ["'self'", "https://fonts.gstatic.com", "asset:", "http://asset.localhost"],
+        "img-src": "'self' asset: http://asset.localhost blob: data:",
+        "event-src": "https://api.restaurant.sitecare.ro"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}
