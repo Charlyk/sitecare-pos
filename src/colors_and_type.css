@@ -4,6 +4,9 @@
    ============================================================ */
 
 /* ---------- FONTS ---------- */
+/* @import must precede all other statements — Google Fonts for Outfit 300-600 and Caveat */
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Caveat:wght@400;600;700&display=swap");
+
 @font-face {
   font-family: "Outfit";
   src: url("/fonts/Outfit-Bold.ttf") format("truetype");
@@ -18,8 +21,6 @@
   font-style: normal;
   font-display: swap;
 }
-/* Outfit 400/500/600 + Caveat handwriting — no .ttf shipped in repo, use Google Fonts */
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Caveat:wght@400;600;700&display=swap");
 
 :root {
   /* ---------- COLORS — base (HSL, matches globals.css) ---------- */
