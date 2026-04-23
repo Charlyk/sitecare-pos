@@ -11,12 +11,18 @@ vi.mock('@tauri-apps/plugin-store', () => ({
 vi.mock('@charlyk/admin-client', () => ({ signIn: vi.fn(), createAdminClient: vi.fn() }))
 vi.mock('@tauri-apps/plugin-opener', () => ({ open: vi.fn(), openUrl: vi.fn() }))
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
+// Hoisted mock so vi.fn() is injectable per-test (vi.doMock is not hoisted and does
+// not affect statically-imported bindings in vitest's module proxy system).
+vi.mock('../auth.jsx', () => ({
+  useAuth: vi.fn(),
+}))
 
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { useOrders } from '../use-orders.js'
 import { useMenu } from '../use-menu.js'
+import { useAuth } from '../auth.jsx'
 
 // ── U11a: useOrders fetches and returns orders (OFF-02) ───────────────────
 
@@ -31,9 +37,7 @@ describe('U11a — useOrders calls client.kitchen.orders.list and returns data (
       },
     }
 
-    vi.doMock('../auth.jsx', () => ({
-      useAuth: vi.fn().mockReturnValue({ client: mockClient }),
-    }))
+    useAuth.mockReturnValue({ client: mockClient })
 
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
@@ -45,9 +49,7 @@ describe('U11a — useOrders calls client.kitchen.orders.list and returns data (
   })
 
   test('useOrders does not run when client is null (enabled: false)', () => {
-    vi.doMock('../auth.jsx', () => ({
-      useAuth: vi.fn().mockReturnValue({ client: null }),
-    }))
+    useAuth.mockReturnValue({ client: null })
 
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
@@ -71,9 +73,7 @@ describe('U11b — useMenu has staleTime of 5 minutes (OFF-02, D-14)', () => {
       },
     }
 
-    vi.doMock('../auth.jsx', () => ({
-      useAuth: vi.fn().mockReturnValue({ client: mockClient }),
-    }))
+    useAuth.mockReturnValue({ client: mockClient })
 
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
