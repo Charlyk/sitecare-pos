@@ -12,6 +12,9 @@ import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { formatRON } from './data.jsx';
 import { typeMeta } from './screen-orders.jsx';
+import { AuthProvider, useAuth } from './auth.jsx';
+import { LoginScreen } from './screen-login.jsx';
+import { open } from '@tauri-apps/plugin-opener';
 
 function App() {
   const lang = useAppStore((s) => s.lang);
@@ -33,6 +36,8 @@ function App() {
   const pushToast = useAppStore((s) => s.pushToast);
   const dismissToast = useAppStore((s) => s.dismissToast);
   const setAcceptDialog = useAppStore((s) => s.setAcceptDialog);
+  const isAuthenticated = useAppStore((s) => s.isAuthenticated);
+  const { signIn, busy: authBusy, error: authError } = useAuth();
 
   // Accent CSS custom property mutation (verbatim from prototype, Zustand-driven):
   useEffect(() => {
@@ -54,6 +59,32 @@ function App() {
   }, [role]);
 
   const orderCount = { live: 0, new: 0, active: 0 };
+
+  // Auth guard (AUTH-05): render LoginScreen for unauthenticated users
+  if (authBusy) {
+    // Cold-start: keychain check in progress — render blank while awaiting result
+    // per UI-SPEC: white background, no content, no spinner
+    return <div style={{ width: '100vw', height: '100vh', background: '#fff' }} />;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <LoginScreen
+        lang={lang}
+        onLangChange={setLang}
+        onSubmit={async (email, pass, remember) => {
+          try {
+            await signIn(email, pass, remember);
+          } catch {
+            // signIn sets authError in context; LoginScreen reads it via error prop
+          }
+        }}
+        onForgotPassword={() => open('https://restaurant.sitecare.ro/reset-password')}
+        busy={authBusy}
+        error={authError}
+      />
+    );
+  }
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
@@ -177,4 +208,12 @@ function AcceptDialog({ lang, order, onCancel, onConfirm }) {
   );
 }
 
-export default App;
+function AppWithAuth() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
+
+export default AppWithAuth;
