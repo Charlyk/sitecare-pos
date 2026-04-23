@@ -102,9 +102,9 @@ Phase 2 of 6 — Plan 0/? (not started)
 
 ## Session Continuity
 
-**Last session:** 2026-04-23 — Phase 2 context discussion completed. Login screen prototype reviewed (`sitecare-orders 2/project/login.html`). Key decisions: email field, toast+redirect on expiry, 5-min proactive refresh, split-layout login screen (no recent-accounts rail, SSO greyed out, forgot-password → restaurant.sitecare.ro/reset-password), always-Orders post-login landing. SSE auth open question resolved.
-**Stopped at:** Phase 2 context gathered — CONTEXT.md written.
-**Next action:** Plan Phase 2 — `/gsd-plan-phase 2` with context captured in `.planning/phases/02-authentication/02-CONTEXT.md`.
+**Last session:** 2026-04-23 — Phase 2 UI design contract created and approved. UI-SPEC covers split-panel login layout (brand left / form right), full bilingual copy contract (35 string pairs RO+EN), color 60/30/10 split with sage accent reserved for 11 specific elements, custom CSS token design system confirmed (no shadcn), auth guard visual contract, session expiry toast, SSO greyed-out pattern. 6/6 checker dimensions passed (1 non-blocking FLAG: type scale extended for pixel-perfect prototype fidelity).
+**Stopped at:** Phase 2 UI-SPEC approved — `.planning/phases/02-authentication/02-UI-SPEC.md` written.
+**Next action:** Plan Phase 2 — `/gsd-plan-phase 2`.
 
 ---
 *State initialized: 2026-04-22*
