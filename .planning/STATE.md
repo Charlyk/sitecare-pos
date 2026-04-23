@@ -47,7 +47,7 @@ Phase 2 of 6 — Plan 0/? (not started)
 | Phases completed | 1 / 6 |
 | Requirements done | 8 / 41 |
 | Plans complete | 5 / 5 (Phase 1 all done) |
-| Sessions | 6 |
+| Sessions | 7 |
 
 ---
 
@@ -77,7 +77,7 @@ Phase 2 of 6 — Plan 0/? (not started)
 
 ### Open Questions (from research)
 
-- Does `@charlyk/admin-client` manage SSE auth internally (cookies) or expose a raw URL requiring Bearer? Inspect SDK source in Phase 2 before wiring KDS-01.
+- ~~Does `@charlyk/admin-client` manage SSE auth internally (cookies) or expose a raw URL requiring Bearer?~~ — RESOLVED (Phase 2 context): SDK uses its own async-generator SSE client (not native `EventSource`), so Bearer headers can be sent through it. Safe for Phase 3 SSE wiring.
 - ~~`decorations: false` has a known macOS bug~~ — RESOLVED: using `decorations: true` (native chrome).
 - Tax calculation bug in `screen-pos.jsx` (total excludes tax) — confirm in Phase 4 whether API returns a server-calculated total (preferred) or the client must apply Romanian VAT rates (5%/9%/19%).
 - Which thermal printer model(s) are targeted? Needed before Phase 5 plugin validation.
@@ -102,10 +102,10 @@ Phase 2 of 6 — Plan 0/? (not started)
 
 ## Session Continuity
 
-**Last session:** 2026-04-22 — Phase 1 Plan 01-05 human verification approved. All 7 screens render correctly, design tokens active (--sc-primary: hsl(120 14% 49%)), layout correct. Two post-task fixes applied: (1) @import moved before @font-face in colors_and_type.css (PostCSS order fix, commit 57252e5); (2) titlebar grid row removed from .win CSS and nested .win wrapper removed from app.jsx (layout fix, commit c1c527b). Phase 1 is complete.
-**Stopped at:** Phase 1 complete — all 5 plans done and human-verified.
-**Next action:** Begin Phase 2 (Authentication) — `/gsd-plan-phase 2` to plan the auth flow using `@charlyk/admin-client`.
+**Last session:** 2026-04-23 — Phase 2 context discussion completed. Login screen prototype reviewed (`sitecare-orders 2/project/login.html`). Key decisions: email field, toast+redirect on expiry, 5-min proactive refresh, split-layout login screen (no recent-accounts rail, SSO greyed out, forgot-password → restaurant.sitecare.ro/reset-password), always-Orders post-login landing. SSE auth open question resolved.
+**Stopped at:** Phase 2 context gathered — CONTEXT.md written.
+**Next action:** Plan Phase 2 — `/gsd-plan-phase 2` with context captured in `.planning/phases/02-authentication/02-CONTEXT.md`.
 
 ---
 *State initialized: 2026-04-22*
-*Last updated: 2026-04-22 after roadmap creation*
+*Last updated: 2026-04-23 after Phase 2 context discussion*
