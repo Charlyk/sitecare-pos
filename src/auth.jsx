@@ -75,56 +75,24 @@ export function AuthProvider({ children }) {
     setTimeout(() => setScreen('orders'), 2000);
   }
 
-  // Cold start: try to restore session from OS keychain (AUTH-04)
+  // Cold start: restore session from OS keychain (AUTH-04).
+  // Trust the stored token — do not call getSession() here. The token is assumed valid
+  // until an API call returns 401 (Phase 3 hooks handle that). getSession() on the
+  // login token consistently returns 401 on this API, so it cannot be used as a gate.
   useEffect(() => {
     (async () => {
-      let token;
       try {
-        token = await invoke('get_token');
-        if (import.meta.env.DEV) console.log('[auth:cold] get_token →', token ? `present (${token.length} chars)` : 'null');
+        const token = await invoke('get_token');
+        if (!token) return;
+        tokenRef.current = token;
+        const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
+        setClient(adminClient);
+        setIsAuthenticated(true);
       } catch (e) {
-        if (import.meta.env.DEV) console.error('[auth:cold] invoke get_token threw:', e);
+        console.error('[auth] cold-start keychain read failed:', e);
+      } finally {
         setColdStartBusy(false);
-        return;
       }
-
-      if (!token) {
-        setColdStartBusy(false);
-        return;
-      }
-
-      // Token found — restore auth immediately. getSession() is best-effort for user
-      // info and refresh timer; a failure there must not block auth restoration.
-      tokenRef.current = token;
-      let adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
-      setClient(adminClient);
-      setIsAuthenticated(true); // restore auth before getSession so reload always works
-
-      try {
-        const { session, user } = await adminClient.auth.getSession();
-        if (import.meta.env.DEV) console.log('[auth:cold] getSession → expiresAt:', session?.expiresAt, 'sessionToken present:', !!session?.token);
-        // Persist a rotated/refreshed token if the API issued a new one
-        if (session?.token && session.token !== token) {
-          tokenRef.current = session.token;
-          try { await invoke('store_token', { token: session.token }); } catch { /* ignore */ }
-          adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: session.token });
-          setClient(adminClient);
-        }
-        setAuthUser(user);
-        if (session?.expiresAt) scheduleRefresh(session.expiresAt, adminClient);
-      } catch (e) {
-        if (import.meta.env.DEV) console.warn('[auth:cold] getSession failed (non-fatal, auth already restored):', e?.status, e?.message);
-        // 401/403 means the stored token is definitively invalid — clear it
-        if (e?.status === 401 || e?.status === 403) {
-          tokenRef.current = null;
-          setIsAuthenticated(false);
-          setClient(null);
-          try { await invoke('delete_token'); } catch { /* ignore */ }
-        }
-        // Other errors (network, 500): keep auth as restored — API calls will surface errors naturally
-      }
-
-      setColdStartBusy(false);
     })();
 
     return () => {
