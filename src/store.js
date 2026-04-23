@@ -54,6 +54,10 @@ export const useAppStore = create(
       toasts: [],              // Managed by pushToast/dismissToast
       acceptDialog: null,      // Set by setAcceptDialog(); consumed by AcceptDialog in app.jsx
 
+      // --- Auth state (session-only, NOT persisted — set by AuthProvider on cold start) ---
+      isAuthenticated: false,
+      authUser: null,
+
       // --- Actions ---
       // setScreen resets selectedOrder so detail screen can't show stale data
       setScreen: (screen) => set({ screen, selectedOrder: null }),
@@ -67,6 +71,8 @@ export const useAppStore = create(
       pushToast: (toast) => set((s) => ({ toasts: [...s.toasts, toast] })),
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
       setAcceptDialog: (dialog) => set({ acceptDialog: dialog }),
+      setIsAuthenticated: (v) => set({ isAuthenticated: v }),
+      setAuthUser: (user) => set({ authUser: user }),
     }),
     {
       name: 'sc-ui-prefs',                           // Key name in preferences.json
