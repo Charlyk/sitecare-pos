@@ -16,13 +16,13 @@
 ## Current Position
 
 **Current Phase:** 2 — Authentication
-**Current Plan:** 02-05 (gap closure — ready to execute)
-**Phase Status:** Phase 2 executed with gaps found; gap-closure plan ready
-**Overall Status:** Phase 2 needs gap-closure execution (02-05-PLAN.md)
+**Current Plan:** 02-05 (COMPLETE — all 5 plans done, pending human verification)
+**Phase Status:** Phase 2 complete — all gaps closed; pending human verification (live Tauri runtime required for SC-1, SC-5)
+**Overall Status:** Phase 2 done; Phase 3 (Shell + Data Foundation) is next
 
 ```
-Progress: [################..........................] 30%
-Phase 2 of 6 — 4/5 plans executed; 02-05 gap-closure plan ready
+Progress: [#######################...................] 38%
+Phase 2 of 6 — 5/5 plans executed and committed
 ```
 
 ---
@@ -32,7 +32,7 @@ Phase 2 of 6 — 4/5 plans executed; 02-05 gap-closure plan ready
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Foundation | Complete — all 5 plans done, human-verified 2026-04-22 |
-| 2 | Authentication | Gap closure planned — 02-05-PLAN.md ready; execute to fix CR-01, WR-01, WR-04 |
+| 2 | Authentication | Complete — all 5 plans done 2026-04-23; pending human verification (live Tauri runtime) |
 | 3 | Shell + Data Foundation | Not started |
 | 4 | Core Screens | Not started |
 | 5 | Native Integration | Not started |
@@ -44,10 +44,10 @@ Phase 2 of 6 — 4/5 plans executed; 02-05 gap-closure plan ready
 
 | Metric | Value |
 |--------|-------|
-| Phases completed | 1 / 6 |
-| Requirements done | 8 / 41 |
-| Plans complete | 5 / 5 (Phase 1 all done) |
-| Sessions | 7 |
+| Phases completed | 1 complete + 1 pending human verify / 6 |
+| Requirements done | 13 / 41 |
+| Plans complete | 10 / 10 (Phase 1: 5, Phase 2: 5) |
+| Sessions | 8 |
 
 ---
 
@@ -68,6 +68,9 @@ Phase 2 of 6 — 4/5 plans executed; 02-05 gap-closure plan ready
 - **Font path strategy:** @font-face uses absolute `/fonts/` paths (not relative `./fonts/`) so fonts resolve correctly when CSS lives in `src/` but font files live in `public/fonts/`.
 - **Zustand partialize:** 6 persisted keys (screen, role, lang, accent, density, sidebarCollapsed); 3 session-only keys excluded (selectedOrder, toasts, acceptDialog).
 - **store.js localStorage comments are documentation only** — comments explain migration provenance; no functional `localStorage.` API calls exist in production code.
+- **setScreen('orders') not setScreen('login') on sign-out/expire** — 'login' is not a valid Zustand-persisted screen enum value; auth guard in app.jsx renders LoginScreen whenever isAuthenticated=false.
+- **MIN_RETRY_MS = 30_000 floor on scheduleRefresh** — the <= 0 (already-expired) branch wraps doRefresh in setTimeout with 30s minimum to prevent tight async loops hammering the auth endpoint.
+- **canSubmit uses isValidEmail(email) not email !== ''** — Submit button disabled for invalid email format; handleSubmit guard retained as secondary safety net for Enter-key edge case.
 - **Fragment import in screen-detail.jsx** — prototype used `React.Fragment` from CDN global; production uses named `Fragment` import from 'react'. JSX shorthand `<>` would also work.
 - **shield icon added to icons.jsx** — screen-settings.jsx uses `<Icon name="shield" />` for fiscal register display; icon was missing from prototype's icons.jsx; added to production version.
 - **App.jsx scaffold renamed to app.jsx** — used `git mv` on macOS case-insensitive filesystem; production entry is lowercase `app.jsx`; git history preserved.
@@ -102,9 +105,9 @@ Phase 2 of 6 — 4/5 plans executed; 02-05 gap-closure plan ready
 
 ## Session Continuity
 
-**Last session:** 2026-04-23 — Phase 2 executed (4 plans: Rust keychain commands, login UI, auth layer, auth guard wiring). Verification found 3 gaps: CR-01 (scheduleRefresh tight-loop), WR-01 (setScreen('login') persists invalid screen), WR-04 (silent email validation). Gap-closure plan 02-05 created and checker-verified.
-**Stopped at:** Gap-closure plan 02-05 planned and verified — ready to execute.
-**Next action:** Execute gap-closure plan — `/gsd-execute-phase 2`.
+**Last session:** 2026-04-23 — Phase 2 gap-closure plan 02-05 executed. Fixed CR-01 (MIN_RETRY_MS floor on scheduleRefresh), WR-01 (setScreen('orders') replaces invalid 'login'), WR-02 (setError(null) in expireSession/signOut), WR-03 (removed console.log), WR-04 (canSubmit uses isValidEmail). Vite build verified clean.
+**Stopped at:** Phase 2 complete — all 5 plans executed and committed.
+**Next action:** Human verify Phase 2 against SC-1 through SC-4 (requires live Tauri runtime), then `/gsd-execute-phase 3`.
 
 ---
 *State initialized: 2026-04-22*

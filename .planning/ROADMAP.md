@@ -49,12 +49,13 @@ Plans:
   2. Closing and reopening the app does not prompt for login again — the token survives a restart via OS secure storage (Keychain / Credential Manager)
   3. After 8 hours of continuous use, the app has not logged the user out — proactive token refresh works
   4. Navigating directly to any screen without a valid token redirects to the login screen — the auth guard is active on all routes
-**Plans**: 4 plans
+**Plans**: 5 plans (4 original + 1 gap-closure)
 Plans:
-- [ ] 02-01-PLAN.md — Rust auth commands: add keyring crate, register opener plugin, write store_token/get_token/delete_token
-- [ ] 02-02-PLAN.md — Login screen UI: create login.css and screen-login.jsx from prototype, add 35 bilingual i18n strings
-- [ ] 02-03-PLAN.md — Auth layer: add isAuthenticated/authUser to Zustand, create AuthProvider and useAuth hook
-- [ ] 02-04-PLAN.md — Auth guard + wiring: wrap app in AuthProvider, guard Shell behind isAuthenticated, wire LoginScreen props
+- [x] 02-01-PLAN.md — Rust auth commands: add keyring crate, register opener plugin, write store_token/get_token/delete_token
+- [x] 02-02-PLAN.md — Login screen UI: create login.css and screen-login.jsx from prototype, add 35 bilingual i18n strings
+- [x] 02-03-PLAN.md — Auth layer: add isAuthenticated/authUser to Zustand, create AuthProvider and useAuth hook
+- [x] 02-04-PLAN.md — Auth guard + wiring: wrap app in AuthProvider, guard Shell behind isAuthenticated, wire LoginScreen props
+- [x] 02-05-PLAN.md — Gap closure: fix CR-01 tight-loop, WR-01 screen persist, WR-02 stale error, WR-03 debug log, WR-04 email validation
 
 ### Phase 3: Shell + Data Foundation
 **Goal**: The app shell, sidebar, and topbar render from live Zustand state; all data-fetching hooks (`useOrders`, `useOrderActions`, `useMenu`, `useSSE`) are connected to the live API; the SSE connection is established at shell level; and the offline banner works.
@@ -108,7 +109,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-04-22 |
-| 2. Authentication | 0/4 | Planned | - |
+| 2. Authentication | 5/5 | Complete — pending human verification | 2026-04-23 |
 | 3. Shell + Data Foundation | 0/? | Not started | - |
 | 4. Core Screens | 0/? | Not started | - |
 | 5. Native Integration | 0/? | Not started | - |
