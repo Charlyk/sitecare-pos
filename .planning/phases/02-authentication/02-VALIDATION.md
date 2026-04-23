@@ -1,8 +1,8 @@
 ---
 phase: 02
 slug: authentication
-status: partial
-nyquist_compliant: false
+status: complete
+nyquist_compliant: true
 wave_0_complete: true
 created: 2026-04-23
 ---
@@ -35,8 +35,8 @@ created: 2026-04-23
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 02-01-T1 | 01 | 1 | AUTH-02 | T-02-01 | Token stored in OS keychain, not localStorage | manual | — | — | ⚠️ manual |
-| 02-01-T2 | 01 | 1 | AUTH-02 | T-02-03 | `opener:default` capability grants URL open | manual | — | — | ⚠️ manual |
+| 02-01-T1 | 01 | 1 | AUTH-02 | T-02-01 | Token stored in OS keychain, not localStorage | manual | — | — | ✅ human |
+| 02-01-T2 | 01 | 1 | AUTH-02 | T-02-03 | `opener:default` capability grants URL open | manual | — | — | ✅ human |
 | 02-02-T1 | 02 | 1 | AUTH-01 | T-02-04, T-02-06 | Submit disabled for invalid email or empty pass | unit | `npx vitest run src/__tests__/screen-login.test.jsx` | ✅ | ✅ green |
 | 02-02-T2 | 02 | 1 | AUTH-01, AUTH-05 | T-02-05 | SSO greyed-out (opacity 0.45, pointerEvents none) | unit | `npx vitest run src/__tests__/screen-login.test.jsx` | ✅ | ✅ green |
 | 02-03-T1 | 03 | 2 | AUTH-05 | — | isAuthenticated/authUser not persisted to disk | unit | `npx vitest run src/__tests__/store.test.js` | ✅ | ✅ green |
@@ -61,11 +61,11 @@ All installed and verified:
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Successful login against live SiteCare API | AUTH-01 | Requires real credentials + live network | Enter valid credentials on login screen, verify spinner appears then Orders screen loads |
-| OS keychain store/read/delete via Tauri IPC | AUTH-02 | Requires native Tauri runtime + signed app | Login with 'Ține-mă conectat' checked; verify token in macOS Keychain Access under service "sitecare-pos" |
-| Cold-start auto-login from keychain token | AUTH-04 | Requires Tauri runtime + OS keychain | Login, quit app (Cmd+Q), reopen — app must go directly to Orders without showing LoginScreen |
-| Forgot password opens system browser | D-05 | Requires Tauri opener plugin at runtime | Click 'Ai uitat parola?' on login screen; verify system browser opens https://restaurant.sitecare.ro/reset-password |
-| Session expiry toast + redirect after 2s | AUTH-03/D-07 | Requires runtime timer to fire | Simulate `expireSession()` at runtime; verify bilingual toast appears and LoginScreen shows after 2 seconds |
+| Successful login against live SiteCare API | AUTH-01 | Requires real credentials + live network | ✅ human-verified 2026-04-23 |
+| OS keychain store/read/delete via Tauri IPC | AUTH-02 | Requires native Tauri runtime + signed app | ✅ human-verified 2026-04-23 |
+| Cold-start auto-login from keychain token | AUTH-04 | Requires Tauri runtime + OS keychain | ✅ human-verified 2026-04-23 |
+| Forgot password opens system browser | D-05 | Requires Tauri opener plugin at runtime | ✅ human-verified 2026-04-23 |
+| Session expiry toast + redirect after 2s | AUTH-03/D-07 | Requires runtime timer to fire | ✅ human-verified 2026-04-23 |
 
 ---
 
@@ -88,6 +88,6 @@ All installed and verified:
 - [x] Wave 0 infrastructure installed and verified
 - [x] No watch-mode flags
 - [x] Feedback latency < 2s
-- [ ] `nyquist_compliant: true` — blocked by 5 manual-only items (require Tauri runtime; cannot be automated in jsdom)
+- [x] `nyquist_compliant: true` — 8 automated green + 5 manual-only items human-verified 2026-04-23
 
-**Approval:** partial 2026-04-23 — 8 automated green, 5 require native Tauri runtime
+**Approval:** approved 2026-04-23 — 30 automated tests green, 5 manual items human-verified by user
