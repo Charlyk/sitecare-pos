@@ -83,13 +83,15 @@ export function AuthProvider({ children }) {
     (async () => {
       try {
         const token = await invoke('get_token');
+        console.log('[auth:cold] get_token →', token ? `present (${String(token).length} chars)` : 'null — will show login');
         if (!token) return;
         tokenRef.current = token;
         const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
         setClient(adminClient);
         setIsAuthenticated(true);
+        console.log('[auth:cold] auth restored ✓');
       } catch (e) {
-        console.error('[auth] cold-start keychain read failed:', e);
+        console.error('[auth:cold] invoke threw — IPC may not be ready yet:', e?.message ?? e);
       } finally {
         setColdStartBusy(false);
       }
@@ -109,9 +111,13 @@ export function AuthProvider({ children }) {
       const token = signInResult.token ?? signInResult.accessToken ?? signInResult.access_token;
       const user = signInResult.user ?? signInResult.profile ?? null;
       if (!token) throw new Error('No token in signIn response: ' + JSON.stringify(Object.keys(signInResult)));
+      console.log('[auth:sign-in] remember =', remember, '| token length =', token?.length);
       if (remember) {
         await invoke('store_token', { token }); // AUTH-02
         tokenRef.current = token;
+        console.log('[auth:sign-in] store_token ✓');
+      } else {
+        console.warn('[auth:sign-in] remember=false → token NOT stored, reload will show login');
       }
       const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
       setClient(adminClient);
