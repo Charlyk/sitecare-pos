@@ -1,0 +1,62 @@
+// Tests for Zustand store partialize — U5 (AUTH-02)
+// Verifies isAuthenticated and authUser are NOT persisted to disk.
+
+vi.mock('@tauri-apps/plugin-store', () => ({
+  load: vi.fn().mockResolvedValue({
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
+
+import { useAppStore } from '../store.js'
+
+// ── U5: isAuthenticated and authUser NOT in partialize (AUTH-02) ─────────
+
+describe('U5 — partialize excludes auth state from persistence (AUTH-02)', () => {
+  test('partialize result does NOT contain isAuthenticated key', () => {
+    const state = useAppStore.getState()
+    // Access the persist options partialize function directly via the store internals
+    // Zustand persist exposes getOptions via store.__zustand_persist__ or through the config
+    // We call partialize manually since it's part of the persist config
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+
+    expect(persisted).not.toHaveProperty('isAuthenticated')
+  })
+
+  test('partialize result does NOT contain authUser key', () => {
+    const state = useAppStore.getState()
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+
+    expect(persisted).not.toHaveProperty('authUser')
+  })
+
+  test('partialize result contains exactly the 6 expected persisted keys', () => {
+    const state = useAppStore.getState()
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+
+    const persistedKeys = Object.keys(persisted).sort()
+    expect(persistedKeys).toEqual([
+      'accent',
+      'density',
+      'lang',
+      'role',
+      'screen',
+      'sidebarCollapsed',
+    ])
+  })
+
+  test('partialize does NOT contain session-only keys (toasts, selectedOrder, acceptDialog)', () => {
+    const state = useAppStore.getState()
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+
+    expect(persisted).not.toHaveProperty('toasts')
+    expect(persisted).not.toHaveProperty('selectedOrder')
+    expect(persisted).not.toHaveProperty('acceptDialog')
+  })
+})
