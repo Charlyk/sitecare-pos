@@ -4,7 +4,7 @@ import { useT } from './i18n.jsx';
 import { elapsedMinutes } from './data.jsx';
 import { typeMeta } from './screen-orders.jsx';
 
-function KitchenScreen({ orders, lang, onAdvance }) {
+function KitchenScreen({ orders, lang, onAdvance, isOffline }) {
   const t = useT(lang);
   const [, force] = useState(0);
 
@@ -14,9 +14,11 @@ function KitchenScreen({ orders, lang, onAdvance }) {
   }, []);
 
   // Kitchen only cares about non-done orders. Group by state.
-  const queue = orders.filter(o => o.state === 'new' || o.state === 'accepted').sort((a, b) => new Date(a.placedAt) - new Date(b.placedAt));
-  const active = orders.filter(o => o.state === 'preparing');
-  const ready = orders.filter(o => o.state === 'ready');
+  // Normalise SDK shape (status: 'NEW') → prototype shape (state: 'new') for compatibility
+  const normalised = orders.map(o => ({ ...o, _state: o.state ?? o.status?.toLowerCase() ?? 'new' }));
+  const queue = normalised.filter(o => o._state === 'new' || o._state === 'accepted').sort((a, b) => new Date(a.placedAt ?? a.createdAt) - new Date(b.placedAt ?? b.createdAt));
+  const active = normalised.filter(o => o._state === 'preparing');
+  const ready = normalised.filter(o => o._state === 'ready');
 
   const Column = ({ title, items, accent, emptyLabel }) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
@@ -26,7 +28,7 @@ function KitchenScreen({ orders, lang, onAdvance }) {
         <div style={{ marginLeft: 'auto', fontWeight: 700, fontSize: 12, color: 'var(--sc-muted-foreground)', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 999, padding: '2px 10px' }}>{items.length}</div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {items.map(o => <KitchenTicket key={o.id} order={o} lang={lang} t={t} onAdvance={onAdvance} />)}
+        {items.map(o => <KitchenTicket key={o.id} order={o} lang={lang} t={t} onAdvance={onAdvance} isOffline={isOffline} />)}
         {items.length === 0 && (
           <div style={{ border: '1.5px dashed hsl(120 10% 82%)', borderRadius: 14, padding: 24, textAlign: 'center', color: 'var(--sc-muted-foreground)', fontSize: 13 }}>
             {emptyLabel}
@@ -47,25 +49,29 @@ function KitchenScreen({ orders, lang, onAdvance }) {
   );
 }
 
-function KitchenTicket({ order, lang, t, onAdvance }) {
-  const elapsed = elapsedMinutes(order.placedAt);
-  const remaining = (order.promisedIn || 0) - elapsed;
+function KitchenTicket({ order, lang, t, onAdvance, isOffline }) {
+  // Normalise SDK shape for compatibility
+  const state = order._state ?? order.state ?? order.status?.toLowerCase() ?? 'new';
+  const type = order.type ?? order.orderType ?? 'dinein';
+  const placedAt = order.placedAt ?? order.createdAt;
+  const elapsed = elapsedMinutes(placedAt);
+  const remaining = (order.promisedIn ?? order.estimatedMinutes ?? 0) - elapsed;
   const critical = remaining <= 3;
   const warn = remaining <= 8 && !critical;
 
-  const tm = typeMeta(order.type, t);
+  const tm = typeMeta(type, t);
   const next = {
     new: { label: t('accept'), state: 'accepted' },
     accepted: { label: t('start'), state: 'preparing' },
     preparing: { label: t('mark_ready'), state: 'ready' },
-    ready: { label: order.type === 'delivery' ? t('state_out') : t('complete'), state: order.type === 'delivery' ? 'out' : 'done' },
-  }[order.state];
+    ready: { label: type === 'delivery' ? t('state_out') : t('complete'), state: type === 'delivery' ? 'out' : 'done' },
+  }[state];
 
   const borderColor = critical ? 'var(--sc-terracotta)' : warn ? 'hsl(38 92% 50%)' : 'hsl(120 10% 90%)';
 
   return (
     <div className="card" style={{ padding: 0, border: `1.5px solid ${borderColor}`, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px', background: order.state === 'ready' ? 'hsl(120 14% 49% / 0.08)' : order.state === 'preparing' ? 'hsl(38 92% 50% / 0.08)' : 'hsl(0 53% 58% / 0.06)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px', background: state === 'ready' ? 'hsl(120 14% 49% / 0.08)' : state === 'preparing' ? 'hsl(38 92% 50% / 0.08)' : 'hsl(0 53% 58% / 0.06)' }}>
         <div>
           <div style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', lineHeight: 1 }}>{order.id}</div>
           <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center' }}>
@@ -106,7 +112,12 @@ function KitchenTicket({ order, lang, t, onAdvance }) {
 
       {next && (
         <div style={{ padding: '10px 14px', borderTop: '1px solid hsl(120 10% 92%)', display: 'flex', gap: 8 }}>
-          <button className="btn-primary" style={{ flex: 1, height: 40 }} onClick={() => onAdvance(order, next.state)}>
+          <button
+            className={`btn-primary${isOffline ? ' btn-disabled-offline' : ''}`}
+            style={{ flex: 1, height: 40 }}
+            disabled={isOffline}
+            onClick={() => onAdvance(order, next.state)}
+          >
             <Icon name="check" size={14} /> {next.label}
           </button>
         </div>

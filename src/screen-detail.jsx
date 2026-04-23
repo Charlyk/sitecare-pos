@@ -4,7 +4,7 @@ import { useT } from './i18n.jsx';
 import { formatRON, elapsedMinutes, orderTimeLabel } from './data.jsx';
 import { sourceMeta, typeMeta, stateMeta } from './screen-orders.jsx';
 
-function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint }) {
+function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, isOffline }) {
   const t = useT(lang);
   const [tab, setTab] = useState('overview');
 
@@ -170,11 +170,15 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint }) {
 
         {/* Advance */}
         {order.state !== 'done' && (
-          <button className="btn-terracotta" style={{ height: 44, justifyContent: 'center', fontSize: 14 }}
+          <button
+            className={`btn-terracotta${isOffline ? ' btn-disabled-offline' : ''}`}
+            style={{ height: 44, justifyContent: 'center', fontSize: 14 }}
+            disabled={isOffline}
             onClick={() => {
               const next = { new: 'accepted', accepted: 'preparing', preparing: 'ready', ready: order.type === 'delivery' ? 'out' : 'done', out: 'done' }[order.state];
               if (next) onAdvance(order, next);
-            }}>
+            }}
+          >
             <Icon name="chevRight" size={14} />
             {order.state === 'new' ? t('accept') : order.state === 'preparing' ? t('mark_ready') : t('complete')}
           </button>

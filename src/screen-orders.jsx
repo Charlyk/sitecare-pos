@@ -31,30 +31,40 @@ function stateMeta(state, t) {
   return map[state] || map.new;
 }
 
-function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint }) {
-  const src = sourceMeta(order.source, t);
-  const typ = typeMeta(order.type, t);
-  const st = stateMeta(order.state, t);
-  const elapsed = elapsedMinutes(order.placedAt);
-  const remaining = (order.promisedIn || 0) - elapsed;
-  const timeCritical = remaining <= 5 && order.state !== 'done' && order.state !== 'out';
+function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
+  // Normalise SDK shape (status: 'NEW') → prototype shape (state: 'new') for compatibility
+  const state = order.state ?? order.status?.toLowerCase() ?? 'new';
+  const type = order.type ?? order.orderType ?? 'dinein';
+  const source = order.source ?? 'counter';
+  const src = sourceMeta(source, t);
+  const typ = typeMeta(type, t);
+  const st = stateMeta(state, t);
+  const elapsed = elapsedMinutes(order.placedAt ?? order.createdAt);
+  const remaining = (order.promisedIn ?? order.estimatedMinutes ?? 0) - elapsed;
+  const timeCritical = remaining <= 5 && state !== 'done' && state !== 'out';
 
   const nextAction = {
     new: { label: t('accept'), next: 'accepted' },
     accepted: { label: t('start'), next: 'preparing' },
     preparing: { label: t('mark_ready'), next: 'ready' },
-    ready: { label: order.type === 'delivery' ? t('state_out') : t('complete'), next: order.type === 'delivery' ? 'out' : 'done' },
+    ready: { label: type === 'delivery' ? t('state_out') : t('complete'), next: type === 'delivery' ? 'out' : 'done' },
     out: { label: t('complete'), next: 'done' },
-  }[order.state];
+  }[state];
+
+  // Normalise customer — SDK uses flat fields, prototype uses nested object
+  const customerName = order.customer?.name ?? order.customerName ?? '';
+  const customerPhone = order.customer?.phone ?? order.customerPhone ?? null;
+  const addressLine = order.address?.line1 ?? null;
+  const placedAt = order.placedAt ?? order.createdAt;
 
   return (
-    <div className="card shadow" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, border: order.state === 'new' ? '1.5px solid hsl(0 53% 58% / 0.4)' : '1px solid hsl(120 10% 90%)' }}>
+    <div className="card shadow" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, border: state === 'new' ? '1.5px solid hsl(0 53% 58% / 0.4)' : '1px solid hsl(120 10% 90%)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em' }}>{order.id}</span>
             <span className={`chip ${st.chip}`}>{st.label}</span>
-            {order.state === 'new' && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--sc-terracotta)' }} className="pulse" />}
+            {state === 'new' && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--sc-terracotta)' }} className="pulse" />}
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
             <span className={`chip ${src.chip}`}><Icon name={src.icon} size={11} />{src.label}</span>
@@ -62,7 +72,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint }) {
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600 }}>{orderTimeLabel(order.placedAt)}</div>
+          <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600 }}>{orderTimeLabel(placedAt)}</div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 2, fontSize: 12, fontWeight: 700, color: timeCritical ? 'var(--sc-terracotta)' : 'var(--sc-muted-foreground)' }}>
             <Icon name="clock" size={12} />
             {elapsed} {t('min')}
@@ -72,9 +82,9 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint }) {
 
       {/* Customer */}
       <div style={{ fontSize: 13 }}>
-        <div style={{ fontWeight: 600 }}>{order.customer.name}</div>
-        {order.customer.phone && <div style={{ color: 'var(--sc-muted-foreground)', fontSize: 12 }}>{order.customer.phone}</div>}
-        {order.address && <div style={{ color: 'var(--sc-muted-foreground)', fontSize: 12, marginTop: 2 }}>{order.address.line1}</div>}
+        <div style={{ fontWeight: 600 }}>{customerName}</div>
+        {customerPhone && <div style={{ color: 'var(--sc-muted-foreground)', fontSize: 12 }}>{customerPhone}</div>}
+        {addressLine && <div style={{ color: 'var(--sc-muted-foreground)', fontSize: 12, marginTop: 2 }}>{addressLine}</div>}
       </div>
 
       {/* Items preview */}
@@ -102,7 +112,12 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint }) {
             {lang === 'ro' ? 'Detalii' : 'Details'}
           </button>
           {nextAction && (
-            <button className="btn-primary" style={{ height: 34, fontSize: 12, padding: '0 14px' }} onClick={() => onAdvance(order, nextAction.next)}>
+            <button
+              className={`btn-primary${isOffline ? ' btn-disabled-offline' : ''}`}
+              style={{ height: 34, fontSize: 12, padding: '0 14px' }}
+              disabled={isOffline}
+              onClick={() => onAdvance(order, nextAction.next)}
+            >
               {nextAction.label}
             </button>
           )}
@@ -112,7 +127,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint }) {
   );
 }
 
-function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint }) {
+function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline }) {
   const t = useT(lang);
   const [filter, setFilter] = useState('all');
 
@@ -195,7 +210,7 @@ function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint }) {
       {/* Columns */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
         {visible.map(o => (
-          <OrderCard key={o.id} order={o} lang={lang} t={t} onOpen={onOpen} onAdvance={onAdvance} onPrint={onPrint} />
+          <OrderCard key={o.id} order={o} lang={lang} t={t} onOpen={onOpen} onAdvance={onAdvance} onPrint={onPrint} isOffline={isOffline} />
         ))}
         {visible.length === 0 && (
           <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 48, color: 'var(--sc-muted-foreground)' }}>
