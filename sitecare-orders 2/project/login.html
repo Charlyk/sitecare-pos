@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SiteCare POS — Sign in</title>
+<link rel="stylesheet" href="assets/colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; background: #1a1a1a; font-family: 'Outfit', system-ui, sans-serif; color: var(--sc-foreground); overflow: hidden; }
+  * { box-sizing: border-box; }
+
+  .desktop-stage { position: fixed; inset: 0; background: radial-gradient(ellipse at top, #2a2a2a 0%, #111 60%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .desktop-frame { width: 1440px; height: 900px; transform-origin: center center; position: relative; }
+
+  /* Window chrome */
+  .win { width: 100%; height: 100%; background: var(--sc-background); border-radius: 14px; overflow: hidden; box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 8px 30px rgba(0,0,0,0.4); display: grid; grid-template-rows: 38px 1fr; }
+  .titlebar { background: linear-gradient(180deg, #f3eee4 0%, #ece6d7 100%); border-bottom: 1px solid rgba(0,0,0,0.08); display: flex; align-items: center; padding: 0 14px; gap: 10px; position: relative; }
+  .tl-dot { width: 12px; height: 12px; border-radius: 50%; border: 0.5px solid rgba(0,0,0,0.12); }
+  .tl-close { background: #ff5f57; } .tl-min { background: #febc2e; } .tl-max { background: #28c840; }
+  .tl-group { display: flex; gap: 8px; }
+  .title-text { position: absolute; left: 50%; transform: translateX(-50%); font-size: 13px; font-weight: 600; color: #555; }
+  .title-text .hand { font-family: 'Caveat', cursive; color: var(--sc-terracotta); font-size: 16px; font-weight: 700; margin-right: 6px; }
+
+  /* Login layout */
+  .login-body { display: grid; grid-template-columns: 1fr 1.1fr; height: 100%; }
+
+  /* Left brand panel */
+  .brand-panel {
+    position: relative;
+    background:
+      radial-gradient(ellipse at 20% 80%, hsl(120 14% 49% / 0.18) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 20%, hsl(0 53% 58% / 0.12) 0%, transparent 55%),
+      linear-gradient(180deg, #fbf6ea 0%, #f4ecd7 100%);
+    padding: 48px 56px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    overflow: hidden;
+  }
+  .brand-panel::before {
+    content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
+    background: linear-gradient(180deg, transparent, hsl(120 10% 82%), transparent);
+  }
+  .arc { position: absolute; top: 50%; left: -80px; width: 540px; height: 540px; transform: translateY(-50%); border: 1.5px dashed hsl(120 14% 49% / 0.25); border-radius: 50%; pointer-events: none; }
+  .arc2 { position: absolute; top: 58%; left: -200px; width: 760px; height: 760px; transform: translateY(-50%); border: 1px dashed hsl(0 53% 58% / 0.18); border-radius: 50%; pointer-events: none; }
+
+  .brand-top { display: flex; align-items: center; gap: 12px; position: relative; z-index: 2; }
+  .brand-logo { width: 44px; height: 44px; border-radius: 12px; background: var(--sc-primary); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 22px; box-shadow: 0 6px 18px hsl(120 14% 49% / 0.35); }
+  .brand-name { font-size: 22px; letter-spacing: -0.02em; font-weight: 700; }
+  .brand-name b { font-weight: 900; }
+  .brand-sub { font-family: 'Caveat', cursive; color: var(--sc-terracotta); font-size: 15px; font-weight: 700; line-height: 1; margin-top: -2px; }
+
+  .brand-hero { position: relative; z-index: 2; }
+  .brand-eyebrow { font-family: 'Caveat', cursive; color: var(--sc-terracotta); font-weight: 700; font-size: 26px; line-height: 1; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 10px; }
+  .brand-eyebrow::before { content: ''; width: 38px; height: 2px; background: var(--sc-terracotta); border-radius: 1px; }
+  .brand-title { font-weight: 900; font-size: 52px; line-height: 1.05; letter-spacing: -0.03em; color: var(--sc-foreground); margin: 0 0 16px; max-width: 460px; }
+  .brand-title em { font-style: normal; font-family: 'Caveat', cursive; color: var(--sc-primary); font-weight: 700; font-size: 1.1em; }
+  .brand-lead { font-size: 16px; line-height: 1.55; color: var(--sc-muted-foreground); max-width: 420px; margin: 0; }
+
+  .brand-stats { display: flex; gap: 28px; margin-top: 40px; position: relative; z-index: 2; }
+  .brand-stat { display: flex; flex-direction: column; gap: 2px; }
+  .brand-stat .n { font-weight: 900; font-size: 26px; letter-spacing: -0.02em; color: var(--sc-primary); }
+  .brand-stat .l { font-size: 11px; font-weight: 600; color: var(--sc-muted-foreground); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .brand-foot { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--sc-muted-foreground); }
+  .brand-foot .links { display: flex; gap: 18px; }
+  .brand-foot a { color: var(--sc-muted-foreground); text-decoration: none; }
+  .brand-foot a:hover { color: var(--sc-primary); }
+  .online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sc-primary); box-shadow: 0 0 0 3px hsl(120 14% 49% / 0.2); display: inline-block; margin-right: 6px; }
+
+  /* Floating receipt card */
+  .receipt-card { position: absolute; bottom: 120px; right: -60px; width: 280px; background: #fff; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 4px 14px rgba(0,0,0,0.06); padding: 16px 18px; transform: rotate(-3deg); z-index: 1; }
+  .receipt-card::before { content: ''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 50px; height: 14px; background: hsl(40 30% 91%); border-radius: 3px 3px 2px 2px; clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%); }
+  .receipt-hdr { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 8px; border-bottom: 1px dashed hsl(120 10% 85%); margin-bottom: 8px; }
+  .receipt-hdr .id { font-weight: 900; letter-spacing: -0.01em; font-size: 16px; }
+  .receipt-hdr .tm { font-size: 11px; color: var(--sc-muted-foreground); }
+  .receipt-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
+  .receipt-row .n { color: var(--sc-foreground); font-weight: 500; }
+  .receipt-row .p { color: var(--sc-muted-foreground); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .receipt-total { display: flex; justify-content: space-between; padding-top: 8px; margin-top: 6px; border-top: 1px dashed hsl(120 10% 85%); font-weight: 900; font-size: 14px; }
+  .receipt-stamp { position: absolute; top: 18px; right: -16px; transform: rotate(12deg); border: 2px solid var(--sc-primary); color: var(--sc-primary); border-radius: 999px; padding: 3px 10px; font-family: 'Caveat', cursive; font-weight: 700; font-size: 15px; background: rgba(255,255,255,0.9); }
+
+  /* Right form panel */
+  .form-panel { background: #fff; display: flex; align-items: center; justify-content: center; padding: 48px 64px; position: relative; }
+  .form-top { position: absolute; top: 28px; right: 32px; display: flex; align-items: center; gap: 10px; }
+
+  .lang-seg { display: flex; background: #faf6ea; border-radius: 999px; padding: 3px; gap: 2px; border: 1px solid hsl(120 10% 88%); }
+  .lang-seg button { border: 0; background: transparent; color: var(--sc-muted-foreground); padding: 5px 12px; border-radius: 999px; font-weight: 700; font-size: 11px; cursor: pointer; font-family: inherit; letter-spacing: 0.06em; }
+  .lang-seg button.on { background: #fff; color: var(--sc-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+
+  .form-wrap { width: 100%; max-width: 420px; }
+
+  .welcome-eyebrow { font-family: 'Caveat', cursive; color: var(--sc-terracotta); font-weight: 700; font-size: 22px; line-height: 1; margin-bottom: 6px; }
+  .welcome-title { font-weight: 900; font-size: 36px; letter-spacing: -0.02em; margin: 0 0 8px; line-height: 1.1; }
+  .welcome-sub { color: var(--sc-muted-foreground); font-size: 14px; margin: 0 0 26px; }
+
+  /* Location chip */
+  .loc-chip { display: flex; align-items: center; gap: 12px; background: hsl(120 14% 49% / 0.08); border: 1px solid hsl(120 14% 49% / 0.2); border-radius: 14px; padding: 12px 14px; margin-bottom: 22px; cursor: pointer; transition: background 150ms; }
+  .loc-chip:hover { background: hsl(120 14% 49% / 0.12); }
+  .loc-icon { width: 36px; height: 36px; border-radius: 10px; background: #fff; color: var(--sc-primary); display: flex; align-items: center; justify-content: center; border: 1px solid hsl(120 14% 49% / 0.2); }
+  .loc-info { flex: 1; min-width: 0; }
+  .loc-label { font-size: 10px; color: var(--sc-muted-foreground); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; line-height: 1; margin-bottom: 2px; }
+  .loc-name { font-weight: 800; font-size: 14px; letter-spacing: -0.01em; }
+  .loc-addr { font-size: 11px; color: var(--sc-muted-foreground); }
+  .loc-edit { color: var(--sc-muted-foreground); font-size: 12px; display: flex; align-items: center; gap: 4px; }
+
+  /* Recent accounts rail */
+  .recent-label { font-size: 10px; color: var(--sc-muted-foreground); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .user-rail { display: flex; gap: 8px; margin-bottom: 22px; overflow-x: auto; padding-bottom: 4px; }
+  .user-rail::-webkit-scrollbar { height: 4px; }
+  .user-rail::-webkit-scrollbar-thumb { background: hsl(120 10% 88%); border-radius: 4px; }
+  .recent-chip {
+    flex: 0 0 auto;
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px 6px 6px; border-radius: 999px;
+    background: #fafaf6; border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: all 150ms;
+  }
+  .recent-chip:hover { background: #f3ecd9; }
+  .recent-chip.active { border-color: var(--sc-primary); background: hsl(120 14% 49% / 0.08); }
+  .recent-chip .av { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; color: #fff; }
+  .recent-chip .av.rcash { background: hsl(120 14% 49%); }
+  .recent-chip .av.rkit  { background: hsl(30 60% 50%); }
+  .recent-chip .av.rmgr  { background: hsl(230 35% 55%); }
+  .recent-chip .nm { font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .recent-chip .x { color: var(--sc-muted-foreground); display: inline-flex; padding: 2px; border-radius: 4px; margin-left: 2px; }
+  .recent-chip .x:hover { background: rgba(0,0,0,0.06); color: var(--sc-foreground); }
+
+  /* Fields */
+  .field { margin-bottom: 14px; position: relative; }
+  .field label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--sc-foreground); margin-bottom: 6px; }
+  .field label a { color: var(--sc-primary); text-decoration: none; font-weight: 600; font-size: 12px; }
+  .field label a:hover { text-decoration: underline; }
+  .field-input {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 14px;
+    border: 1.5px solid hsl(120 10% 88%); border-radius: 12px;
+    background: #fff; height: 50px;
+    transition: border-color 150ms, box-shadow 150ms;
+  }
+  .field-input:focus-within { border-color: var(--sc-primary); box-shadow: 0 0 0 3px hsl(120 14% 49% / 0.15); }
+  .field-input.err { border-color: hsl(0 72% 55%); box-shadow: 0 0 0 3px hsl(0 72% 55% / 0.12); }
+  .field-input .ico { color: var(--sc-muted-foreground); flex-shrink: 0; }
+  .field-input input { flex: 1; border: 0; outline: 0; background: transparent; font-family: inherit; font-size: 14px; color: var(--sc-foreground); min-width: 0; }
+  .field-input input::placeholder { color: hsl(120 5% 65%); }
+  .field-input .toggle { border: 0; background: transparent; color: var(--sc-muted-foreground); cursor: pointer; padding: 4px; border-radius: 6px; display: flex; align-items: center; }
+  .field-input .toggle:hover { color: var(--sc-foreground); background: rgba(0,0,0,0.04); }
+
+  .field-hint { font-size: 11px; color: var(--sc-muted-foreground); margin-top: 6px; }
+  .field-error { font-size: 12px; color: hsl(0 72% 48%); font-weight: 600; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+
+  .field-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 13px; color: var(--sc-foreground); font-weight: 500; }
+  .check input { appearance: none; width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid hsl(120 10% 78%); background: #fff; cursor: pointer; position: relative; transition: all 120ms; }
+  .check input:checked { background: var(--sc-primary); border-color: var(--sc-primary); }
+  .check input:checked::after { content: ''; position: absolute; top: 3px; left: 6px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+
+  .primary-btn { width: 100%; height: 54px; border-radius: 14px; border: 0; background: var(--sc-primary); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; font-family: inherit; box-shadow: 0 6px 20px hsl(120 14% 49% / 0.3); transition: background 150ms, transform 100ms; }
+  .primary-btn:hover { background: hsl(120 14% 42%); }
+  .primary-btn:active { transform: scale(0.99); }
+  .primary-btn:disabled { background: hsl(120 10% 80%); color: #fff; box-shadow: none; cursor: not-allowed; }
+
+  .divider { display: flex; align-items: center; gap: 10px; margin: 22px 0; color: var(--sc-muted-foreground); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: hsl(120 10% 90%); }
+
+  .alt-btn { width: 100%; height: 46px; border-radius: 12px; border: 1px solid hsl(120 10% 88%); background: #fff; font-weight: 600; font-size: 13px; color: var(--sc-foreground); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-family: inherit; transition: all 150ms; }
+  .alt-btn:hover { background: #faf6ea; border-color: hsl(120 14% 49% / 0.4); }
+
+  .form-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--sc-muted-foreground); margin-top: 22px; }
+
+  .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: hsl(120 14% 49% / 0.1); color: var(--sc-primary); border-radius: 999px; font-weight: 700; font-size: 11px; }
+  .status-pill .d { width: 6px; height: 6px; border-radius: 50%; background: var(--sc-primary); animation: pulse 2s infinite; }
+  @keyframes pulse { 50% { opacity: 0.4; } }
+
+  .signature { position: absolute; bottom: 24px; right: 32px; font-family: 'Caveat', cursive; font-size: 16px; color: var(--sc-muted-foreground); font-weight: 600; }
+  .signature b { color: var(--sc-terracotta); }
+
+  /* Tweaks panel */
+  .tweaks-panel { position: fixed; bottom: 20px; right: 20px; width: 260px; background: #fff; border: 1px solid hsl(120 10% 88%); border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); padding: 16px; z-index: 10000; font-family: 'Outfit', sans-serif; }
+  .tweaks-panel h4 { margin: 0 0 12px; font-size: 14px; font-weight: 900; display: flex; align-items: center; justify-content: space-between; }
+  .tweaks-panel .tw-row { margin-bottom: 10px; }
+  .tweaks-panel .tw-label { font-size: 11px; font-weight: 600; color: var(--sc-muted-foreground); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .tw-seg { display: flex; background: #f7f1e1; border-radius: 8px; padding: 2px; gap: 2px; }
+  .tw-seg button { flex: 1; border: 0; background: transparent; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; color: #555; }
+  .tw-seg button.on { background: #fff; color: var(--sc-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="src/icons.jsx"></script>
+<script type="text/babel">
+/* global React, ReactDOM */
+const { useState, useEffect, useRef } = React;
+
+const STRINGS = {
+  ro: {
+    welcome: 'salut!',
+    signin: 'Intră în contul tău',
+    sub: 'Folosește emailul și parola contului tău SiteCare.',
+    location: 'Locație',
+    change: 'Schimbă',
+    recent: 'Conturi recente',
+    email: 'Email',
+    email_ph: 'nume@restaurant.ro',
+    pass: 'Parolă',
+    pass_ph: 'Parola ta',
+    show: 'Arată parola',
+    hide: 'Ascunde parola',
+    forgot: 'Ai uitat parola?',
+    remember: 'Ține-mă conectat pe acest terminal',
+    signin_btn: 'Intră în aplicație',
+    or: 'sau',
+    sso: 'Intră cu SSO (Google Workspace)',
+    online: 'Online · sincronizat',
+    offline: 'Offline · comenzile se vor sincroniza',
+    terms: 'Termeni',
+    privacy: 'Confidențialitate',
+    support: 'Suport',
+    title_a: 'Bucătăria ta,',
+    title_b: 'orchestrată.',
+    lead: 'SiteCare POS aduce laolaltă comenzile online, la telefon și la masă într-un singur flux clar.',
+    stat_orders: 'Comenzi procesate',
+    stat_rest: 'Restaurante partenere',
+    stat_uptime: 'Uptime lunar',
+    signed: 'făcut în Brașov cu',
+    heart: 'drag',
+    receipt_time: 'astăzi, 13:24',
+    r_item1: 'Papanași cu afine',
+    r_item2: 'Ciorbă de burtă',
+    r_item3: 'Mămăligă cu brânză',
+    r_total: 'Total',
+    stamp: 'livrat',
+    err_email: 'Email invalid',
+    err_creds: 'Email sau parolă greșită',
+  },
+  en: {
+    welcome: 'hello there!',
+    signin: 'Sign in to your account',
+    sub: 'Use the email and password of your SiteCare account.',
+    location: 'Location',
+    change: 'Change',
+    recent: 'Recent accounts',
+    email: 'Email',
+    email_ph: 'you@restaurant.com',
+    pass: 'Password',
+    pass_ph: 'Your password',
+    show: 'Show password',
+    hide: 'Hide password',
+    forgot: 'Forgot your password?',
+    remember: 'Keep me signed in on this terminal',
+    signin_btn: 'Sign in',
+    or: 'or',
+    sso: 'Sign in with SSO (Google Workspace)',
+    online: 'Online · in sync',
+    offline: 'Offline · orders will sync',
+    terms: 'Terms',
+    privacy: 'Privacy',
+    support: 'Support',
+    title_a: 'Your kitchen,',
+    title_b: 'in concert.',
+    lead: 'SiteCare POS brings online, phone, and on-site orders into one clear flow for your team.',
+    stat_orders: 'Orders processed',
+    stat_rest: 'Partner restaurants',
+    stat_uptime: 'Monthly uptime',
+    signed: 'made in Brașov with',
+    heart: 'love',
+    receipt_time: 'today, 13:24',
+    r_item1: 'Blueberry papanași',
+    r_item2: 'Tripe soup',
+    r_item3: 'Polenta with cheese',
+    r_total: 'Total',
+    stamp: 'delivered',
+    err_email: 'Invalid email',
+    err_creds: 'Wrong email or password',
+  },
+};
+
+function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+function Login() {
+  const [scale, setScale] = useState(1);
+  const [lang, setLang] = useState(localStorage.getItem('sc_lang') || 'ro');
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [online, setOnline] = useState(true);
+  const [tweaksOn, setTweaksOn] = useState(false);
+  const [accent, setAccent] = useState(localStorage.getItem('sc_accent') || 'sage');
+  const [bg, setBg] = useState(localStorage.getItem('sc_login_bg') || 'arcs');
+  const passRef = useRef(null);
+  const t = STRINGS[lang];
+
+  useEffect(() => localStorage.setItem('sc_lang', lang), [lang]);
+  useEffect(() => localStorage.setItem('sc_accent', accent), [accent]);
+  useEffect(() => localStorage.setItem('sc_login_bg', bg), [bg]);
+
+  useEffect(() => {
+    const fit = () => {
+      const vw = window.innerWidth, vh = window.innerHeight;
+      setScale(Math.min((vw - 32) / 1440, (vh - 32) / 900, 1));
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
+  useEffect(() => {
+    const map = {
+      sage: { primary: 'hsl(120 14% 49%)', hover: 'hsl(120 14% 42%)' },
+      indigo: { primary: 'hsl(230 50% 55%)', hover: 'hsl(230 50% 48%)' },
+      terracotta: { primary: 'hsl(0 53% 52%)', hover: 'hsl(0 53% 45%)' },
+      charcoal: { primary: 'hsl(120 8% 25%)', hover: 'hsl(120 8% 18%)' },
+    };
+    const c = map[accent] || map.sage;
+    document.documentElement.style.setProperty('--sc-primary', c.primary);
+    document.documentElement.style.setProperty('--sc-primary-hover', c.hover);
+  }, [accent]);
+
+  useEffect(() => {
+    const h = e => {
+      if (!e.data || !e.data.type) return;
+      if (e.data.type === '__activate_edit_mode') setTweaksOn(true);
+      if (e.data.type === '__deactivate_edit_mode') setTweaksOn(false);
+    };
+    window.addEventListener('message', h);
+    try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch(e) {}
+    return () => window.removeEventListener('message', h);
+  }, []);
+
+  const onSubmit = (e) => {
+    e && e.preventDefault();
+    setError(null);
+    if (!isValidEmail(email)) { setError('email'); return; }
+    if (!pass) { setError('pass'); return; }
+    setBusy(true);
+    // Simulate auth: any password of 6+ succeeds; shorter fails
+    setTimeout(() => {
+      if (pass.length >= 6) {
+        window.location.href = 'index.html';
+      } else {
+        setBusy(false);
+        setError('creds');
+        setPass('');
+      }
+    }, 600);
+  };
+
+  const Icon = window.Icon;
+  const canSubmit = email && pass && !busy;
+
+  return (
+    <div className="desktop-stage">
+      <div className="desktop-frame" style={{ transform: `scale(${scale})` }}>
+        <div className="win">
+          <div className="titlebar">
+            <div className="tl-group"><div className="tl-dot tl-close" /><div className="tl-dot tl-min" /><div className="tl-dot tl-max" /></div>
+            <div className="title-text"><span className="hand">SiteCare</span> POS</div>
+          </div>
+
+          <div className="login-body">
+            {/* Brand panel */}
+            <div className="brand-panel">
+              {bg === 'arcs' && <><div className="arc" /><div className="arc2" /></>}
+
+              <div className="brand-top">
+                <div className="brand-logo">S</div>
+                <div>
+                  <div className="brand-name"><span>Site</span><b>Care</b></div>
+                  <div className="brand-sub">POS</div>
+                </div>
+              </div>
+
+              <div className="brand-hero">
+                <div className="brand-eyebrow">{lang === 'ro' ? 'bun venit înapoi' : 'welcome back'}</div>
+                <h1 className="brand-title">{t.title_a}<br/><em>{t.title_b}</em></h1>
+                <p className="brand-lead">{t.lead}</p>
+
+                <div className="brand-stats">
+                  <div className="brand-stat"><div className="n">1.4M+</div><div className="l">{t.stat_orders}</div></div>
+                  <div className="brand-stat"><div className="n">320</div><div className="l">{t.stat_rest}</div></div>
+                  <div className="brand-stat"><div className="n">99.97%</div><div className="l">{t.stat_uptime}</div></div>
+                </div>
+              </div>
+
+              <div className="receipt-card">
+                <div className="receipt-hdr"><div className="id">#1047</div><div className="tm">{t.receipt_time}</div></div>
+                <div className="receipt-row"><span className="n">2× {t.r_item1}</span><span className="p">42,00</span></div>
+                <div className="receipt-row"><span className="n">1× {t.r_item2}</span><span className="p">28,00</span></div>
+                <div className="receipt-row"><span className="n">1× {t.r_item3}</span><span className="p">22,00</span></div>
+                <div className="receipt-total"><span>{t.r_total}</span><span>92,00 lei</span></div>
+                <div className="receipt-stamp">{t.stamp}</div>
+              </div>
+
+              <div className="brand-foot">
+                <div><span className="online-dot" /> SiteCare Cloud · eu-central</div>
+                <div className="links">
+                  <a href="#" onClick={e=>e.preventDefault()}>{t.terms}</a>
+                  <a href="#" onClick={e=>e.preventDefault()}>{t.privacy}</a>
+                  <a href="#" onClick={e=>e.preventDefault()}>{t.support}</a>
+                </div>
+              </div>
+            </div>
+
+            {/* Form panel */}
+            <div className="form-panel">
+              <div className="form-top">
+                <button onClick={() => setOnline(!online)} className="status-pill" style={{ border: 0, cursor: 'pointer', background: online ? 'hsl(120 14% 49% / 0.1)' : 'hsl(38 92% 50% / 0.12)', color: online ? 'var(--sc-primary)' : 'hsl(30 80% 38%)' }}>
+                  <span className="d" style={{ background: online ? 'var(--sc-primary)' : 'hsl(30 80% 45%)' }} />
+                  {online ? t.online : t.offline}
+                </button>
+                <div className="lang-seg">
+                  <button className={lang === 'ro' ? 'on' : ''} onClick={() => setLang('ro')}>RO</button>
+                  <button className={lang === 'en' ? 'on' : ''} onClick={() => setLang('en')}>EN</button>
+                </div>
+              </div>
+
+              <form className="form-wrap" onSubmit={onSubmit}>
+                <div className="welcome-eyebrow">{t.welcome}</div>
+                <h2 className="welcome-title">{t.signin}</h2>
+                <p className="welcome-sub">{t.sub}</p>
+
+                {/* Email */}
+                <div className="field">
+                  <label>{t.email}</label>
+                  <div className={`field-input ${error === 'email' || error === 'creds' ? 'err' : ''}`}>
+                    <span className="ico"><Icon name="users" size={16} /></span>
+                    <input type="email" autoComplete="email" placeholder={t.email_ph} value={email}
+                      onChange={e => { setEmail(e.target.value); setError(null); }} />
+                  </div>
+                  {error === 'email' && <div className="field-error"><Icon name="alert" size={12} /> {t.err_email}</div>}
+                </div>
+
+                {/* Password */}
+                <div className="field">
+                  <label>
+                    {t.pass}
+                    <a href="#" onClick={e=>e.preventDefault()}>{t.forgot}</a>
+                  </label>
+                  <div className={`field-input ${error === 'pass' || error === 'creds' ? 'err' : ''}`}>
+                    <span className="ico"><Icon name="settings" size={16} /></span>
+                    <input ref={passRef} type={showPass ? 'text' : 'password'} autoComplete="current-password"
+                      placeholder={t.pass_ph} value={pass}
+                      onChange={e => { setPass(e.target.value); setError(null); }} />
+                    <button type="button" className="toggle" onClick={() => setShowPass(!showPass)} title={showPass ? t.hide : t.show}>
+                      <Icon name={showPass ? 'x' : 'search'} size={15} />
+                    </button>
+                  </div>
+                  {error === 'creds' && <div className="field-error"><Icon name="alert" size={12} /> {t.err_creds}</div>}
+                </div>
+
+                <div className="field-row">
+                  <label className="check">
+                    <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} />
+                    {t.remember}
+                  </label>
+                </div>
+
+                <button type="submit" className="primary-btn" disabled={!canSubmit}>
+                  {busy ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                      <Spinner /> {lang === 'ro' ? 'Se conectează…' : 'Signing in…'}
+                    </span>
+                  ) : (
+                    <>
+                      <Icon name="check" size={16} /> {t.signin_btn}
+                    </>
+                  )}
+                </button>
+
+                <div className="divider">{t.or}</div>
+
+                <button type="button" className="alt-btn">
+                  <Icon name="wifi" size={15} /> {t.sso}
+                </button>
+
+                <div className="form-foot">
+                  <span>v4.2.1 · {new Date().toLocaleDateString(lang === 'ro' ? 'ro-RO' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                  <a href="#" onClick={e=>e.preventDefault()} style={{ color: 'var(--sc-primary)', textDecoration: 'none', fontWeight: 600 }}>{t.forgot}</a>
+                </div>
+              </form>
+
+              <div className="signature">{t.signed} <b>♥</b> {t.heart}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {tweaksOn && (
+        <div className="tweaks-panel">
+          <h4>Tweaks <span style={{ fontFamily: 'Caveat', color: 'var(--sc-terracotta)', fontSize: 16 }}>live</span></h4>
+          <div className="tw-row">
+            <div className="tw-label">Language</div>
+            <div className="tw-seg">
+              <button className={lang === 'ro' ? 'on' : ''} onClick={() => { setLang('ro'); save({ lang: 'ro' }); }}>Română</button>
+              <button className={lang === 'en' ? 'on' : ''} onClick={() => { setLang('en'); save({ lang: 'en' }); }}>English</button>
+            </div>
+          </div>
+          <div className="tw-row">
+            <div className="tw-label">Accent</div>
+            <div className="tw-seg">
+              <button className={accent === 'sage' ? 'on' : ''} onClick={() => { setAccent('sage'); save({ accent: 'sage' }); }}>Sage</button>
+              <button className={accent === 'terracotta' ? 'on' : ''} onClick={() => { setAccent('terracotta'); save({ accent: 'terracotta' }); }}>Terra</button>
+              <button className={accent === 'indigo' ? 'on' : ''} onClick={() => { setAccent('indigo'); save({ accent: 'indigo' }); }}>Indigo</button>
+              <button className={accent === 'charcoal' ? 'on' : ''} onClick={() => { setAccent('charcoal'); save({ accent: 'charcoal' }); }}>Coal</button>
+            </div>
+          </div>
+          <div className="tw-row">
+            <div className="tw-label">Brand panel</div>
+            <div className="tw-seg">
+              <button className={bg === 'arcs' ? 'on' : ''} onClick={() => { setBg('arcs'); save({ bg: 'arcs' }); }}>Arcs</button>
+              <button className={bg === 'plain' ? 'on' : ''} onClick={() => { setBg('plain'); save({ bg: 'plain' }); }}>Plain</button>
+            </div>
+          </div>
+          <div className="tw-row">
+            <div className="tw-label">Network</div>
+            <div className="tw-seg">
+              <button className={online ? 'on' : ''} onClick={() => setOnline(true)}>Online</button>
+              <button className={!online ? 'on' : ''} onClick={() => setOnline(false)}>Offline</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 900ms linear infinite' }}>
+      <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </svg>
+  );
+}
+
+function save(edits) {
+  try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*'); } catch(e) {}
+}
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "lang": "ro",
+  "accent": "sage",
+  "bg": "arcs"
+}/*EDITMODE-END*/;
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Login />);
+</script>
+</body>
+</html>
