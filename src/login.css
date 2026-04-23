@@ -1,7 +1,7 @@
 /* Login screen styles — extracted from sitecare-orders 2/project/login.html */
 
 /* Login layout */
-.login-body { display: grid; grid-template-columns: 1fr 1.1fr; height: 100%; }
+.login-body { display: grid; grid-template-columns: 1fr 1.1fr; height: 100vh; }
 
 /* Left brand panel */
 .brand-panel {
