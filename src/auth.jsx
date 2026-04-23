@@ -7,6 +7,7 @@ import { useAppStore } from './store.js';
 // In production Tauri build, requests go directly to the API
 const BASE_URL = import.meta.env.DEV ? '' : 'https://api.restaurant.sitecare.ro';
 const REFRESH_LEAD_MS = 5 * 60 * 1000; // 5 minutes before expiry
+const MIN_RETRY_MS = 30_000; // minimum floor to prevent tight refresh loops
 
 const AuthContext = createContext(null);
 
@@ -28,8 +29,8 @@ export function AuthProvider({ children }) {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     const msUntilRefresh = new Date(expiresAt).getTime() - Date.now() - REFRESH_LEAD_MS;
     if (msUntilRefresh <= 0) {
-      // Already near expiry — refresh immediately
-      doRefresh(adminClient);
+      // Already near expiry — use setTimeout floor to prevent tight async loops (CR-01)
+      refreshTimerRef.current = setTimeout(() => doRefresh(adminClient), MIN_RETRY_MS);
       return;
     }
     refreshTimerRef.current = setTimeout(() => doRefresh(adminClient), msUntilRefresh);
@@ -51,6 +52,7 @@ export function AuthProvider({ children }) {
     setClient(null);
     setIsAuthenticated(false);
     setAuthUser(null);
+    setError(null); // WR-02: clear stale login error before showing login screen again
     pushToast({
       id: Date.now(),
       kind: 'alert',
@@ -59,8 +61,10 @@ export function AuthProvider({ children }) {
         : 'Session expired — please log in again',
       detail: '',
     });
-    // Navigate to login after 2s per D-07
-    setTimeout(() => setScreen('login'), 2000);
+    // WR-01: set screen to 'orders' (not 'login') — 'login' is not a valid router branch
+    // and would be persisted by Zustand partialize, causing a blank shell on cold start.
+    // The auth guard in app.jsx renders LoginScreen whenever isAuthenticated=false.
+    setTimeout(() => setScreen('orders'), 2000);
   }
 
   // Cold start: try to restore session from OS keychain (AUTH-04)
@@ -98,7 +102,6 @@ export function AuthProvider({ children }) {
     setSigningIn(true);
     try {
       const signInResult = await sdkSignIn(BASE_URL, { email, password: pass });
-      console.log('[auth] signIn response keys:', Object.keys(signInResult));
       const token = signInResult.token ?? signInResult.accessToken ?? signInResult.access_token;
       const user = signInResult.user ?? signInResult.profile ?? null;
       if (!token) throw new Error('No token in signIn response: ' + JSON.stringify(Object.keys(signInResult)));
@@ -139,7 +142,8 @@ export function AuthProvider({ children }) {
     setClient(null);
     setIsAuthenticated(false);
     setAuthUser(null);
-    setScreen('login');
+    setError(null); // WR-02: clear stale login error before showing login screen again
+    setScreen('orders'); // WR-01: 'login' is not a valid router branch; auth guard handles LoginScreen render
   }
 
   return (
