@@ -49,7 +49,12 @@ Plans:
   2. Closing and reopening the app does not prompt for login again — the token survives a restart via OS secure storage (Keychain / Credential Manager)
   3. After 8 hours of continuous use, the app has not logged the user out — proactive token refresh works
   4. Navigating directly to any screen without a valid token redirects to the login screen — the auth guard is active on all routes
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 02-01-PLAN.md — Rust auth commands: add keyring crate, register opener plugin, write store_token/get_token/delete_token
+- [ ] 02-02-PLAN.md — Login screen UI: create login.css and screen-login.jsx from prototype, add 35 bilingual i18n strings
+- [ ] 02-03-PLAN.md — Auth layer: add isAuthenticated/authUser to Zustand, create AuthProvider and useAuth hook
+- [ ] 02-04-PLAN.md — Auth guard + wiring: wrap app in AuthProvider, guard Shell behind isAuthenticated, wire LoginScreen props
 
 ### Phase 3: Shell + Data Foundation
 **Goal**: The app shell, sidebar, and topbar render from live Zustand state; all data-fetching hooks (`useOrders`, `useOrderActions`, `useMenu`, `useSSE`) are connected to the live API; the SSE connection is established at shell level; and the offline banner works.
@@ -103,7 +108,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-04-22 |
-| 2. Authentication | 0/? | Not started | - |
+| 2. Authentication | 0/4 | Planned | - |
 | 3. Shell + Data Foundation | 0/? | Not started | - |
 | 4. Core Screens | 0/? | Not started | - |
 | 5. Native Integration | 0/? | Not started | - |
@@ -163,4 +168,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-04-22 — Phase 1 complete (all 5 plans executed and human-verified)*
+*Last updated: 2026-04-23 — Phase 2 planned (4 plans, 3 waves)*
