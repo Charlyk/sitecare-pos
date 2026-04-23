@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { load } from '@tauri-apps/plugin-store';
 import { signIn as sdkSignIn, createAdminClient } from '@charlyk/admin-client';
 import { useAppStore } from './store.js';
 
@@ -8,6 +8,28 @@ import { useAppStore } from './store.js';
 const BASE_URL = import.meta.env.DEV ? '' : 'https://api.restaurant.sitecare.ro';
 const REFRESH_LEAD_MS = 5 * 60 * 1000; // 5 minutes before expiry
 const MIN_RETRY_MS = 30_000; // minimum floor to prevent tight refresh loops
+const TOKEN_KEY = 'auth_token'; // top-level key in preferences.json, separate from Zustand's 'sc-ui-prefs'
+
+// Token persistence via plugin-store (preferences.json).
+// OS keychain (keyring crate) silently discards writes in unsigned macOS dev builds — plugin-store
+// is the proven persistence mechanism already used for Zustand UI state.
+let _store = null;
+async function getStore() {
+  if (!_store) _store = await load('preferences.json', { autoSave: true });
+  return _store;
+}
+async function persistToken(token) {
+  const s = await getStore();
+  await s.set(TOKEN_KEY, token);
+}
+async function readToken() {
+  const s = await getStore();
+  return (await s.get(TOKEN_KEY)) ?? null;
+}
+async function clearToken() {
+  const s = await getStore();
+  await s.delete(TOKEN_KEY);
+}
 
 const AuthContext = createContext(null);
 
@@ -18,7 +40,7 @@ export function AuthProvider({ children }) {
   const setScreen = useAppStore((s) => s.setScreen);
 
   const [client, setClient] = useState(null);
-  const [coldStartBusy, setColdStartBusy] = useState(true); // true only during initial keychain restore
+  const [coldStartBusy, setColdStartBusy] = useState(true); // true only during initial token restore
   const [signingIn, setSigningIn] = useState(false);        // true only during signIn() call
   const [error, setError] = useState(null);
   const refreshTimerRef = useRef(null);
@@ -40,10 +62,10 @@ export function AuthProvider({ children }) {
   async function doRefresh(adminClient) {
     try {
       const { session } = await adminClient.auth.getSession();
-      // If the API rotated the token, update keychain and rebuild the client (AUTH-04)
+      // If the API rotated the token, update store and rebuild the client (AUTH-04)
       if (session?.token && session.token !== tokenRef.current) {
         tokenRef.current = session.token;
-        try { await invoke('store_token', { token: session.token }); } catch { /* non-fatal */ }
+        try { await persistToken(session.token); } catch { /* non-fatal */ }
         const newClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: session.token });
         setClient(newClient);
         scheduleRefresh(session.expiresAt, newClient);
@@ -75,15 +97,14 @@ export function AuthProvider({ children }) {
     setTimeout(() => setScreen('orders'), 2000);
   }
 
-  // Cold start: restore session from OS keychain (AUTH-04).
-  // Trust the stored token — do not call getSession() here. The token is assumed valid
-  // until an API call returns 401 (Phase 3 hooks handle that). getSession() on the
-  // login token consistently returns 401 on this API, so it cannot be used as a gate.
+  // Cold start: restore session from plugin-store (preferences.json).
+  // Trust the stored token — getSession() is not called here. The token is assumed valid
+  // until an API call returns 401 (Phase 3 hooks handle that naturally).
   useEffect(() => {
     (async () => {
       try {
-        const token = await invoke('get_token');
-        console.log('[auth:cold] get_token →', token ? `present (${String(token).length} chars)` : 'null — will show login');
+        const token = await readToken();
+        console.log('[auth:cold] readToken →', token ? `present (${String(token).length} chars)` : 'null — will show login');
         if (!token) return;
         tokenRef.current = token;
         const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
@@ -91,7 +112,7 @@ export function AuthProvider({ children }) {
         setIsAuthenticated(true);
         console.log('[auth:cold] auth restored ✓');
       } catch (e) {
-        console.error('[auth:cold] invoke threw — IPC may not be ready yet:', e?.message ?? e);
+        console.error('[auth:cold] token read failed:', e?.message ?? e);
       } finally {
         setColdStartBusy(false);
       }
@@ -111,13 +132,9 @@ export function AuthProvider({ children }) {
       const token = signInResult.token ?? signInResult.accessToken ?? signInResult.access_token;
       const user = signInResult.user ?? signInResult.profile ?? null;
       if (!token) throw new Error('No token in signIn response: ' + JSON.stringify(Object.keys(signInResult)));
-      console.log('[auth:sign-in] remember =', remember, '| token length =', token?.length);
       if (remember) {
-        await invoke('store_token', { token }); // AUTH-02
+        await persistToken(token); // AUTH-02
         tokenRef.current = token;
-        console.log('[auth:sign-in] store_token ✓');
-      } else {
-        console.warn('[auth:sign-in] remember=false → token NOT stored, reload will show login');
       }
       const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
       setClient(adminClient);
@@ -146,10 +163,10 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // signOut: clears keychain token and resets state
+  // signOut: clears stored token and resets state
   async function signOut() {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-    try { await invoke('delete_token'); } catch { /* ignore */ }
+    try { await clearToken(); } catch { /* ignore */ }
     tokenRef.current = null;
     setClient(null);
     setIsAuthenticated(false);
