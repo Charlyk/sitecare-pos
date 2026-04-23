@@ -14,7 +14,7 @@ import { formatRON } from './data.jsx';
 import { typeMeta } from './screen-orders.jsx';
 import { AuthProvider, useAuth } from './auth.jsx';
 import { LoginScreen } from './screen-login.jsx';
-import { open } from '@tauri-apps/plugin-opener';
+import { openUrl } from '@tauri-apps/plugin-opener';
 
 function App() {
   const lang = useAppStore((s) => s.lang);
@@ -79,7 +79,7 @@ function App() {
             // signIn sets authError in context; LoginScreen reads it via error prop
           }
         }}
-        onForgotPassword={() => open('https://restaurant.sitecare.ro/reset-password')}
+        onForgotPassword={() => openUrl('https://restaurant.sitecare.ro/reset-password')}
         busy={authBusy}
         error={authError}
       />
