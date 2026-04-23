@@ -52,3 +52,35 @@ describe('U8 — i18n bilingual completeness for login_ keys (AUTH-01)', () => {
     }
   })
 })
+
+// ── U13: offline_ i18n keys (OFF-01) ────────────────────────────────────────
+
+describe('U13 — i18n bilingual completeness for offline_ keys (OFF-01)', () => {
+  test('all offline_ keys in ro also exist in en', () => {
+    const roOfflineKeys = Object.keys(I18N.ro).filter((k) => k.startsWith('offline_'))
+    const enKeys = Object.keys(I18N.en)
+    const missingInEn = roOfflineKeys.filter((k) => !enKeys.includes(k))
+    expect(missingInEn).toEqual([])
+  })
+
+  test('all offline_ keys in en also exist in ro', () => {
+    const enOfflineKeys = Object.keys(I18N.en).filter((k) => k.startsWith('offline_'))
+    const roKeys = Object.keys(I18N.ro)
+    const missingInRo = enOfflineKeys.filter((k) => !roKeys.includes(k))
+    expect(missingInRo).toEqual([])
+  })
+
+  test('offline_banner_title has non-empty string in ro and en', () => {
+    expect(typeof I18N.ro.offline_banner_title).toBe('string')
+    expect(I18N.ro.offline_banner_title.length).toBeGreaterThan(0)
+    expect(typeof I18N.en.offline_banner_title).toBe('string')
+    expect(I18N.en.offline_banner_title.length).toBeGreaterThan(0)
+  })
+
+  test('offline_banner_sub has non-empty string in ro and en', () => {
+    expect(typeof I18N.ro.offline_banner_sub).toBe('string')
+    expect(I18N.ro.offline_banner_sub.length).toBeGreaterThan(0)
+    expect(typeof I18N.en.offline_banner_sub).toBe('string')
+    expect(I18N.en.offline_banner_sub.length).toBeGreaterThan(0)
+  })
+})
