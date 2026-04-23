@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
+import { OfflineBanner } from './offline-banner.jsx';
 
-function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, density, children, orderCount, sidebarCollapsed, setSidebarCollapsed }) {
+function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, density, children, orderCount, sidebarCollapsed, setSidebarCollapsed, isOffline }) {
   const t = useT(lang);
 
   const navGroups = [
@@ -152,6 +153,7 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
           </div>
 
           <div className={`content ${density === 'dense' ? 'density-compact' : ''}`}>
+            {isOffline && <OfflineBanner lang={lang} />}
             {children}
           </div>
         </div>

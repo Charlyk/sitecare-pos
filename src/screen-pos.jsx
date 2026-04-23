@@ -4,7 +4,7 @@ import { useT } from './i18n.jsx';
 import { MENU_CATEGORIES, MENU_ITEMS, formatRON } from './data.jsx';
 import { typeMeta } from './screen-orders.jsx';
 
-function PosScreen({ lang, onCreate }) {
+function PosScreen({ lang, onCreate, isOffline }) {
   const t = useT(lang);
   const cats = MENU_CATEGORIES;
   const items = MENU_ITEMS;
@@ -155,7 +155,12 @@ function PosScreen({ lang, onCreate }) {
             ))}
           </div>
 
-          <button className="btn-primary" style={{ width: '100%', marginTop: 12, height: 46, fontSize: 14, justifyContent: 'center' }} disabled={cart.length === 0} onClick={() => onCreate({ cart, type, table, customer, payment, note, subtotal, tax, fee, total })}>
+          <button
+            className={`btn-primary${isOffline ? ' btn-disabled-offline' : ''}`}
+            style={{ width: '100%', marginTop: 12, height: 46, fontSize: 14, justifyContent: 'center' }}
+            disabled={cart.length === 0 || isOffline}
+            onClick={() => onCreate({ cart, type, table, customer, payment, note, subtotal, tax, fee, total })}
+          >
             <Icon name="check" size={16} /> {t('ring_up')} — {formatRON(total)}
           </button>
         </div>

@@ -15,6 +15,8 @@ import { typeMeta } from './screen-orders.jsx';
 import { AuthProvider, useAuth } from './auth.jsx';
 import { LoginScreen } from './screen-login.jsx';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { useSSE } from './use-sse.js';
+import { useOrders } from './use-orders.js';
 
 function App() {
   const lang = useAppStore((s) => s.lang);
@@ -37,7 +39,12 @@ function App() {
   const dismissToast = useAppStore((s) => s.dismissToast);
   const setAcceptDialog = useAppStore((s) => s.setAcceptDialog);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
-  const { signIn, coldStartBusy, busy: authBusy, error: authError } = useAuth();
+  const { signIn, coldStartBusy, busy: authBusy, error: authError, token } = useAuth();
+
+  const { isConnected } = useSSE(token);
+  const isOffline = !isConnected;
+  const { data: ordersData } = useOrders();
+  const orders = ordersData?.orders ?? [];
 
   // Accent CSS custom property mutation (verbatim from prototype, Zustand-driven):
   useEffect(() => {
@@ -58,7 +65,11 @@ function App() {
     if (role === 'kitchen' && !['kitchen', 'orders'].includes(screen)) setScreen('kitchen');
   }, [role]);
 
-  const orderCount = { live: 0, new: 0, active: 0 };
+  const orderCount = {
+    live: orders.filter(o => !['COMPLETED', 'CANCELLED'].includes(o.status)).length,
+    new: orders.filter(o => o.status === 'NEW').length,
+    active: orders.filter(o => ['ACCEPTED', 'PREPARING'].includes(o.status)).length,
+  };
 
   // Auth guard (AUTH-05): render LoginScreen for unauthenticated users
   if (coldStartBusy) {
@@ -90,15 +101,15 @@ function App() {
       <Shell lang={lang} setLang={setLang} role={role} setRole={setRole}
              screen={screen} setScreen={setScreen} accent={accent} density={density}
              orderCount={orderCount} sidebarCollapsed={sidebarCollapsed}
-             setSidebarCollapsed={setSidebarCollapsed}>
-        {/* Screen router: Phase 1 stubs -- orders=[] until Phase 3 wires useOrders() */}
-        {screen === 'orders'  && <OrdersScreen  orders={[]} lang={lang} onOpen={openOrder} onAdvance={() => {}} onPrint={() => {}} />}
-        {screen === 'kitchen' && <KitchenScreen orders={[]} lang={lang} onAdvance={() => {}} />}
-        {screen === 'pos'     && <PosScreen     lang={lang} onCreate={() => {}} />}
-        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} onBack={() => setScreen('orders')} onAdvance={() => {}} onPrint={() => {}} />}
-        {screen === 'menu'    && <MenuScreen    lang={lang} />}
-        {screen === 'printer' && <PrinterScreen lang={lang} onTestPrint={() => pushToast({ id: Date.now(), kind: 'info', title: 'Test print sent', detail: '' })} />}
-        {screen === 'settings'&& <SettingsScreen lang={lang} />}
+             setSidebarCollapsed={setSidebarCollapsed} isOffline={isOffline}>
+        {/* Screen router: Phase 3 — orders from useOrders(), isOffline wired to all screens */}
+        {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={() => {}} onPrint={() => {}} isOffline={isOffline} />}
+        {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={() => {}} isOffline={isOffline} />}
+        {screen === 'pos'     && <PosScreen     lang={lang} onCreate={() => {}} isOffline={isOffline} />}
+        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} onBack={() => setScreen('orders')} onAdvance={() => {}} onPrint={() => {}} isOffline={isOffline} />}
+        {screen === 'menu'    && <MenuScreen    lang={lang} isOffline={isOffline} />}
+        {screen === 'printer' && <PrinterScreen lang={lang} onTestPrint={() => pushToast({ id: Date.now(), kind: 'info', title: 'Test print sent', detail: '' })} isOffline={isOffline} />}
+        {screen === 'settings'&& <SettingsScreen lang={lang} isOffline={isOffline} />}
       </Shell>
 
       {/* Toast stack -- render toasts from store */}
