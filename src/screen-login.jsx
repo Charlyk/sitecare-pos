@@ -24,7 +24,7 @@ export function LoginScreen({ lang, onLangChange, onSubmit, onForgotPassword, bu
   const [showPass, setShowPass] = useState(false);
   const [remember, setRemember] = useState(true);
 
-  const canSubmit = email !== '' && pass !== '' && !busy;
+  const canSubmit = isValidEmail(email) && pass !== '' && !busy;
 
   const handleSubmit = (e) => {
     e.preventDefault();
