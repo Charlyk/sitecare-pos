@@ -11,7 +11,7 @@
 ## Phases
 
 - [x] **Phase 1: Foundation** - Working Tauri + Vite scaffold with all 7 prototype screens converted to ES modules, design tokens wired, and CSP configured
-- [ ] **Phase 2: Authentication** - Staff can log in with username + password, stay logged in across restarts, and be redirected to login when their session expires
+- [x] **Phase 2: Authentication** - Staff can log in with username + password, stay logged in across restarts, and be redirected to login when their session expires
 - [ ] **Phase 3: Shell + Data Foundation** - App shell renders from real Zustand state, data hooks connect to live API, SSE connection established, offline banner works
 - [ ] **Phase 4: Core Screens** - All 7 screens render live API data with full UX — orders, KDS timers/urgency/sound/bump, POS checkout flow, menu toggles, settings persistence
 - [ ] **Phase 5: Native Integration** - Staff can configure a thermal printer and print receipts end-to-end via Tauri native plugin
@@ -109,7 +109,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-04-22 |
-| 2. Authentication | 5/5 | Complete — pending human verification | 2026-04-23 |
+| 2. Authentication | 5/5 | Complete | 2026-04-23 |
 | 3. Shell + Data Foundation | 0/? | Not started | - |
 | 4. Core Screens | 0/? | Not started | - |
 | 5. Native Integration | 0/? | Not started | - |

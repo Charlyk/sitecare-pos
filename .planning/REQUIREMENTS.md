@@ -9,18 +9,18 @@
 
 - [x] **FOUND-01**: Tauri v2 + React 18 + Vite 6 scaffold builds successfully on macOS and Windows
 - [x] **FOUND-02**: @charlyk/admin-client installs from GitHub Package Registry in local dev and CI environments
-- [ ] **FOUND-03**: All 7 prototype screens converted from `window.*` globals to ES module imports/exports
-- [ ] **FOUND-04**: Zustand store manages UI state (screen, role, lang, accent, density, sidebar, toasts) with @tauri-apps/plugin-store persistence
-- [ ] **FOUND-05**: CSS design tokens from prototype (`colors_and_type.css`) imported and working in Vite without modification
+- [x] **FOUND-03**: All 7 prototype screens converted from `window.*` globals to ES module imports/exports
+- [x] **FOUND-04**: Zustand store manages UI state (screen, role, lang, accent, density, sidebar, toasts) with @tauri-apps/plugin-store persistence
+- [x] **FOUND-05**: CSS design tokens from prototype (`colors_and_type.css`) imported and working in Vite without modification
 - [x] **FOUND-06**: Tauri CSP configured to allow API domain in `connect-src` (blocks SSE and fetches if missing)
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can log in with username + password via @charlyk/admin-client
-- [ ] **AUTH-02**: Auth token is persisted in OS secure storage (macOS Keychain / Windows Credential Manager), not localStorage
-- [ ] **AUTH-03**: App proactively refreshes auth token before expiry to cover full 8-hour shifts
-- [ ] **AUTH-04**: App auto-logs in on restart when a valid stored token exists (remember device)
-- [ ] **AUTH-05**: All screens are protected by an auth guard — unauthenticated users are redirected to login screen
+- [x] **AUTH-01**: User can log in with username + password via @charlyk/admin-client
+- [x] **AUTH-02**: Auth token is persisted in OS secure storage (macOS Keychain / Windows Credential Manager), not localStorage
+- [x] **AUTH-03**: App proactively refreshes auth token before expiry to cover full 8-hour shifts
+- [x] **AUTH-04**: App auto-logs in on restart when a valid stored token exists (remember device)
+- [x] **AUTH-05**: All screens are protected by an auth guard — unauthenticated users are redirected to login screen
 
 ### Orders
 
@@ -124,15 +124,15 @@
 |-------------|-------|------------|--------|
 | FOUND-01 | Phase 1 | Foundation | Complete (01-01) |
 | FOUND-02 | Phase 1 | Foundation | Complete (01-02) |
-| FOUND-03 | Phase 1 | Foundation | Pending |
-| FOUND-04 | Phase 1 | Foundation | Pending |
-| FOUND-05 | Phase 1 | Foundation | Pending |
+| FOUND-03 | Phase 1 | Foundation | Complete (01-04) |
+| FOUND-04 | Phase 1 | Foundation | Complete (01-03) |
+| FOUND-05 | Phase 1 | Foundation | Complete (01-03) |
 | FOUND-06 | Phase 1 | Foundation | Complete (01-02) |
-| AUTH-01 | Phase 2 | Authentication | Pending |
-| AUTH-02 | Phase 2 | Authentication | Pending |
-| AUTH-03 | Phase 2 | Authentication | Pending |
-| AUTH-04 | Phase 2 | Authentication | Pending |
-| AUTH-05 | Phase 2 | Authentication | Pending |
+| AUTH-01 | Phase 2 | Authentication | Complete (02-02, 02-03, 02-04) |
+| AUTH-02 | Phase 2 | Authentication | Complete (02-01, 02-03) |
+| AUTH-03 | Phase 2 | Authentication | Complete (02-03, 02-05) |
+| AUTH-04 | Phase 2 | Authentication | Complete (02-03, 02-04, 02-05) |
+| AUTH-05 | Phase 2 | Authentication | Complete (02-04) |
 | KDS-01 | Phase 3 | Shell + Data Foundation | Pending |
 | OFF-01 | Phase 3 | Shell + Data Foundation | Pending |
 | OFF-02 | Phase 3 | Shell + Data Foundation | Pending |
@@ -173,4 +173,4 @@
 
 ---
 *Requirements defined: 2026-04-22*
-*Last updated: 2026-04-22 after roadmap creation — phase names added to traceability*
+*Last updated: 2026-04-23 — Phase 2 Authentication complete (AUTH-01–05 verified); Phase 1 FOUND-03/04/05 backfilled*
