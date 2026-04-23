@@ -133,6 +133,9 @@ export const I18N = {
     login_terms: 'Termeni',
     login_privacy: 'Confidențialitate',
     login_support: 'Suport',
+    // offline banner
+    offline_banner_title: 'Conexiune întreruptă',
+    offline_banner_sub: 'Reconectare automată în curs…',
   },
   en: {
     nav_orders: 'Live orders',
@@ -254,6 +257,9 @@ export const I18N = {
     login_terms: 'Terms',
     login_privacy: 'Privacy',
     login_support: 'Support',
+    // offline banner
+    offline_banner_title: 'Connection lost',
+    offline_banner_sub: 'Reconnecting automatically…',
   },
 };
 
