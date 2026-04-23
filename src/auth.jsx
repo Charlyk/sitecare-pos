@@ -40,6 +40,7 @@ export function AuthProvider({ children }) {
   const setScreen = useAppStore((s) => s.setScreen);
 
   const [client, setClient] = useState(null);
+  const [token, setToken] = useState(null);
   const [coldStartBusy, setColdStartBusy] = useState(true); // true only during initial token restore
   const [signingIn, setSigningIn] = useState(false);        // true only during signIn() call
   const [error, setError] = useState(null);
@@ -65,6 +66,7 @@ export function AuthProvider({ children }) {
       // If the API rotated the token, update store and rebuild the client (AUTH-04)
       if (session?.token && session.token !== tokenRef.current) {
         tokenRef.current = session.token;
+        setToken(session.token);
         try { await persistToken(session.token); } catch { /* non-fatal */ }
         const newClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: session.token });
         setClient(newClient);
@@ -80,6 +82,7 @@ export function AuthProvider({ children }) {
   function expireSession() {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     setClient(null);
+    setToken(null);
     setIsAuthenticated(false);
     setAuthUser(null);
     setError(null); // WR-02: clear stale login error before showing login screen again
@@ -107,6 +110,7 @@ export function AuthProvider({ children }) {
         console.log('[auth:cold] readToken →', token ? `present (${String(token).length} chars)` : 'null — will show login');
         if (!token) return;
         tokenRef.current = token;
+        setToken(token);
         const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
         setClient(adminClient);
         setIsAuthenticated(true);
@@ -132,6 +136,7 @@ export function AuthProvider({ children }) {
       const token = signInResult.token ?? signInResult.accessToken ?? signInResult.access_token;
       const user = signInResult.user ?? signInResult.profile ?? null;
       if (!token) throw new Error('No token in signIn response: ' + JSON.stringify(Object.keys(signInResult)));
+      setToken(token);
       if (remember) {
         await persistToken(token); // AUTH-02
         tokenRef.current = token;
@@ -168,6 +173,7 @@ export function AuthProvider({ children }) {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     try { await clearToken(); } catch { /* ignore */ }
     tokenRef.current = null;
+    setToken(null);
     setClient(null);
     setIsAuthenticated(false);
     setAuthUser(null);
@@ -176,7 +182,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ signIn, signOut, client, coldStartBusy, busy: signingIn, error, setError }}>
+    <AuthContext.Provider value={{ signIn, signOut, client, token, coldStartBusy, busy: signingIn, error, setError }}>
       {children}
     </AuthContext.Provider>
   );
