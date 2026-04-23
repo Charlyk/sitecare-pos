@@ -15,7 +15,8 @@ export function AuthProvider({ children }) {
   const setScreen = useAppStore((s) => s.setScreen);
 
   const [client, setClient] = useState(null);
-  const [busy, setBusy] = useState(true);   // true on cold start while checking keychain
+  const [coldStartBusy, setColdStartBusy] = useState(true); // true only during initial keychain restore
+  const [signingIn, setSigningIn] = useState(false);        // true only during signIn() call
   const [error, setError] = useState(null);
   const refreshTimerRef = useRef(null);
 
@@ -75,12 +76,13 @@ export function AuthProvider({ children }) {
         setIsAuthenticated(true);
         setAuthUser(user);
         scheduleRefresh(session.expiresAt, adminClient);
-      } catch {
+      } catch (e) {
         // Stored token is stale — clear it
+        console.error('[auth] cold-start restore failed:', e);
         try { await invoke('delete_token'); } catch { /* ignore */ }
         setIsAuthenticated(false);
       } finally {
-        setBusy(false);
+        setColdStartBusy(false);
       }
     })();
 
@@ -92,29 +94,40 @@ export function AuthProvider({ children }) {
   // signIn: called by LoginScreen's onSubmit prop (AUTH-01)
   async function signIn(email, pass, remember) {
     setError(null);
-    setBusy(true);
+    setSigningIn(true);
     try {
-      const { token, user } = await sdkSignIn(BASE_URL, { email, password: pass });
+      const signInResult = await sdkSignIn(BASE_URL, { email, password: pass });
+      console.log('[auth] signIn response keys:', Object.keys(signInResult));
+      const token = signInResult.token ?? signInResult.accessToken ?? signInResult.access_token;
+      const user = signInResult.user ?? signInResult.profile ?? null;
+      if (!token) throw new Error('No token in signIn response: ' + JSON.stringify(Object.keys(signInResult)));
       if (remember) {
         await invoke('store_token', { token }); // AUTH-02
       }
       const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
-      const { session } = await adminClient.auth.getSession();
       setClient(adminClient);
       setIsAuthenticated(true);
       setAuthUser(user);
-      scheduleRefresh(session.expiresAt, adminClient); // AUTH-03
+      // Try to get session for refresh timer — non-fatal if it fails
+      try {
+        const { session } = await adminClient.auth.getSession();
+        if (session?.expiresAt) scheduleRefresh(session.expiresAt, adminClient);
+      } catch (sessionErr) {
+        console.warn('[auth] getSession after signIn failed (non-fatal):', sessionErr);
+      }
       setScreen('orders'); // D-09: always navigate to orders after login
     } catch (err) {
-      const msg = err?.message || '';
-      if (msg.includes('401') || msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credential')) {
+      console.error('[auth] signIn error:', err);
+      const status = err?.status;
+      if (status === 401 || status === 403) {
         setError('creds');
+      } else if (status === 422 || err?.message?.toLowerCase().includes('email')) {
+        setError('email');
       } else {
-        setError('creds'); // surface any auth failure as credential error
+        setError('creds');
       }
-      throw err; // re-throw so LoginScreen can react if needed
     } finally {
-      setBusy(false);
+      setSigningIn(false);
     }
   }
 
@@ -129,7 +142,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ signIn, signOut, client, busy, error, setError }}>
+    <AuthContext.Provider value={{ signIn, signOut, client, coldStartBusy, busy: signingIn, error, setError }}>
       {children}
     </AuthContext.Provider>
   );
