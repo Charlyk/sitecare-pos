@@ -3,7 +3,9 @@ import { invoke } from '@tauri-apps/api/core';
 import { signIn as sdkSignIn, createAdminClient } from '@charlyk/admin-client';
 import { useAppStore } from './store.js';
 
-const BASE_URL = 'https://api.restaurant.sitecare.ro';
+// In dev, requests go through Vite proxy (empty base = relative URL → proxy intercepts /v1/*)
+// In production Tauri build, requests go directly to the API
+const BASE_URL = import.meta.env.DEV ? '' : 'https://api.restaurant.sitecare.ro';
 const REFRESH_LEAD_MS = 5 * 60 * 1000; // 5 minutes before expiry
 
 const AuthContext = createContext(null);
@@ -67,7 +69,6 @@ export function AuthProvider({ children }) {
       try {
         const token = await invoke('get_token');
         if (!token) {
-          setBusy(false);
           return;
         }
         const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
