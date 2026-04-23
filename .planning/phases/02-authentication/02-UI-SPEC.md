@@ -1,7 +1,8 @@
 ---
 phase: 2
 slug: authentication
-status: draft
+status: approved
+reviewed_at: 2026-04-23
 shadcn_initialized: false
 preset: none
 created: 2026-04-23
