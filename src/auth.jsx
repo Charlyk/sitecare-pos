@@ -22,6 +22,7 @@ export function AuthProvider({ children }) {
   const [signingIn, setSigningIn] = useState(false);        // true only during signIn() call
   const [error, setError] = useState(null);
   const refreshTimerRef = useRef(null);
+  const tokenRef = useRef(null); // tracks current session token so doRefresh can detect rotation
 
   // Schedules a proactive refresh timer per D-08.
   // expiresAt is an ISO-8601 string from session.expiresAt.
@@ -39,10 +40,17 @@ export function AuthProvider({ children }) {
   async function doRefresh(adminClient) {
     try {
       const { session } = await adminClient.auth.getSession();
-      // Token refreshed — reschedule with new expiry
+      // If the API rotated the token, update keychain and rebuild the client (AUTH-04)
+      if (session?.token && session.token !== tokenRef.current) {
+        tokenRef.current = session.token;
+        try { await invoke('store_token', { token: session.token }); } catch { /* non-fatal */ }
+        const newClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: session.token });
+        setClient(newClient);
+        scheduleRefresh(session.expiresAt, newClient);
+        return;
+      }
       scheduleRefresh(session.expiresAt, adminClient);
     } catch {
-      // Refresh failed — expire session per D-07
       expireSession();
     }
   }
@@ -75,16 +83,25 @@ export function AuthProvider({ children }) {
         if (!token) {
           return;
         }
-        const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
+        tokenRef.current = token;
+        let adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
         const { session, user } = await adminClient.auth.getSession();
+        // Persist a rotated/refreshed token if the API issued a new one
+        if (session?.token && session.token !== token) {
+          tokenRef.current = session.token;
+          try { await invoke('store_token', { token: session.token }); } catch { /* ignore */ }
+          adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: session.token });
+        }
         setClient(adminClient);
         setIsAuthenticated(true);
         setAuthUser(user);
         scheduleRefresh(session.expiresAt, adminClient);
       } catch (e) {
-        // Stored token is stale — clear it
         console.error('[auth] cold-start restore failed:', e);
-        try { await invoke('delete_token'); } catch { /* ignore */ }
+        // Only delete the stored token on auth failures — preserve it for transient network errors
+        if (e?.status === 401 || e?.status === 403) {
+          try { await invoke('delete_token'); } catch { /* ignore */ }
+        }
         setIsAuthenticated(false);
       } finally {
         setColdStartBusy(false);
@@ -107,6 +124,7 @@ export function AuthProvider({ children }) {
       if (!token) throw new Error('No token in signIn response: ' + JSON.stringify(Object.keys(signInResult)));
       if (remember) {
         await invoke('store_token', { token }); // AUTH-02
+        tokenRef.current = token;
       }
       const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
       setClient(adminClient);
@@ -139,6 +157,7 @@ export function AuthProvider({ children }) {
   async function signOut() {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     try { await invoke('delete_token'); } catch { /* ignore */ }
+    tokenRef.current = null;
     setClient(null);
     setIsAuthenticated(false);
     setAuthUser(null);
