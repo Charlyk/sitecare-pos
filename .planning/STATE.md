@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 3 — Shell + Data Foundation
-current_plan: none (Phase 3 not started)
+current_plan: 03-01 (Wave 0 — test stubs)
 status: ready
-last_updated: "2026-04-23T15:30:00.000Z"
+last_updated: "2026-04-23T19:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 10
+  total_plans: 16
   completed_plans: 10
   percent: 33
 ---
@@ -32,13 +32,13 @@ progress:
 ## Current Position
 
 **Current Phase:** 3 — Shell + Data Foundation
-**Current Plan:** none (Phase 3 not started)
-**Phase Status:** Phase 2 complete — human verified 2026-04-23
-**Overall Status:** Phase 2 done; Phase 3 (Shell + Data Foundation) is next
+**Current Plan:** 03-01 (ready to execute)
+**Phase Status:** Phase 3 planned — 6 plans, 5 waves, ready to execute
+**Overall Status:** Phase 2 done; Phase 3 planned and ready
 
 ```
 Progress: [############............................] 33%
-Phase 2 of 6 complete — ready for Phase 3
+Phase 2 of 6 complete — Phase 3 planned, not yet started
 ```
 
 ---
@@ -49,7 +49,7 @@ Phase 2 of 6 complete — ready for Phase 3
 |-------|------|--------|
 | 1 | Foundation | Complete — all 5 plans done, human-verified 2026-04-22 |
 | 2 | Authentication | Complete — all 5 plans done and human-verified 2026-04-23 |
-| 3 | Shell + Data Foundation | Not started |
+| 3 | Shell + Data Foundation | Planned — 6 plans across 5 waves |
 | 4 | Core Screens | Not started |
 | 5 | Native Integration | Not started |
 | 6 | Build Pipeline | Not started |
@@ -62,8 +62,8 @@ Phase 2 of 6 complete — ready for Phase 3
 |--------|-------|
 | Phases completed | 2 / 6 |
 | Requirements done | 17 / 41 |
-| Plans complete | 10 / 10 (Phase 1: 5, Phase 2: 5) |
-| Sessions | 8 |
+| Plans complete | 10 / 16 (Phase 1: 5, Phase 2: 5, Phase 3: 0/6) |
+| Sessions | 9 |
 
 ---
 
@@ -91,8 +91,10 @@ Phase 2 of 6 complete — ready for Phase 3
 - **shield icon added to icons.jsx** — screen-settings.jsx uses `<Icon name="shield" />` for fiscal register display; icon was missing from prototype's icons.jsx; added to production version.
 - **App.jsx scaffold renamed to app.jsx** — used `git mv` on macOS case-insensitive filesystem; production entry is lowercase `app.jsx`; git history preserved.
 - **AcceptDialog local state** — `picked`, `custom`, `useCustom` are dialog-only ephemeral values; kept in component `useState`, not in global Zustand store.
-- **orders=[] stub in Phase 1 screen router** — `orderCount` hardcoded to `{live:0, new:0, active:0}`; Phase 3 derives these from TanStack Query cache via `useOrders()`.
+- **orders=[] stub in Phase 1 screen router** — `orderCount` hardcoded to `{live:0, new:0, active:0}`; Phase 3 replaces this with live data from `useOrders()`.
 - **ES module migration complete** — all 12 prototype files migrated; zero `window.*` module globals remain in any `src/*.jsx` file (verified by grep audit after Plan 05).
+- **Phase 3 SSE approach confirmed** — @microsoft/fetch-event-source (not native EventSource) required for Bearer auth header. Token exposed from AuthProvider context (token state alongside tokenRef). useSSE mounted in App authenticated branch (not Shell component). isConnected is sole offline signal (no navigator.onLine). Cache key ['orders'] is canonical root shared by useSSE.setQueryData and useOrderActions.invalidateQueries.
+- **Phase 3 hook placement** — useSSE and useOrders called unconditionally at top of App() function (before conditional returns) so React hook rules are respected. The `if (!token)` guard inside useSSE handles null token during cold-start safely.
 
 ### Open Questions (from research)
 
@@ -105,26 +107,27 @@ Phase 2 of 6 complete — ready for Phase 3
 
 - **CSP silently blocks everything** — `connect-src` in `tauri.conf.json` must include the API domain on day 1. Silent failure: screens empty, EventSource loops forever.
 - **GitHub Package Registry auth breaks CI** — `.npmrc` must commit scope routing (`@charlyk:registry=https://npm.pkg.github.com`); use `NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}` in Actions. Never commit a literal PAT.
-- **EventSource cannot send auth headers** — If the SSE endpoint requires Bearer, use `@microsoft/fetch-event-source` instead of native `EventSource`. Confirmed in Phase 2.
-- **`window.*` migration order matters** — Convert leaf components first, verify renders, move up the tree. Convert `i18n.jsx` first (everything depends on `useT`).
+- **EventSource cannot send auth headers** — Using @microsoft/fetch-event-source for SSE. Confirmed in Phase 3 plan.
+- **React hook ordering in app.jsx** — useSSE and useOrders MUST be called before any conditional return (coldStartBusy, isAuthenticated guards). Violating this causes "rendered fewer hooks" runtime error.
 - **macOS notarization is a hard distribution block** — Apple Developer account ($99/yr) required before Phase 6. Configure all CI secrets before the first release build.
+- **TanStack Query v5 API** — useQuery takes single options object; useMutation uses .isPending not .isLoading. All Phase 3 hooks use v5 syntax.
 
 ### Todos
 
-*(None yet — todos logged here during planning and implementation)*
+*(None)*
 
 ### Blockers
 
-*(None — project not yet started)*
+*(None)*
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-04-23T15:30:00.000Z
-**Stopped at:** Phase 3 context gathered — `.planning/phases/03-shell-data-foundation/03-CONTEXT.md`
-**Next action:** `/gsd-plan-phase 3` to plan Shell + Data Foundation.
+**Last session:** 2026-04-23T19:30:00.000Z
+**Stopped at:** Phase 3 plans created (03-01 through 03-06). Wave structure: Wave 0 → Wave 1 → Wave 2 (parallel: 03-03 + 03-04) → Wave 3 → Wave 4 (checkpoint)
+**Next action:** `/gsd-execute-phase 3` — start with 03-01-PLAN.md (Wave 0 test stubs)
 
 ---
 *State initialized: 2026-04-22*
-*Last updated: 2026-04-23 after Phase 3 context discussion*
+*Last updated: 2026-04-23 after Phase 3 planning*
