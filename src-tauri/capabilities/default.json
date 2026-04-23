@@ -6,6 +6,7 @@
   "permissions": [
     "core:default",
     "store:default",
-    "window-state:default"
+    "window-state:default",
+    "opener:default"
   ]
 }
