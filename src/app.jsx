@@ -136,7 +136,7 @@ function App() {
         {/* Screen router: Phase 3 — orders from useOrders(), isOffline wired to all screens */}
         {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={handleAdvance} onPrint={() => {}} isOffline={isOffline} />}
         {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={handleAdvance} isOffline={isOffline} />}
-        {screen === 'pos'     && <PosScreen     lang={lang} onCreate={() => {}} isOffline={isOffline} />}
+        {screen === 'pos'     && <PosScreen     lang={lang} isOffline={isOffline} />}
         {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={() => {}} onCancel={() => setCancelDialog({ order: selectedOrder })} isOffline={isOffline} />}
         {screen === 'menu'    && <MenuScreen    lang={lang} isOffline={isOffline} />}
         {screen === 'printer' && <PrinterScreen lang={lang} onTestPrint={() => pushToast({ id: Date.now(), kind: 'info', title: 'Test print sent', detail: '' })} isOffline={isOffline} />}

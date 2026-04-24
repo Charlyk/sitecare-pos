@@ -1,27 +1,51 @@
 import { useState, useMemo } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
-import { MENU_CATEGORIES, MENU_ITEMS, formatRON } from './data.jsx';
+import { formatRON } from './data.jsx';
 import { typeMeta } from './screen-orders.jsx';
+import { useMenu } from './use-menu.js';
+import { useAuth } from './auth.jsx';
+import { useAppStore } from './store.js';
 
-function PosScreen({ lang, onCreate, isOffline }) {
+const orderTypeMap = { dinein: 'local', pickup: 'pickup', delivery: 'delivery' };
+
+function PosScreen({ lang, isOffline }) {
   const t = useT(lang);
-  const cats = MENU_CATEGORIES;
-  const items = MENU_ITEMS;
+  const { client } = useAuth();
+  const queryClient = useQueryClient();
+  const pushToast = useAppStore((s) => s.pushToast);
+  const { data: menuData } = useMenu();
 
-  const [cat, setCat] = useState(cats[0].id);
+  const cats = useMemo(() => (menuData?.categories ?? []).map(c => ({
+    id: c.id ?? String(c.categoryId ?? ''),
+    ro: c.name ?? '',
+    en: c.nameEn ?? c.name ?? '',
+    icon: c.icon ?? 'utensils',
+    items: (c.products ?? c.items ?? []).map(p => ({
+      id: p.id ?? String(p.productId ?? ''),
+      ro: p.name ?? '',
+      en: p.nameEn ?? p.name ?? '',
+      price: typeof p.price === 'number' ? p.price / 100 : 0,
+      inStock: p.inStock !== false,
+    })),
+  })), [menuData]);
+
+  const [cat, setCat] = useState(() => cats[0]?.id ?? '');
   const [cart, setCart] = useState([]);
   const [type, setType] = useState('dinein');
   const [table, setTable] = useState('7');
   const [customer, setCustomer] = useState({ name: '', phone: '', address: '' });
   const [payment, setPayment] = useState('card');
   const [note, setNote] = useState('');
+  const [discountValue, setDiscountValue] = useState('');
+  const [discountMode, setDiscountMode] = useState('pct'); // 'pct' | 'ron'
 
   const add = (it) => {
     setCart(c => {
       const ex = c.find(x => x.id === it.id);
       if (ex) return c.map(x => x.id === it.id ? { ...x, qty: x.qty + 1 } : x);
-      return [...c, { id: it.id, name: it[lang], price: it.price, qty: 1, mods: [] }];
+      return [...c, { id: it.id, name: it[lang === 'ro' ? 'ro' : 'en'], price: it.price, qty: 1, mods: [] }];
     });
   };
   const setQty = (id, qty) => setCart(c => qty <= 0 ? c.filter(x => x.id !== id) : c.map(x => x.id === id ? { ...x, qty } : x));
@@ -29,9 +53,52 @@ function PosScreen({ lang, onCreate, isOffline }) {
   const subtotal = cart.reduce((a, x) => a + x.qty * x.price, 0);
   const tax = +(subtotal * 0.19).toFixed(2);
   const fee = type === 'delivery' ? 10 : 0;
-  const total = +(subtotal + fee).toFixed(2);
 
-  const visible = items.filter(i => i.cat === cat);
+  const discountAmount = useMemo(() => {
+    const v = parseFloat(discountValue);
+    if (!v || v <= 0) return 0;
+    if (discountMode === 'pct') return +(subtotal * v / 100).toFixed(2);
+    return Math.min(v, subtotal); // RON mode: cap at subtotal
+  }, [discountValue, discountMode, subtotal]);
+
+  const total = +(subtotal + fee - discountAmount).toFixed(2);
+
+  const visible = cats.find(c => c.id === cat)?.items ?? [];
+
+  // Sync cat state when categories load for the first time
+  const effectiveCat = cat || (cats[0]?.id ?? '');
+
+  const createOrder = useMutation({
+    mutationFn: (orderData) => client.kitchen.orders.create({ body: orderData }),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      pushToast({ id: Date.now(), kind: 'success', title: t('order_sent'), detail: `#${result.data?.dailyNumber}` });
+      setCart([]);
+      setDiscountValue('');
+      setNote('');
+      setCustomer({ name: '', phone: '', address: '' });
+    },
+    onError: () => {
+      pushToast({ id: Date.now(), kind: 'error', title: t('order_error'), detail: t('check_connection') });
+    },
+  });
+
+  const handleCreate = () => {
+    const body = {
+      orderType: orderTypeMap[type], // CRITICAL: 'dinein' → 'local'
+      items: cart.map(it => ({ productId: it.id, quantity: it.qty })),
+      ...(customer.name  ? { customerName: customer.name }  : {}),
+      ...(customer.phone ? { customerPhone: customer.phone } : {}),
+      ...(note           ? { notes: note }                   : {}),
+      paymentType: payment === 'online' ? undefined : payment,
+      ...(type === 'delivery' && customer.address
+        ? { deliveryAddress: { street: customer.address, number: '' } }
+        : {}),
+    };
+    createOrder.mutate(body);
+  };
+
+  const effectiveVisible = (cats.find(c => c.id === effectiveCat)?.items ?? []);
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', height: '100%' }}>
@@ -41,24 +108,31 @@ function PosScreen({ lang, onCreate, isOffline }) {
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           {cats.map(c => (
             <button key={c.id} onClick={() => setCat(c.id)}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, border: cat === c.id ? '1.5px solid var(--sc-primary)' : '1px solid hsl(120 10% 90%)', background: cat === c.id ? 'hsl(120 14% 49% / 0.08)' : '#fff', color: cat === c.id ? 'var(--sc-primary)' : '#444', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
-              <Icon name={c.icon} size={14} /> {c[lang]}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 12, border: effectiveCat === c.id ? '1.5px solid var(--sc-primary)' : '1px solid hsl(120 10% 90%)', background: effectiveCat === c.id ? 'hsl(120 14% 49% / 0.08)' : '#fff', color: effectiveCat === c.id ? 'var(--sc-primary)' : '#444', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Icon name={c.icon} size={14} /> {c[lang === 'ro' ? 'ro' : 'en']}
             </button>
           ))}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-          {visible.map(it => {
+          {effectiveVisible.map((it, idx) => {
             const inCart = cart.find(c => c.id === it.id);
             return (
-              <button key={it.id} onClick={() => add(it)}
-                className="card" style={{ textAlign: 'left', padding: 14, cursor: 'pointer', border: inCart ? '1.5px solid var(--sc-primary)' : '1px solid hsl(120 10% 90%)', background: '#fff', display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', fontFamily: 'inherit' }}>
+              <button key={it.id}
+                onClick={it.inStock ? () => add(it) : undefined}
+                className="card"
+                style={{
+                  textAlign: 'left', padding: 14, cursor: it.inStock ? 'pointer' : 'default',
+                  border: inCart ? '1.5px solid var(--sc-primary)' : '1px solid hsl(120 10% 90%)',
+                  background: '#fff', display: 'flex', flexDirection: 'column', gap: 6,
+                  position: 'relative', fontFamily: 'inherit',
+                  opacity: it.inStock ? 1 : 0.45,
+                }}>
                 {inCart && <div style={{ position: 'absolute', top: 8, right: 8, width: 22, height: 22, background: 'var(--sc-primary)', color: '#fff', borderRadius: 999, fontWeight: 900, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{inCart.qty}</div>}
-                <div style={{ height: 72, borderRadius: 10, background: `linear-gradient(135deg, ${['#f3ecd9', '#fbf6ea', '#ede9de', '#f7efe0'][items.indexOf(it) % 4]} 0%, #fff 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--sc-primary)' }}>
-                  <Icon name={cats.find(c => c.id === it.cat)?.icon} size={28} stroke={1.25} />
+                <div style={{ height: 72, borderRadius: 10, background: `linear-gradient(135deg, ${['#f3ecd9', '#fbf6ea', '#ede9de', '#f7efe0'][idx % 4]} 0%, #fff 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--sc-primary)' }}>
+                  <Icon name={cats.find(c => c.id === effectiveCat)?.icon ?? 'utensils'} size={28} stroke={1.25} />
                 </div>
-                <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em' }}>{it[lang]}</div>
-                <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', lineHeight: 1.3 }}>{it.desc}</div>
+                <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em' }}>{it[lang === 'ro' ? 'ro' : 'en']}</div>
                 <div style={{ fontWeight: 900, fontSize: 15, color: 'var(--sc-primary)', marginTop: 2 }}>{formatRON(it.price)}</div>
               </button>
             );
@@ -140,6 +214,46 @@ function PosScreen({ lang, onCreate, isOffline }) {
               <span style={{ fontWeight: 600 }}>{formatRON(fee)}</span>
             </div>
           )}
+
+          {/* Discount field — between fee and total */}
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, paddingTop: 4 }}>
+            <span style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', fontWeight: 600, minWidth: 60 }}>
+              {t('discount')}
+            </span>
+            <input
+              type="number"
+              min="0"
+              max={discountMode === 'pct' ? 100 : undefined}
+              value={discountValue}
+              onChange={e => setDiscountValue(e.target.value)}
+              placeholder="0"
+              style={{
+                flex: 1, padding: '5px 8px',
+                border: '1px solid hsl(120 10% 88%)', borderRadius: 8,
+                fontFamily: 'inherit', fontSize: 13,
+              }}
+            />
+            <button
+              onClick={() => setDiscountMode(discountMode === 'pct' ? 'ron' : 'pct')}
+              style={{
+                padding: '5px 10px', borderRadius: 8,
+                border: '1px solid hsl(120 10% 88%)',
+                background: '#fff', fontWeight: 700, fontSize: 12,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {discountMode === 'pct' ? '%' : 'RON'}
+            </button>
+          </div>
+
+          {/* Discount line — only when discountAmount > 0 */}
+          {discountAmount > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4, color: 'hsl(0 53% 42%)' }}>
+              <span style={{ color: 'var(--sc-muted-foreground)', fontWeight: 600 }}>{t('discount')}</span>
+              <span style={{ fontWeight: 700 }}>−{formatRON(discountAmount)}</span>
+            </div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 8, borderTop: '1px dashed hsl(120 10% 88%)', marginTop: 8 }}>
             <span style={{ fontWeight: 900, fontSize: 15 }}>{t('total')}</span>
             <span style={{ fontWeight: 900, fontSize: 24, letterSpacing: '-0.02em', color: 'var(--sc-primary)' }}>{formatRON(total)}</span>
@@ -158,8 +272,8 @@ function PosScreen({ lang, onCreate, isOffline }) {
           <button
             className={`btn-primary${isOffline ? ' btn-disabled-offline' : ''}`}
             style={{ width: '100%', marginTop: 12, height: 46, fontSize: 14, justifyContent: 'center' }}
-            disabled={cart.length === 0 || isOffline}
-            onClick={() => onCreate({ cart, type, table, customer, payment, note, subtotal, tax, fee, total })}
+            disabled={cart.length === 0 || isOffline || createOrder.isPending}
+            onClick={() => handleCreate()}
           >
             <Icon name="check" size={16} /> {t('ring_up')} — {formatRON(total)}
           </button>
