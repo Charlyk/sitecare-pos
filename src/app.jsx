@@ -18,6 +18,7 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import { useSSE } from './use-sse.js';
 import { useOrders } from './use-orders.js';
 import { useOrderActions } from './use-order-actions.js';
+import { CancelDialog } from './cancel-dialog.jsx';
 
 const statusToSDK = {
   new: 'NEW',
@@ -49,6 +50,7 @@ function App() {
   const pushToast = useAppStore((s) => s.pushToast);
   const dismissToast = useAppStore((s) => s.dismissToast);
   const setAcceptDialog = useAppStore((s) => s.setAcceptDialog);
+  const [cancelDialog, setCancelDialog] = useState(null);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const { signIn, coldStartBusy, busy: authBusy, error: authError, token } = useAuth();
   const t = useT(lang);
@@ -135,7 +137,7 @@ function App() {
         {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={handleAdvance} onPrint={() => {}} isOffline={isOffline} />}
         {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={handleAdvance} isOffline={isOffline} />}
         {screen === 'pos'     && <PosScreen     lang={lang} onCreate={() => {}} isOffline={isOffline} />}
-        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={() => {}} isOffline={isOffline} />}
+        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={() => {}} onCancel={() => setCancelDialog({ order: selectedOrder })} isOffline={isOffline} />}
         {screen === 'menu'    && <MenuScreen    lang={lang} isOffline={isOffline} />}
         {screen === 'printer' && <PrinterScreen lang={lang} onTestPrint={() => pushToast({ id: Date.now(), kind: 'info', title: 'Test print sent', detail: '' })} isOffline={isOffline} />}
         {screen === 'settings'&& <SettingsScreen lang={lang} isOffline={isOffline} />}
@@ -170,6 +172,36 @@ function App() {
                 onError: () => {
                   pushToast({ id: Date.now(), kind: 'error', title: t('accept_error_title'), detail: t('check_connection') });
                   // dialog stays open intentionally — do NOT call setAcceptDialog(null) here
+                },
+              }
+            );
+          }}
+        />
+      )}
+
+      {/* CancelDialog -- shown when staff clicks Cancel on an order detail screen */}
+      {cancelDialog && (
+        <CancelDialog
+          lang={lang}
+          order={cancelDialog.order}
+          onCancel={() => setCancelDialog(null)}
+          onConfirm={(reason) => {
+            updateStatus.mutate(
+              {
+                id: cancelDialog.order.id,
+                currentStatus: statusToSDK[cancelDialog.order.state] ?? cancelDialog.order.state.toUpperCase(),
+                toStatus: 'CANCELLED',
+                reason,
+              },
+              {
+                onSuccess: () => {
+                  setCancelDialog(null);
+                  setScreen('orders');
+                  pushToast({ id: Date.now(), kind: 'success', title: t('cancel_success_title'), detail: t('cancel_success_detail') });
+                },
+                onError: () => {
+                  pushToast({ id: Date.now(), kind: 'error', title: t('cancel_error_title'), detail: t('check_connection') });
+                  // dialog stays open intentionally — do NOT call setCancelDialog(null) here
                 },
               }
             );

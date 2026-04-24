@@ -4,7 +4,7 @@ import { useT } from './i18n.jsx';
 import { formatRON, elapsedMinutes, orderTimeLabel } from './data.jsx';
 import { sourceMeta, typeMeta, stateMeta } from './screen-orders.jsx';
 
-function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, isOffline }) {
+function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, isOffline }) {
   const t = useT(lang);
   const [tab, setTab] = useState('overview');
 
@@ -215,6 +215,23 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, isOffline 
           >
             <Icon name="chevRight" size={14} />
             {order.state === 'new' ? t('accept') : order.state === 'preparing' ? t('mark_ready') : t('complete')}
+          </button>
+        )}
+
+        {/* Cancel — only visible for non-terminal states */}
+        {order.state !== 'done' && order.state !== 'cancelled' && (
+          <button
+            className="btn-secondary"
+            style={{
+              height: 44, justifyContent: 'center', fontSize: 14,
+              color: 'hsl(0 53% 42%)', borderColor: 'hsl(0 53% 58% / 0.4)',
+              display: 'flex', alignItems: 'center', gap: 6, width: '100%',
+              marginTop: 8,
+            }}
+            disabled={isOffline}
+            onClick={() => onCancel && onCancel(order)}
+          >
+            <Icon name="x" size={14} /> {t('cancel_order')}
           </button>
         )}
       </div>
