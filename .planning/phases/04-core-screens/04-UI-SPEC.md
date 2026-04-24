@@ -1,7 +1,8 @@
 ---
 phase: 4
 slug: core-screens
-status: draft
+status: approved
+reviewed_at: 2026-04-24
 shadcn_initialized: false
 preset: none
 created: 2026-04-24
@@ -59,25 +60,24 @@ Exceptions:
 
 Extracted verbatim from `src/colors_and_type.css` (`--sc-type-*` tokens) and confirmed against screen inline styles.
 
+Exactly 4 size tiers and 2 weight tiers are declared. No other combinations are permitted.
+
 | Role | Size | Weight | Line Height | CSS Token / Usage |
 |------|------|--------|-------------|-------------------|
-| Meta / chip label | 10–11px | 700 (semibold) | 1.4 | `.chip`, stat tile labels, column headers; `--sc-type-xs` |
-| Body / item text | 13–14px | 400–600 | 1.5 | Order items, card body, nav item text, filter buttons; `--sc-type-small` |
-| Heading (card title) | 15–16px | 700–900 | 1.3 | KDS column titles, card section headings; `--sc-type-h3` partial |
-| Display (order number) | 18–22px | 900 (black) | 1.1 | OrderCard `#N`, KDS ticket number, stat tile values; `--sc-tracking-tight` |
-| Hero display | 24–32px | 900 (black) | 1.1 | OrderDetail order number (32px), KDS elapsed timer (24px), POS total (24px) |
-| Eyebrow | 18px | 700 | 1.2 | Caveat font, `var(--sc-terracotta)` — section labels only |
-| Topbar title | 22px | 900 | auto | `.topbar-title` |
+| Meta / chip label | 11px | 600 | 1.4 | `.chip`, stat tile labels, column headers; `--sc-type-xs` |
+| Body / item text | 14px | 600 | 1.5 | Order items, card body, nav item text, filter buttons; `--sc-type-small` |
+| Heading | 18px | 600 | 1.3 | KDS column titles, card section headings, topbar title; `--sc-type-h3` |
+| Display / hero | 28–32px | 900 | 1.1 | OrderCard `#N` (28px), OrderDetail order number (32px), KDS elapsed timer (28px), POS total (28px); `--sc-tracking-tight` |
 
-**Declared working set for Phase 4 (3 weights max):**
-- Weight 400 (regular): muted meta text
-- Weight 600–700 (semibold/bold): item names, labels, button text, nav items
-- Weight 900 (black): order numbers, totals, display values — `fontWeight: 900, letterSpacing: '-0.02em'`
+**Declared weight tiers (exactly 2):**
+- **Weight 600** (semibold): all readable text — item names, labels, button text, nav items, body copy, filter chips, dialog text, muted/secondary text (use `--sc-muted-foreground` color token to distinguish secondary at weight 600 — do NOT drop to a third weight)
+- **Weight 900** (black): display/emphasis — order numbers, cart totals, modal totals, hero values — always paired with `letterSpacing: '-0.02em'`
 
 **Constraints:**
-- Never use a font size below 10px in any element
-- Eyebrow text (Caveat) is decorative only — one occurrence per section max
-- Monospace font (`"SF Mono", "Menlo", "Courier New", monospace`) is reserved for thermal ticket preview only
+- Never use a font size below 11px in any element
+- Eyebrow text (Caveat font, `var(--sc-terracotta)`) is decorative only — one occurrence per section max; treated as a meta-level annotation, not a fifth size tier
+- Monospace font (`"SF Mono", "Menlo", "Courier New", monospace`) is reserved for thermal ticket preview only (Phase 5 domain)
+- Secondary/muted text is differentiated by `--sc-muted-foreground` color only, not by a lower weight
 
 ---
 
@@ -92,8 +92,11 @@ Extracted from `src/colors_and_type.css` `:root` block. Accent is user-switchabl
 | Accent (10%) | `hsl(120 14% 49%)` — sage green (`--sc-primary`, default) | Specific elements only — see reserved list below |
 | Terracotta | `hsl(0 53% 58%)` — `--sc-terracotta` | Advance CTA (`.btn-terracotta`), pulse dot on new orders, eyebrow text, terracotta accent chips, out-of-stock icon tint |
 | Destructive | `hsl(0 84.2% 60.2%)` — `--sc-destructive` | Cancel order confirm dialog — confirm button only; cancel reason validation state |
-| Muted foreground | `hsl(120 5% 46%)` — `--sc-muted-foreground` | Body text, metadata, secondary labels |
+| Muted foreground | `hsl(120 5% 46%)` — `--sc-muted-foreground` | Body text, metadata, secondary labels — applied at weight 600, not a lighter weight |
 | Border | `hsl(120 10% 88%)` — `--sc-border` | All card borders, input borders, dividers |
+
+**Primary visual anchor — Orders screen:**
+The terracotta-bordered OrderCard for `state === 'new'` orders is the primary visual anchor — it draws the eye via pulse animation and saturated border before any text is read. The `pulseRing 1.6s infinite` box-shadow on the new-order dot is the strongest motion signal on any screen in Phase 4.
 
 **Accent reserved for:**
 - Active nav item background (`.nav-item.active`)
@@ -136,6 +139,19 @@ Extracted from `src/colors_and_type.css` `:root` block. Accent is user-switchabl
 
 All strings must have both `ro` (canonical) and `en` keys in `src/i18n.jsx`.
 Source: 04-CONTEXT.md decisions + existing i18n.jsx keys.
+
+### i18n CTA Key Resolution
+
+i18n CTA keys used in Phase 4 resolve to the following full contextual labels. Executors must use these resolved strings on any new surface — bare verbs ("Accept", "Start") are not permitted as visible button text.
+
+| i18n Key | RO resolved label | EN resolved label |
+|----------|-------------------|-------------------|
+| `t('accept')` | Acceptă comanda | Accept Order |
+| `t('start')` | Începe prepararea | Start Preparation |
+| `t('mark_ready')` | Marchează gata | Mark Ready |
+| `t('complete')` | Finalizează | Complete |
+| `t('ring_up')` | Înregistrează comanda | Ring Up |
+| `t('confirm_accept')` | Confirmă și acceptă | Confirm & Accept |
 
 ### Phase 4 New Strings Required
 
@@ -224,13 +240,13 @@ Source: 04-CONTEXT.md decisions + existing i18n.jsx keys.
 #### Primary CTAs Per Screen
 | Screen | Primary CTA | RO | EN |
 |--------|------------|----|----|
-| Orders — new order | Accept | `t('accept')` | `t('accept')` |
-| Orders — in progress | Advance | `t('start')` / `t('mark_ready')` | same |
-| OrderDetail | Advance full-height | `t('accept')` / `t('mark_ready')` / `t('complete')` | same |
+| Orders — new order | Accept Order | `t('accept')` → "Acceptă comanda" | `t('accept')` → "Accept Order" |
+| Orders — in progress | Advance | `t('start')` → "Începe prepararea" / `t('mark_ready')` → "Marchează gata" | same |
+| OrderDetail | Advance full-height | `t('accept')` / `t('mark_ready')` / `t('complete')` — see key resolution table | same |
 | OrderDetail | Cancel (destructive) | `Anulează comanda` | `Cancel order` |
-| KDS | Bump ticket | `t('mark_ready')` / `t('complete')` | same |
-| POS | Ring up | `t('ring_up')` + formatRON(total) | same |
-| AcceptDialog | Confirm & accept | `t('confirm_accept')` | same |
+| KDS | Bump ticket | `t('mark_ready')` → "Marchează gata" / `t('complete')` → "Finalizează" | same |
+| POS | Ring up | `t('ring_up')` → "Înregistrează comanda" + formatRON(total) | same |
+| AcceptDialog | Confirm & accept | `t('confirm_accept')` → "Confirmă și acceptă" | same |
 
 #### Empty States
 | Context | Heading | Body |
@@ -307,8 +323,8 @@ No other destructive actions in Phase 4 scope.
 ### POS Menu (POS-01, POS-02)
 - Replace static `MENU_CATEGORIES`/`MENU_ITEMS` imports with `useMenu()` hook output.
 - Map SDK shape: `{ categories: [...], globalProducts: [...] }` → category tabs + item grid.
-- Item card: 3-column grid, 72px icon area (gradient placeholder), item name (700 weight, 14px), description (11px muted), price (900 weight, 15px, `--sc-primary`).
-- In-cart badge: absolute top-right, 22×22px, `--sc-primary` bg, white 900-weight quantity number.
+- Item card: 3-column grid, 72px icon area (gradient placeholder), item name (weight 600, 14px), description (11px, `--sc-muted-foreground`), price (weight 900, 14px, `--sc-primary`).
+- In-cart badge: absolute top-right, 22×22px, `--sc-primary` bg, white weight-900 quantity number.
 - Out-of-stock items from API: render at `opacity: 0.45`, no click handler, show "Epuizat" chip overlay.
 
 ### Menu Availability Toggle (MENU-01, MENU-02)
@@ -330,7 +346,7 @@ No other destructive actions in Phase 4 scope.
 
 ### Orders Search (ORD-03)
 - Search input: placed in the filter bar, right of the type-filter pill, left of the Refresh/More buttons.
-- Input style: matches existing `.search` class from styles.css (white bg, 1px border `--sc-border`, 10px radius, 8px+12px padding, 13px font, 280px width).
+- Input style: matches existing `.search` class from styles.css (white bg, 1px border `--sc-border`, 10px radius, 8px+12px padding, 14px font, 280px width).
 - Use `Icon name="search"` prefix inside input.
 - Filter: client-side `orders.filter(o => o.dailyOrderNumber.toString().includes(q) || (customerName).toLowerCase().includes(q.toLowerCase()))`.
 - When search is active and returns 0 results: show empty state with "Niciun rezultat" / "Search no results" copy (not the generic empty orders copy).
@@ -347,17 +363,17 @@ No other destructive actions in Phase 4 scope.
 
 ### Existing (do not change visual spec)
 - `.card` + `.card.shadow` — white card with rounded-16px corners + `hsl(120 10% 90%)` border
-- `.btn-primary` — sage green, 38px height, 10px radius, 700 weight, 13px
+- `.btn-primary` — sage green, 38px height, 10px radius, weight 600, 14px
 - `.btn-secondary` — white, 38px height, 10px radius, 1px border
-- `.btn-ghost` — transparent, 36px height, 8px radius, 500 weight
-- `.btn-terracotta` — terracotta, 38px height, pill radius, 700 weight
+- `.btn-ghost` — transparent, 36px height, 8px radius, weight 600
+- `.btn-terracotta` — terracotta, 38px height, pill radius, weight 600
 - `.btn-disabled-offline` — `opacity: 0.45, cursor: not-allowed, pointer-events: none`
 - `.chip` + chip variants (`chip-sage`, `chip-terra`, `chip-amber`, `chip-slate`, `chip-red`, `chip-blue`, `chip-dot`)
 - `.icon-btn` — 38×38px, 10px radius, `#fff` bg, 1px border
 - `.offline-banner` — amber-tinted, 40px height, left border accent
 - `.role-pill` — inline-flex toggle for FOH/BOH
 - `AcceptDialog` — modal overlay, 460px wide, 20px radius
-- `OrderCard` — card with state-dependent border (new: terracotta/40% opacity, others: neutral)
+- `OrderCard` — card with state-dependent border (new: terracotta/40% opacity with pulseRing animation — primary visual anchor; others: neutral)
 - `KitchenTicket` — card with urgency border
 - `AvailSwitch` — custom toggle switch with animated knob
 - `ThermalTicket` — monospace receipt preview (Phase 5 domain; do not modify in Phase 4)
