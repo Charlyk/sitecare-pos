@@ -70,7 +70,7 @@ function App() {
     const id = setInterval(() => {
       const hasNew = ordersRef.current.some(o => o.state === 'new');
       if (hasNew && !soundMutedRef.current) {
-        new Audio('/notification.mp3').play().catch(() => {});
+        new Audio('/sounds/notification.mp3').play().catch(() => {});
       }
     }, 15000);
     return () => clearInterval(id);
