@@ -106,22 +106,54 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, isOffline 
         </div>
 
         {/* Items */}
-        <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid hsl(120 10% 92%)' }}>
-            <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: '-0.02em' }}>{order.items.length} {t('items')}</div>
-            <button className="btn-ghost"><Icon name="edit" size={13} />{lang === 'ro' ? 'Modifică' : 'Modify'}</button>
-          </div>
-          {order.items.map((it, i) => (
-            <div key={i} style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < order.items.length - 1 ? '1px solid hsl(120 10% 94%)' : 'none' }}>
-              <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(120 14% 49% / 0.12)', color: 'var(--sc-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13 }}>{it.qty}×</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{it.name}</div>
-                {it.mods && it.mods.length > 0 && <div style={{ fontSize: 12, color: 'var(--sc-terracotta)', fontWeight: 600 }}>→ {it.mods.join(', ')}</div>}
-              </div>
-              <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{formatRON(it.price)}</div>
-              <div style={{ fontWeight: 800, fontSize: 14, minWidth: 72, textAlign: 'right' }}>{formatRON(it.price * it.qty)}</div>
+        {(() => {
+          const menuItems = order.items.filter((it) => it.source !== 'global_product');
+          const globalProducts = order.items.filter((it) => it.source === 'global_product');
+          const hasExtras = globalProducts.length > 0 || order.deliveryFee > 0;
+          return (
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid hsl(120 10% 92%)' }}>
+              <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: '-0.02em' }}>{order.items.length} {t('items')}</div>
+              <button className="btn-ghost"><Icon name="edit" size={13} />{lang === 'ro' ? 'Modifică' : 'Modify'}</button>
             </div>
-          ))}
+            {menuItems.map((it, i) => (
+              <div key={i} style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < menuItems.length - 1 ? '1px solid hsl(120 10% 94%)' : 'none' }}>
+                <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(120 14% 49% / 0.12)', color: 'var(--sc-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13 }}>{it.qty}×</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{it.name}</div>
+                  {it.mods && it.mods.length > 0 && <div style={{ fontSize: 12, color: 'var(--sc-terracotta)', fontWeight: 600 }}>→ {it.mods.join(', ')}</div>}
+                </div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{formatRON(it.price)}</div>
+                <div style={{ fontWeight: 800, fontSize: 14, minWidth: 72, textAlign: 'right' }}>{formatRON(it.price * it.qty)}</div>
+              </div>
+            ))}
+            {hasExtras && (
+              <>
+                <div style={{ margin: '0 18px', borderTop: '1px dashed hsl(120 10% 85%)' }} />
+                {globalProducts.map((it, i) => (
+                  <div key={i} style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(210 15% 92%)', color: '#556', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13 }}>{it.qty}×</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{it.name}</div>
+                    </div>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{formatRON(it.price)}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, minWidth: 72, textAlign: 'right' }}>{formatRON(it.price * it.qty)}</div>
+                  </div>
+                ))}
+                {order.deliveryFee > 0 && (
+                  <div style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(210 15% 92%)', color: '#556', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name="moped" size={14} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13 }}>{t('delivery_fee')}</div>
+                    </div>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{formatRON(order.deliveryFee)}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, minWidth: 72, textAlign: 'right' }}>{formatRON(order.deliveryFee)}</div>
+                  </div>
+                )}
+              </>
+            )}
           <div style={{ padding: 18, background: '#fbf6ea' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
               <span>{t('subtotal')}</span><span style={{ fontWeight: 600 }}>{formatRON(order.subtotal)}</span>
@@ -136,7 +168,9 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, isOffline 
               <span style={{ fontWeight: 900, fontSize: 26, letterSpacing: '-0.02em', color: 'var(--sc-primary)' }}>{formatRON(order.total)}</span>
             </div>
           </div>
-        </div>
+          </div>
+          );
+        })()}
       </div>
 
       {/* Right: thermal ticket preview */}
