@@ -190,22 +190,22 @@ function PosScreen({ lang, isOffline }) {
                   <select
                     value={deliveryAreaId}
                     onChange={e => setDeliveryAreaId(e.target.value)}
-                    style={{ padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: deliveryAreaId ? '#111' : 'hsl(120 5% 55%)' }}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: '#111', boxSizing: 'border-box' }}
                   >
                     <option value="">{deliveryAreas.length === 0 ? t('no_areas') : t('choose_area')}</option>
                     {deliveryAreas.map(a => (
                       <option key={a.id} value={a.id}>{a.name} — {formatRON(a.fee)}</option>
                     ))}
                   </select>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <input placeholder={t('street')} value={customer.street} onChange={e => setCustomer({...customer, street: e.target.value})} style={{ flex: 3, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
-                    <input placeholder={t('street_number')} value={customer.number} onChange={e => setCustomer({...customer, number: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
+                  <div style={{ display: 'flex', gap: 6, minWidth: 0 }}>
+                    <input placeholder={t('street')} value={customer.street} onChange={e => setCustomer({...customer, street: e.target.value})} style={{ flex: 3, minWidth: 0, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
+                    <input placeholder={t('street_number')} value={customer.number} onChange={e => setCustomer({...customer, number: e.target.value})} style={{ flex: 1, minWidth: 0, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <input placeholder={t('bloc')} value={customer.bloc} onChange={e => setCustomer({...customer, bloc: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
-                    <input placeholder={t('apartament')} value={customer.apartament} onChange={e => setCustomer({...customer, apartament: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
-                    <input placeholder={t('etaj')} value={customer.etaj} onChange={e => setCustomer({...customer, etaj: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
-                    <input placeholder={t('interfon')} value={customer.interfon} onChange={e => setCustomer({...customer, interfon: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
+                  <div style={{ display: 'flex', gap: 6, minWidth: 0 }}>
+                    <input placeholder={t('bloc')} value={customer.bloc} onChange={e => setCustomer({...customer, bloc: e.target.value})} style={{ flex: 1, minWidth: 0, padding: '8px 8px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 12 }} />
+                    <input placeholder={t('apartament')} value={customer.apartament} onChange={e => setCustomer({...customer, apartament: e.target.value})} style={{ flex: 1, minWidth: 0, padding: '8px 8px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 12 }} />
+                    <input placeholder={t('etaj')} value={customer.etaj} onChange={e => setCustomer({...customer, etaj: e.target.value})} style={{ flex: 1, minWidth: 0, padding: '8px 8px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 12 }} />
+                    <input placeholder={t('interfon')} value={customer.interfon} onChange={e => setCustomer({...customer, interfon: e.target.value})} style={{ flex: 1, minWidth: 0, padding: '8px 8px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 12 }} />
                   </div>
                 </>
               )}
