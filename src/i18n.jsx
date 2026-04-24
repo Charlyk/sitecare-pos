@@ -164,6 +164,9 @@ export const I18N = {
     sound_off: 'Sunet oprit',
     sound_on_tooltip: 'Dezactivează sunetul',
     sound_off_tooltip: 'Activează sunetul',
+    // ORD-03 Orders search
+    search_no_results: 'Niciun rezultat',
+    search_no_results_sub: 'Nicio comandă nu corespunde căutării.',
   },
   en: {
     nav_orders: 'Live orders',
@@ -316,6 +319,9 @@ export const I18N = {
     sound_off: 'Muted',
     sound_on_tooltip: 'Mute sound',
     sound_off_tooltip: 'Unmute',
+    // ORD-03 Orders search
+    search_no_results: 'No results',
+    search_no_results_sub: 'No orders match your search.',
   },
 };
 

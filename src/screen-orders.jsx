@@ -163,6 +163,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
 function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline }) {
   const t = useT(lang);
   const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filters = [
     { id: 'all', label: t('all'), count: orders.length },
@@ -184,6 +185,12 @@ function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline }) {
     if (filter === 'ready' && !['ready', 'out'].includes(o.state)) return false;
     if (filter !== 'all' && filter !== 'preparing' && filter !== 'ready' && o.state !== filter) return false;
     if (typeFilter !== 'all' && o.type !== typeFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchId = String(o.dailyOrderNumber ?? '').includes(q);
+      const matchName = (o.customer?.name ?? o.customerName ?? '').toLowerCase().includes(q);
+      if (!matchId && !matchName) return false;
+    }
     return o.state !== 'done';
   });
 
@@ -234,6 +241,42 @@ function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline }) {
           ))}
         </div>
 
+        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+          <Icon name="search" size={14} style={{
+            position: 'absolute', left: 10, color: 'var(--sc-muted-foreground)', pointerEvents: 'none',
+          }} />
+          <input
+            type="search"
+            placeholder={t('search_placeholder')}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              padding: '7px 32px 7px 32px',
+              border: '1px solid hsl(120 10% 90%)',
+              borderRadius: 10,
+              fontSize: 13,
+              fontFamily: 'inherit',
+              fontWeight: 500,
+              background: '#fff',
+              width: 220,
+              outline: 'none',
+            }}
+          />
+          {searchQuery.length > 0 && (
+            <button
+              onClick={() => setSearchQuery('')}
+              style={{
+                position: 'absolute', right: 8,
+                background: 'none', border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center',
+                color: 'var(--sc-muted-foreground)', padding: 2,
+              }}
+            >
+              <Icon name="x" size={12} />
+            </button>
+          )}
+        </div>
+
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           <button className="btn-secondary"><Icon name="refresh" size={14} />{lang === 'ro' ? 'Reîmprospătează' : 'Refresh'}</button>
           <button className="btn-secondary"><Icon name="filter" size={14} />{lang === 'ro' ? 'Mai multe filtre' : 'More filters'}</button>
@@ -247,8 +290,17 @@ function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline }) {
         ))}
         {visible.length === 0 && (
           <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 48, color: 'var(--sc-muted-foreground)' }}>
-            <div style={{ fontSize: 15, fontWeight: 600 }}>{t('empty_orders')}</div>
-            <div style={{ fontSize: 13, marginTop: 4 }}>{t('empty_orders_sub')}</div>
+            {searchQuery.trim() ? (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 600 }}>{t('search_no_results')}</div>
+                <div style={{ fontSize: 13, marginTop: 4 }}>{t('search_no_results_sub')}</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 600 }}>{t('empty_orders')}</div>
+                <div style={{ fontSize: 13, marginTop: 4 }}>{t('empty_orders_sub')}</div>
+              </>
+            )}
           </div>
         )}
       </div>
