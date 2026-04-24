@@ -136,6 +136,29 @@ export const I18N = {
     // offline banner
     offline_banner_title: 'Conexiune întreruptă',
     offline_banner_sub: 'Reconectare automată în curs…',
+    // ACT-01 AcceptDialog API wiring
+    accept_success_title: 'Comandă acceptată',
+    accept_error_title: 'Eroare la acceptare',
+    check_connection: 'Verifică conexiunea și încearcă din nou.',
+    // ACT-03 CancelDialog
+    cancel_dialog_title: 'Anulează comanda',
+    cancel_dialog_sub: 'Selectează motivul anulării. Această acțiune nu poate fi anulată.',
+    cancel_reason_label: 'Motiv anulare',
+    cancel_success_title: 'Comandă anulată',
+    cancel_success_detail: 'Comanda a fost anulată cu succes.',
+    cancel_error_title: 'Eroare la anulare',
+    confirm_cancellation: 'Confirmă anularea',
+    select_reason: 'Selectează un motiv',
+    cancel_order: 'Anulează comanda',
+    back: 'Înapoi',
+    // POS order creation (POS-05)
+    order_sent: 'Comandă trimisă',
+    order_error: 'Eroare la trimitere',
+    discount: 'Discount',
+    // Settings Display tab (SET-01, SET-02, SET-03)
+    display_lang_label: 'Limbă',
+    display_density_label: 'Densitate',
+    display_accent_label: 'Culoare accent',
   },
   en: {
     nav_orders: 'Live orders',
@@ -260,6 +283,29 @@ export const I18N = {
     // offline banner
     offline_banner_title: 'Connection lost',
     offline_banner_sub: 'Reconnecting automatically…',
+    // ACT-01 AcceptDialog API wiring
+    accept_success_title: 'Order accepted',
+    accept_error_title: 'Could not accept',
+    check_connection: 'Check connection and try again.',
+    // ACT-03 CancelDialog
+    cancel_dialog_title: 'Cancel order',
+    cancel_dialog_sub: 'Select a reason. This action cannot be undone.',
+    cancel_reason_label: 'Cancellation reason',
+    cancel_success_title: 'Order cancelled',
+    cancel_success_detail: 'The order has been cancelled.',
+    cancel_error_title: 'Cancel failed',
+    confirm_cancellation: 'Confirm cancellation',
+    select_reason: 'Select a reason',
+    cancel_order: 'Cancel order',
+    back: 'Back',
+    // POS order creation (POS-05)
+    order_sent: 'Order sent',
+    order_error: 'Order failed',
+    discount: 'Discount',
+    // Settings Display tab (SET-01, SET-02, SET-03)
+    display_lang_label: 'Language',
+    display_density_label: 'Density',
+    display_accent_label: 'Accent colour',
   },
 };
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Shell } from './shell.jsx';
 import { OrdersScreen } from './screen-orders.jsx';
 import { KitchenScreen } from './screen-kitchen.jsx';
@@ -18,6 +18,16 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import { useSSE } from './use-sse.js';
 import { useOrders } from './use-orders.js';
 import { useOrderActions } from './use-order-actions.js';
+
+const statusToSDK = {
+  new: 'NEW',
+  accepted: 'ACCEPTED',
+  preparing: 'PREPARING',
+  ready: 'READY',
+  out: 'OUT_FOR_DELIVERY',   // NOT 'OUT'
+  done: 'COMPLETED',         // NOT 'DONE'
+  cancelled: 'CANCELLED',
+};
 
 function App() {
   const lang = useAppStore((s) => s.lang);
@@ -41,15 +51,28 @@ function App() {
   const setAcceptDialog = useAppStore((s) => s.setAcceptDialog);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const { signIn, coldStartBusy, busy: authBusy, error: authError, token } = useAuth();
+  const t = useT(lang);
 
-  const { isConnected } = useSSE(token);
-  const isOffline = !isConnected;
   const { data: ordersData } = useOrders();
   const orders = ordersData?.orders ?? [];
   const { updateStatus } = useOrderActions();
+  const soundMuted = useAppStore((s) => s.soundMuted);
+
+  const handleLiveOrder = useCallback(() => {
+    if (!soundMuted) {
+      new Audio('/sounds/new-order.mp3').play().catch(() => {});
+    }
+  }, [soundMuted]);
+
+  const { isConnected } = useSSE(token, handleLiveOrder);
+  const isOffline = !isConnected;
 
   const handleAdvance = (order, toStatus) => {
-    updateStatus.mutate({ id: order.id, currentStatus: order.state.toUpperCase(), toStatus: toStatus.toUpperCase() });
+    updateStatus.mutate({
+      id: order.id,
+      currentStatus: statusToSDK[order.state] ?? order.state.toUpperCase(),
+      toStatus: statusToSDK[toStatus] ?? toStatus.toUpperCase(),
+    });
   };
 
   // Accent CSS custom property mutation (verbatim from prototype, Zustand-driven):
@@ -137,8 +160,19 @@ function App() {
           order={acceptDialog.order}
           onCancel={() => setAcceptDialog(null)}
           onConfirm={(prepMin) => {
-            pushToast({ id: Date.now(), kind: 'success', title: lang === 'ro' ? 'Comanda acceptata' : 'Order accepted', detail: acceptDialog.order.id + ' ' + prepMin + ' min' });
-            setAcceptDialog(null);
+            updateStatus.mutate(
+              { id: acceptDialog.order.id, currentStatus: 'NEW', toStatus: 'ACCEPTED', estimatedMinutes: prepMin },
+              {
+                onSuccess: () => {
+                  setAcceptDialog(null);
+                  pushToast({ id: Date.now(), kind: 'success', title: t('accept_success_title'), detail: `${t('promised')}: ${prepMin} ${t('min')}` });
+                },
+                onError: () => {
+                  pushToast({ id: Date.now(), kind: 'error', title: t('accept_error_title'), detail: t('check_connection') });
+                  // dialog stays open intentionally — do NOT call setAcceptDialog(null) here
+                },
+              }
+            );
           }}
         />
       )}

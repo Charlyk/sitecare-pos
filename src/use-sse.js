@@ -14,10 +14,11 @@ const SSE_URL = import.meta.env.DEV
   ? '/v1/sse/orders'
   : 'https://api.restaurant.sitecare.ro/v1/sse/orders';
 
-export function useSSE(token) {
+export function useSSE(token, onLiveOrder) {
   const queryClient = useQueryClient();
   const [isConnected, setIsConnected] = useState(false);
   const abortRef = useRef(null);
+  const snapshotDone = useRef(false);
 
   useEffect(() => {
     // Guard: do not attempt SSE without a token (D-07) — handles null during cold-start
@@ -36,6 +37,7 @@ export function useSSE(token) {
       async onopen(response) {
         if (response.ok) {
           setIsConnected(true); // D-06: connected = stream open and receiving
+          setTimeout(() => { snapshotDone.current = true; }, 100); // absorb initial snapshot batch silently (D-06)
           return;
         }
         // Non-2xx: throw so fetchEventSource routes to onerror and retries
@@ -58,6 +60,10 @@ export function useSSE(token) {
                 : [...list, order];                                  // append new
               return { orders: next };
             });
+            // D-06: only call onLiveOrder for live events, not initial snapshot
+            if (snapshotDone.current && onLiveOrder) {
+              onLiveOrder();
+            }
           } catch {
             // Malformed JSON from server — ignore silently (V5 input validation)
           }
@@ -78,7 +84,7 @@ export function useSSE(token) {
 
     // Cleanup: abort SSE on unmount (prevents memory leak — server unregisters client on abort)
     return () => ctrl.abort();
-  }, [token, queryClient]); // Re-run if token changes (e.g., rotation in doRefresh)
+  }, [token, queryClient, onLiveOrder]); // Re-run if token or onLiveOrder changes
 
   return { isConnected };
 }
