@@ -97,9 +97,16 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
         return (
           <div style={{ borderTop: '1px dashed hsl(120 10% 88%)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
             {shownMenuItems.map((it, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                <span><b style={{ color: 'var(--sc-primary)', marginRight: 6 }}>{it.qty}×</b>{it.name}</span>
-                <span style={{ color: 'var(--sc-muted-foreground)' }}>{formatRON(it.qty * it.price)}</span>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, alignItems: 'flex-start' }}>
+                <div>
+                  <span><b style={{ color: 'var(--sc-primary)', marginRight: 6 }}>{it.qty}×</b>{it.name}</span>
+                  {it.mods?.length > 0 && (
+                    <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', marginLeft: 20, marginTop: 1 }}>
+                      {it.mods.join(', ')}
+                    </div>
+                  )}
+                </div>
+                <span style={{ color: 'var(--sc-muted-foreground)', whiteSpace: 'nowrap', marginLeft: 8 }}>{formatRON(it.qty * it.price)}</span>
               </div>
             ))}
             {hiddenCount > 0 && <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)' }}>+{hiddenCount} {lang === 'ro' ? 'încă' : 'more'}</div>}
