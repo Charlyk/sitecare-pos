@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Shell } from './shell.jsx';
 import { OrdersScreen } from './screen-orders.jsx';
 import { KitchenScreen } from './screen-kitchen.jsx';
@@ -60,13 +60,23 @@ function App() {
   const { updateStatus } = useOrderActions();
   const soundMuted = useAppStore((s) => s.soundMuted);
 
-  const handleLiveOrder = useCallback(() => {
-    if (!soundMuted) {
-      new Audio('/sounds/new-order.mp3').play().catch(() => {});
-    }
-  }, [soundMuted]);
+  // Refs keep interval closure fresh without resetting the 15s clock on every orders update
+  const ordersRef = useRef(orders);
+  const soundMutedRef = useRef(soundMuted);
+  useEffect(() => { ordersRef.current = orders; }, [orders]);
+  useEffect(() => { soundMutedRef.current = soundMuted; }, [soundMuted]);
 
-  const { isConnected } = useSSE(token, handleLiveOrder);
+  useEffect(() => {
+    const id = setInterval(() => {
+      const hasNew = ordersRef.current.some(o => o.state === 'new');
+      if (hasNew && !soundMutedRef.current) {
+        new Audio('/notification.mp3').play().catch(() => {});
+      }
+    }, 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  const { isConnected } = useSSE(token);
   const isOffline = !isConnected;
 
   const handleAdvance = (order, toStatus) => {
