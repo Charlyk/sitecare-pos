@@ -160,7 +160,7 @@ function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline }) {
     { label: lang === 'ro' ? 'Venit azi' : 'Today revenue', value: formatRON(todayRevenue), icon: 'ron', tint: 'sage' },
     { label: lang === 'ro' ? 'Comenzi active' : 'Active orders', value: orders.filter(o => o.state !== 'done').length, icon: 'zap', tint: 'terra' },
     { label: lang === 'ro' ? 'Timp mediu' : 'Avg. time', value: '23 ' + t('min'), icon: 'clock', tint: 'slate' },
-    { label: lang === 'ro' ? 'Finalizate azi' : 'Completed today', value: orders.filter(o => o.state === 'done').length + 24, icon: 'check', tint: 'sage' },
+    { label: lang === 'ro' ? 'Finalizate azi' : 'Completed today', value: orders.filter(o => o.state === 'done').length, icon: 'check', tint: 'sage' },
   ];
 
   return (
