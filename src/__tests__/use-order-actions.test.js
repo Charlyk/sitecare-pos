@@ -121,3 +121,11 @@ describe('U11c — useOrderActions mutation wrappers (D-15)', () => {
     })
   })
 })
+
+describe('ACT-02: statusToSDK mapping — correct enum values sent to API', () => {
+  test.todo('advancing from "done" state sends toStatus "COMPLETED" not "DONE"')
+  test.todo('advancing from "out" state sends toStatus "OUT_FOR_DELIVERY" not "OUT"')
+  test.todo('advancing from "new" sends toStatus "ACCEPTED"')
+  test.todo('advancing from "accepted" sends toStatus "PREPARING"')
+  test.todo('advancing from "preparing" sends toStatus "READY"')
+})

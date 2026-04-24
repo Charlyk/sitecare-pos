@@ -143,3 +143,10 @@ describe('U9c — useSSE ignores ping events (KDS-01, D-04)', () => {
     expect(cached.orders).toHaveLength(0) // unchanged
   })
 })
+
+describe('KDS-04: snapshot detection — sound plays only on live events', () => {
+  test.todo('useSSE accepts optional second parameter onLiveOrder callback')
+  test.todo('onLiveOrder is NOT called for order_new events arriving within 100ms of connect (snapshot)')
+  test.todo('onLiveOrder IS called for order_new events arriving after snapshotDone flag is set')
+  test.todo('when soundMuted is true in Zustand store, the caller should not play audio (mute is caller responsibility)')
+})

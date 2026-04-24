@@ -60,3 +60,15 @@ describe('U5 — partialize excludes auth state from persistence (AUTH-02)', () 
     expect(persisted).not.toHaveProperty('acceptDialog')
   })
 })
+
+describe('soundMuted state (KDS-04, D-07)', () => {
+  test.todo('store initializes with soundMuted: false')
+  test.todo('setSoundMuted(true) sets soundMuted to true')
+  test.todo('setSoundMuted(false) sets soundMuted back to false')
+  test.todo('soundMuted is NOT included in the partialize output (session-only)')
+})
+
+describe('ORD-02: role switch reflects in store', () => {
+  test.todo('setRole("boh") updates role to boh')
+  test.todo('setRole("foh") updates role back to foh')
+})
