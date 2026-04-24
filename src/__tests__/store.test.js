@@ -62,10 +62,30 @@ describe('U5 — partialize excludes auth state from persistence (AUTH-02)', () 
 })
 
 describe('soundMuted state (KDS-04, D-07)', () => {
-  test.todo('store initializes with soundMuted: false')
-  test.todo('setSoundMuted(true) sets soundMuted to true')
-  test.todo('setSoundMuted(false) sets soundMuted back to false')
-  test.todo('soundMuted is NOT included in the partialize output (session-only)')
+  test('store initializes with soundMuted: false', () => {
+    const state = useAppStore.getState()
+    expect(state.soundMuted).toBe(false)
+  })
+
+  test('setSoundMuted(true) sets soundMuted to true', () => {
+    useAppStore.getState().setSoundMuted(true)
+    expect(useAppStore.getState().soundMuted).toBe(true)
+    // reset
+    useAppStore.getState().setSoundMuted(false)
+  })
+
+  test('setSoundMuted(false) sets soundMuted back to false', () => {
+    useAppStore.getState().setSoundMuted(true)
+    useAppStore.getState().setSoundMuted(false)
+    expect(useAppStore.getState().soundMuted).toBe(false)
+  })
+
+  test('soundMuted is NOT included in the partialize output (session-only)', () => {
+    const state = useAppStore.getState()
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+    expect(persisted).not.toHaveProperty('soundMuted')
+  })
 })
 
 describe('ORD-02: role switch reflects in store', () => {
