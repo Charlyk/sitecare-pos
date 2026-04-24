@@ -87,7 +87,7 @@ Plans:
   5. Changing language, density, or accent in Settings persists after closing and reopening the app
 **Plans**: 9 plans
 Plans:
-- [ ] 04-01-PLAN.md — Wave 0: Create all failing test stubs for 20 Phase 4 requirement IDs
+- [x] 04-01-PLAN.md — Wave 0: Create all failing test stubs for 20 Phase 4 requirement IDs
 - [ ] 04-02-PLAN.md — Wave 1: Shared infrastructure — soundMuted store, SSE onLiveOrder callback, AcceptDialog API wiring, statusToSDK map
 - [ ] 04-03-PLAN.md — Wave 1: CancelDialog component + screen-detail Cancel button + cancel i18n strings (ACT-03)
 - [ ] 04-04-PLAN.md — Wave 1: KDS timer 60s + mute toggle button + sound i18n strings (KDS-02, KDS-03, KDS-04, KDS-05)
@@ -128,7 +128,7 @@ Plans:
 | 1. Foundation | 5/5 | Complete | 2026-04-22 |
 | 2. Authentication | 5/5 | Complete | 2026-04-23 |
 | 3. Shell + Data Foundation | 6/6 | Complete | 2026-04-24 |
-| 4. Core Screens | 0/9 | In progress | - |
+| 4. Core Screens | 1/9 | In progress | - |
 | 5. Native Integration | 0/? | Not started | - |
 | 6. Build Pipeline | 0/? | Not started | - |
 
