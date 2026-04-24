@@ -88,15 +88,41 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
       </div>
 
       {/* Items preview */}
-      <div style={{ borderTop: '1px dashed hsl(120 10% 88%)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {order.items.slice(0, 3).map((it, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-            <span><b style={{ color: 'var(--sc-primary)', marginRight: 6 }}>{it.qty}×</b>{it.name}</span>
-            <span style={{ color: 'var(--sc-muted-foreground)' }}>{formatRON(it.qty * it.price)}</span>
+      {(() => {
+        const menuItems = order.items.filter(it => it.source !== 'global_product');
+        const globalProducts = order.items.filter(it => it.source === 'global_product');
+        const hasExtras = globalProducts.length > 0 || (order.deliveryFee ?? 0) > 0;
+        const shownMenuItems = menuItems.slice(0, 3);
+        const hiddenCount = menuItems.length - shownMenuItems.length;
+        return (
+          <div style={{ borderTop: '1px dashed hsl(120 10% 88%)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {shownMenuItems.map((it, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                <span><b style={{ color: 'var(--sc-primary)', marginRight: 6 }}>{it.qty}×</b>{it.name}</span>
+                <span style={{ color: 'var(--sc-muted-foreground)' }}>{formatRON(it.qty * it.price)}</span>
+              </div>
+            ))}
+            {hiddenCount > 0 && <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)' }}>+{hiddenCount} {lang === 'ro' ? 'încă' : 'more'}</div>}
+            {hasExtras && (
+              <>
+                <div style={{ borderTop: '1px dashed hsl(120 10% 85%)', margin: '2px 0' }} />
+                {globalProducts.map((it, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--sc-muted-foreground)' }}><b style={{ marginRight: 6 }}>{it.qty}×</b>{it.name}</span>
+                    <span style={{ color: 'var(--sc-muted-foreground)' }}>{formatRON(it.qty * it.price)}</span>
+                  </div>
+                ))}
+                {(order.deliveryFee ?? 0) > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <span style={{ color: 'var(--sc-muted-foreground)', display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="moped" size={11} />{t('delivery_fee')}</span>
+                    <span style={{ color: 'var(--sc-muted-foreground)' }}>{formatRON(order.deliveryFee)}</span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        ))}
-        {order.items.length > 3 && <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)' }}>+{order.items.length - 3} {lang === 'ro' ? 'încă' : 'more'}</div>}
-      </div>
+        );
+      })()}
 
       {/* Total + actions */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid hsl(120 10% 92%)' }}>

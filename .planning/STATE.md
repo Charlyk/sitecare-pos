@@ -113,6 +113,12 @@ Phase 3 of 6 complete — Phase 4 ready to plan
 - **macOS notarization is a hard distribution block** — Apple Developer account ($99/yr) required before Phase 6. Configure all CI secrets before the first release build.
 - **TanStack Query v5 API** — useQuery takes single options object; useMutation uses .isPending not .isLoading. All Phase 3 hooks use v5 syntax.
 
+### Quick Tasks Completed
+
+| Date | Slug | Description |
+|------|------|-------------|
+| 2026-04-24 | order-card-item-groups | Split OrderCard items preview into menu items + global products/delivery fee groups with dashed divider |
+
 ### Todos
 
 *(None)*
