@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 4 — Core Screens
-current_plan: "07 — Wave 2: Menu screen live toggle (MENU-01, MENU-02)"
+current_plan: "08 — Wave 2: Settings Display Tab (SET-01, SET-02, SET-03)"
 status: in-progress
-stopped_at: "Phase 4 Plan 06 complete — POS live menu + discount + createOrder (POS-01 to POS-05), 2026-04-24"
-last_updated: "2026-04-24T14:41:16Z"
+stopped_at: "Phase 4 Plan 07 complete — Menu screen live toggle MENU-01/MENU-02, localStorage removed, useMenu() + toggleStock mutation wired, 2026-04-24"
+last_updated: "2026-04-24T17:47:00Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 31
-  completed_plans: 21
-  percent: 64
+  completed_plans: 22
+  percent: 68
 ---
 
 # State: SiteCare POS Desktop App
@@ -33,13 +33,13 @@ progress:
 ## Current Position
 
 **Current Phase:** 4 — Core Screens
-**Current Plan:** 07 — Wave 2: Menu screen live toggle (MENU-01, MENU-02)
-**Phase Status:** Phase 4 in progress — Plans 01-06 complete, Plan 07 next
-**Overall Status:** Phase 3 done; Phase 4 executing (6/9 plans done)
+**Current Plan:** 08 — Wave 2: Settings Display Tab (SET-01, SET-02, SET-03)
+**Phase Status:** Phase 4 in progress — Plans 01-07 complete, Plan 08 next
+**Overall Status:** Phase 3 done; Phase 4 executing (7/9 plans done)
 
 ```
-Progress: [##########################............] 64%
-Phase 4 of 6 in progress — Plans 01-06 complete (test scaffolding + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation), 3 plans remaining
+Progress: [############################..........] 68%
+Phase 4 of 6 in progress — Plans 01-07 complete (test scaffolding + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation + Menu live toggle), 2 plans remaining
 ```
 
 ---
@@ -51,7 +51,7 @@ Phase 4 of 6 in progress — Plans 01-06 complete (test scaffolding + shared inf
 | 1 | Foundation | Complete — all 5 plans done, human-verified 2026-04-22 |
 | 2 | Authentication | Complete — all 5 plans done and human-verified 2026-04-23 |
 | 3 | Shell + Data Foundation | Complete — all 6 plans done, human-verified 2026-04-24 |
-| 4 | Core Screens | In progress — Plans 01-06 complete (test stubs + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation), Plan 07 next |
+| 4 | Core Screens | In progress — Plans 01-07 complete (test stubs + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation + Menu live toggle), Plan 08 next |
 | 5 | Native Integration | Not started |
 | 6 | Build Pipeline | Not started |
 
@@ -63,7 +63,7 @@ Phase 4 of 6 in progress — Plans 01-06 complete (test scaffolding + shared inf
 |--------|-------|
 | Phases completed | 3 / 6 |
 | Requirements done | 26 / 41 |
-| Plans complete | 21 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 6/9) |
+| Plans complete | 22 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 7/9) |
 | Sessions | 12 |
 
 ---
@@ -109,6 +109,10 @@ Phase 4 of 6 in progress — Plans 01-06 complete (test scaffolding + shared inf
 - **Discount is client-side display only** — SDK `CreateKitchenOrderBody` has no discount field; server computes authoritative total; client-side discount shown for staff awareness only.
 - **createOrder.isPending disables Ring Up** — prevents double-submit on rapid clicks; follows T-04-06-04 threat mitigation.
 - **onCreate prop removed from PosScreen** — mutation is now internal to PosScreen; app.jsx no longer passes an empty `onCreate={() => {}}` stub.
+- **toggleStock body-only (no path param)** — SDK UpdateProductStockData.path is 'never'; correct call is `updateStock({ body: { productId, inStock } })` with productId in body, no path argument.
+- **toggleAll removed from MenuScreen** — bulk "All available" / "All out" localStorage writes have no API equivalent; buttons removed entirely.
+- **Menu category filter uses cats.find()** — normalized items from useMenu() don't carry a static `.cat` field; category association resolved via `cats.find(c => c.items.some(ci => ci.id === it.id))`.
+- **Description column removed from menu table** — static MENU_ITEMS had `it.desc`; normalized API items have no description field; column count reduced from 6 to 5.
 
 ### Open Questions (from research)
 
@@ -146,9 +150,9 @@ Phase 4 of 6 in progress — Plans 01-06 complete (test scaffolding + shared inf
 
 ## Session Continuity
 
-**Last session:** 2026-04-24T14:41:16Z
-**Stopped at:** Phase 4 Plan 06 complete — POS live menu + discount field + createOrder mutation (POS-01 to POS-05): useMenu() normalization, orderTypeMap, discountValue/discountMode, Ring Up wired; 109 tests passing
-**Next action:** `/gsd-execute-phase 4` — execute Plan 07 (Menu screen live toggle, MENU-01, MENU-02)
+**Last session:** 2026-04-24T17:47:00Z
+**Stopped at:** Phase 4 Plan 07 complete — Menu screen live toggle (MENU-01, MENU-02): localStorage removed, useMenu() normalization, toggleStock mutation with body.productId (no path param), AvailSwitch wired, 114 tests passing
+**Next action:** `/gsd-execute-phase 4` — execute Plan 08 (Settings Display Tab, SET-01, SET-02, SET-03)
 
 ---
 *State initialized: 2026-04-22*
