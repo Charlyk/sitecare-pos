@@ -69,7 +69,7 @@ function App() {
   // Role gate (verbatim from prototype):
   useEffect(() => {
     if (role === 'kitchen' && !['kitchen', 'orders'].includes(screen)) setScreen('kitchen');
-  }, [role]);
+  }, [role, screen, setScreen]);
 
   const orderCount = {
     live:   orders.filter(o => !['done', 'cancelled'].includes(o.state)).length,
