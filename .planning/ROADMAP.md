@@ -12,7 +12,7 @@
 
 - [x] **Phase 1: Foundation** - Working Tauri + Vite scaffold with all 7 prototype screens converted to ES modules, design tokens wired, and CSP configured
 - [x] **Phase 2: Authentication** - Staff can log in with username + password, stay logged in across restarts, and be redirected to login when their session expires
-- [ ] **Phase 3: Shell + Data Foundation** - App shell renders from real Zustand state, data hooks connect to live API, SSE connection established, offline banner works
+- [x] **Phase 3: Shell + Data Foundation** - App shell renders from real Zustand state, data hooks connect to live API, SSE connection established, offline banner works
 - [ ] **Phase 4: Core Screens** - All 7 screens render live API data with full UX — orders, KDS timers/urgency/sound/bump, POS checkout flow, menu toggles, settings persistence
 - [ ] **Phase 5: Native Integration** - Staff can configure a thermal printer and print receipts end-to-end via Tauri native plugin
 - [ ] **Phase 6: Build Pipeline** - Every release tag produces signed, notarized macOS and Windows installers; auto-update works
@@ -68,12 +68,12 @@ Plans:
   4. While offline, the Accept, Advance, and Cancel buttons are visually disabled — mutating actions are blocked and re-enable when connectivity returns
 **Plans**: 6 plans
 Plans:
-- [ ] 03-01-PLAN.md — Wave 0: Create failing test stubs for all 4 Phase 3 requirements (KDS-01, OFF-01, OFF-02, OFF-03)
-- [ ] 03-02-PLAN.md — Install @microsoft/fetch-event-source; expose token from AuthProvider context
-- [ ] 03-03-PLAN.md — Implement use-sse.js, use-orders.js, use-menu.js, use-order-actions.js hooks
-- [ ] 03-04-PLAN.md — Create offline-banner.jsx; add offline_ i18n keys; add .offline-banner + .btn-disabled-offline CSS
-- [ ] 03-05-PLAN.md — Wire app.jsx + shell.jsx + 4 mutating screens; replace orderCount stub with live data
-- [ ] 03-06-PLAN.md — Human verify: SSE real-time delivery, offline banner, cached data, button disabled state
+- [x] 03-01-PLAN.md — Wave 0: Create failing test stubs for all 4 Phase 3 requirements (KDS-01, OFF-01, OFF-02, OFF-03)
+- [x] 03-02-PLAN.md — Install @microsoft/fetch-event-source; expose token from AuthProvider context
+- [x] 03-03-PLAN.md — Implement use-sse.js, use-orders.js, use-menu.js, use-order-actions.js hooks
+- [x] 03-04-PLAN.md — Create offline-banner.jsx; add offline_ i18n keys; add .offline-banner + .btn-disabled-offline CSS
+- [x] 03-05-PLAN.md — Wire app.jsx + shell.jsx + 4 mutating screens; replace orderCount stub with live data
+- [x] 03-06-PLAN.md — Human verify: SSE real-time delivery, offline banner, cached data, button disabled state
 
 ### Phase 4: Core Screens
 **Goal**: All 7 screens render live API data with the full prototype UX — orders list with filtering and search, KDS with per-ticket elapsed timers, urgency colors, sound alerts, and bump; POS checkout with cart, discounts, and order submission; menu availability toggles; and settings persistence.
@@ -117,7 +117,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation | 5/5 | Complete | 2026-04-22 |
 | 2. Authentication | 5/5 | Complete | 2026-04-23 |
-| 3. Shell + Data Foundation | 0/6 | Not started | - |
+| 3. Shell + Data Foundation | 6/6 | Complete | 2026-04-24 |
 | 4. Core Screens | 0/? | Not started | - |
 | 5. Native Integration | 0/? | Not started | - |
 | 6. Build Pipeline | 0/? | Not started | - |
@@ -176,4 +176,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-04-23 — Phase 3 planned (6 plans, 5 waves)*
+*Last updated: 2026-04-24 — Phase 3 complete (6/6 plans, human-verified)*
