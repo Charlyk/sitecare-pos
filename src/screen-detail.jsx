@@ -40,7 +40,7 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, isOffline 
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <span className={`chip ${st.chip}`}>{st.label}</span>
-            <span className={`chip ${src.chip}`}><Icon name={src.icon} size={11} />{src.label}</span>
+            <span className="chip chip-slate"><Icon name={order.payment === 'card' ? 'card' : order.payment === 'online' ? 'wifi' : 'cash'} size={11} />{t(order.payment ?? 'cash')}</span>
             <span className="chip chip-slate"><Icon name={typ.icon} size={11} />{typ.label}{order.table ? ` · ${t('table')} ${order.table}` : ''}</span>
           </div>
         </div>

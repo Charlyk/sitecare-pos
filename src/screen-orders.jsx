@@ -67,7 +67,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
             {state === 'new' && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--sc-terracotta)' }} className="pulse" />}
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span className={`chip ${src.chip}`}><Icon name={src.icon} size={11} />{src.label}</span>
+            <span className="chip chip-slate"><Icon name={order.payment === 'card' ? 'card' : order.payment === 'online' ? 'wifi' : 'cash'} size={11} />{t(order.payment ?? 'cash')}</span>
             <span className="chip chip-slate"><Icon name={typ.icon} size={11} />{typ.label}{order.table ? ` · ${t('table')} ${order.table}` : ''}</span>
           </div>
         </div>
