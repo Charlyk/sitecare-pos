@@ -140,6 +140,7 @@ Phase 4 of 6 in progress — Plans 01-08 complete (test scaffolding + shared inf
 | 2026-04-24 | order-card-item-groups | Split OrderCard items preview into menu items + global products/delivery fee groups with dashed divider |
 | 2026-04-24 | kitchen-ticket-data-mapping | Fix KitchenTicket: use dailyOrderNumber, add estimatedMinutes fallback, filter out global products |
 | 2026-04-24 | show-item-options-order-card | Show selected product options (mods) as subtitle below each item name in OrderCard items preview |
+| 2026-04-24 | pos-delivery-address-area | Structured address fields (street/number/bloc/apt/floor/intercom) + delivery zone picker with dynamic fee in POS manual order form |
 
 ### Todos
 

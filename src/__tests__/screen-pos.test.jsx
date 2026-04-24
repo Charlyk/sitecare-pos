@@ -46,6 +46,16 @@ vi.mock('../use-menu.js', () => ({
   })),
 }))
 
+// Mock useDeliveryAreas
+vi.mock('../use-delivery-areas.js', () => ({
+  useDeliveryAreas: vi.fn(() => ({
+    data: [
+      { id: 'area-1', name: 'Centru', fee: 10 },
+      { id: 'area-2', name: 'Tractorul', fee: 15 },
+    ],
+  })),
+}))
+
 // Mock useAuth to return a client with kitchen.orders.create
 const mockCreate = vi.fn()
 vi.mock('../auth.jsx', () => ({
@@ -54,6 +64,9 @@ vi.mock('../auth.jsx', () => ({
       kitchen: {
         orders: {
           create: mockCreate,
+        },
+        deliveryAreas: {
+          list: vi.fn().mockResolvedValue({ data: { deliveryAreas: [] } }),
         },
       },
     },
@@ -144,9 +157,11 @@ describe('PosScreen', () => {
       const discountInput = document.querySelector('input[type="number"][placeholder="0"]')
       expect(discountInput).toBeTruthy()
       fireEvent.change(discountInput, { target: { value: '10' } })
-      // discountAmount should be 25 * 0.10 = 2.50 RON — look for negative amount in totals
-      // Reducere: -2,50 RON
-      expect(screen.getByText(/−/).textContent).toMatch(/−/)
+      // discountAmount should be 25 * 0.10 = 2.50 RON
+      // The discount span has text like "−2,50 lei" — look for a span starting with −
+      const discountSpans = screen.getAllByText(/^−/)
+      expect(discountSpans.length).toBeGreaterThan(0)
+      expect(discountSpans.some(el => el.tagName === 'SPAN')).toBe(true)
     })
 
     test('in ron mode: discountAmount = min(discountValue, subtotal)', () => {
@@ -162,8 +177,9 @@ describe('PosScreen', () => {
       // Enter discount of 5 RON
       const discountInput = document.querySelector('input[type="number"][placeholder="0"]')
       fireEvent.change(discountInput, { target: { value: '5' } })
-      // discount line should show
-      expect(screen.getByText(/−/).textContent).toMatch(/−/)
+      // discount line should show a span with −
+      const discountSpans = screen.getAllByText(/^−/)
+      expect(discountSpans.some(el => el.tagName === 'SPAN')).toBe(true)
     })
 
     test('discount line is hidden when discountValue is empty or 0', () => {
@@ -172,12 +188,12 @@ describe('PosScreen', () => {
       // Add item to cart
       const ciorbaButton = screen.getAllByRole('button').find(b => b.textContent.includes('Ciorbă') && !b.textContent.includes('Comandă'))
       fireEvent.click(ciorbaButton)
-      // Discount input is empty by default — discount line should not show a negative value
-      // The "Reducere" label appears only as the discount field label, not as a totals line
+      // Discount input is empty by default — discount line should not show a negative span
       const discountInput = document.querySelector('input[type="number"][placeholder="0"]')
       expect(discountInput.value).toBe('')
-      // No negative sign element present
-      expect(screen.queryByText(/−/)).toBeNull()
+      // No span starting with − (cart minus buttons render as button text "−" not in spans)
+      const discountSpans = screen.queryAllByText(/^−/)
+      expect(discountSpans.filter(el => el.tagName === 'SPAN').length).toBe(0)
     })
 
     test('discount line shows negative formatted amount when discountAmount > 0', () => {
@@ -187,9 +203,9 @@ describe('PosScreen', () => {
       fireEvent.click(ciorbaButton)
       const discountInput = document.querySelector('input[type="number"][placeholder="0"]')
       fireEvent.change(discountInput, { target: { value: '20' } })
-      // 20% of 25 RON = 5 RON discount
-      const negLine = screen.getByText(/−/)
-      expect(negLine).toBeTruthy()
+      // 20% of 25 RON = 5 RON discount — a span starting with − should appear
+      const discountSpans = screen.getAllByText(/^−/)
+      expect(discountSpans.some(el => el.tagName === 'SPAN')).toBe(true)
     })
   })
 

@@ -5,6 +5,7 @@ import { useT } from './i18n.jsx';
 import { formatRON } from './data.jsx';
 import { typeMeta } from './screen-orders.jsx';
 import { useMenu } from './use-menu.js';
+import { useDeliveryAreas } from './use-delivery-areas.js';
 import { useAuth } from './auth.jsx';
 import { useAppStore } from './store.js';
 
@@ -16,6 +17,7 @@ function PosScreen({ lang, isOffline }) {
   const queryClient = useQueryClient();
   const pushToast = useAppStore((s) => s.pushToast);
   const { data: menuData } = useMenu();
+  const { data: deliveryAreas = [] } = useDeliveryAreas();
 
   const cats = useMemo(() => (menuData?.categories ?? []).map(c => ({
     id: c.id ?? String(c.categoryId ?? ''),
@@ -35,7 +37,8 @@ function PosScreen({ lang, isOffline }) {
   const [cart, setCart] = useState([]);
   const [type, setType] = useState('dinein');
   const [table, setTable] = useState('7');
-  const [customer, setCustomer] = useState({ name: '', phone: '', address: '' });
+  const [customer, setCustomer] = useState({ name: '', phone: '', street: '', number: '', bloc: '', apartament: '', etaj: '', interfon: '' });
+  const [deliveryAreaId, setDeliveryAreaId] = useState('');
   const [payment, setPayment] = useState('card');
   const [note, setNote] = useState('');
   const [discountValue, setDiscountValue] = useState('');
@@ -52,7 +55,8 @@ function PosScreen({ lang, isOffline }) {
 
   const subtotal = cart.reduce((a, x) => a + x.qty * x.price, 0);
   const tax = +(subtotal * 0.19).toFixed(2);
-  const fee = type === 'delivery' ? 10 : 0;
+  const selectedArea = deliveryAreas.find(a => a.id === deliveryAreaId) ?? null;
+  const fee = type === 'delivery' ? (selectedArea?.fee ?? 0) : 0;
 
   const discountAmount = useMemo(() => {
     const v = parseFloat(discountValue);
@@ -68,6 +72,11 @@ function PosScreen({ lang, isOffline }) {
   // Sync cat state when categories load for the first time
   const effectiveCat = cat || (cats[0]?.id ?? '');
 
+  const resetCustomer = () => {
+    setCustomer({ name: '', phone: '', street: '', number: '', bloc: '', apartament: '', etaj: '', interfon: '' });
+    setDeliveryAreaId('');
+  };
+
   const createOrder = useMutation({
     mutationFn: (orderData) => client.kitchen.orders.create({ body: orderData }),
     onSuccess: (result) => {
@@ -76,7 +85,7 @@ function PosScreen({ lang, isOffline }) {
       setCart([]);
       setDiscountValue('');
       setNote('');
-      setCustomer({ name: '', phone: '', address: '' });
+      resetCustomer();
     },
     onError: () => {
       pushToast({ id: Date.now(), kind: 'error', title: t('order_error'), detail: t('check_connection') });
@@ -91,8 +100,16 @@ function PosScreen({ lang, isOffline }) {
       ...(customer.phone ? { customerPhone: customer.phone } : {}),
       ...(note           ? { notes: note }                   : {}),
       paymentType: payment === 'online' ? undefined : payment,
-      ...(type === 'delivery' && customer.address
-        ? { deliveryAddress: { street: customer.address, number: '' } }
+      ...(type === 'delivery' && deliveryAreaId ? { deliveryAreaId } : {}),
+      ...(type === 'delivery' && customer.street
+        ? { deliveryAddress: {
+            street: customer.street,
+            number: customer.number,
+            ...(customer.bloc       ? { bloc: customer.bloc }             : {}),
+            ...(customer.apartament ? { apartament: customer.apartament } : {}),
+            ...(customer.etaj       ? { etaj: customer.etaj }             : {}),
+            ...(customer.interfon   ? { interfon: customer.interfon }     : {}),
+          } }
         : {}),
     };
     createOrder.mutate(body);
@@ -168,7 +185,30 @@ function PosScreen({ lang, isOffline }) {
             <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
               <input placeholder={lang === 'ro' ? 'Nume client' : 'Customer name'} value={customer.name} onChange={e => setCustomer({...customer, name: e.target.value})} style={{ padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
               <input placeholder={lang === 'ro' ? 'Telefon' : 'Phone'} value={customer.phone} onChange={e => setCustomer({...customer, phone: e.target.value})} style={{ padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
-              {type === 'delivery' && <input placeholder={t('address')} value={customer.address} onChange={e => setCustomer({...customer, address: e.target.value})} style={{ padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />}
+              {type === 'delivery' && (
+                <>
+                  <select
+                    value={deliveryAreaId}
+                    onChange={e => setDeliveryAreaId(e.target.value)}
+                    style={{ padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: deliveryAreaId ? '#111' : 'hsl(120 5% 55%)' }}
+                  >
+                    <option value="">{deliveryAreas.length === 0 ? t('no_areas') : t('choose_area')}</option>
+                    {deliveryAreas.map(a => (
+                      <option key={a.id} value={a.id}>{a.name} — {formatRON(a.fee)}</option>
+                    ))}
+                  </select>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input placeholder={t('street')} value={customer.street} onChange={e => setCustomer({...customer, street: e.target.value})} style={{ flex: 3, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
+                    <input placeholder={t('street_number')} value={customer.number} onChange={e => setCustomer({...customer, number: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input placeholder={t('bloc')} value={customer.bloc} onChange={e => setCustomer({...customer, bloc: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
+                    <input placeholder={t('apartament')} value={customer.apartament} onChange={e => setCustomer({...customer, apartament: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
+                    <input placeholder={t('etaj')} value={customer.etaj} onChange={e => setCustomer({...customer, etaj: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
+                    <input placeholder={t('interfon')} value={customer.interfon} onChange={e => setCustomer({...customer, interfon: e.target.value})} style={{ flex: 1, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
