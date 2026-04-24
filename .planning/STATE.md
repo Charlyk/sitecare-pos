@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 4 — Core Screens
-current_plan: "08 — Wave 2: Settings Display Tab (SET-01, SET-02, SET-03)"
+current_plan: "09 — Wave 2: Human Verify (Phase 4 full verification)"
 status: in-progress
-stopped_at: "Phase 4 Plan 07 complete — Menu screen live toggle MENU-01/MENU-02, localStorage removed, useMenu() + toggleStock mutation wired, 2026-04-24"
-last_updated: "2026-04-24T17:47:00Z"
+stopped_at: "Phase 4 Plan 08 complete — Settings Display Tab (SET-01, SET-02, SET-03): Display tab with lang/density/accent controls wired to useAppStore, display_tab i18n key added, 10 tests passing, 2026-04-24"
+last_updated: "2026-04-24T17:55:00Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 31
-  completed_plans: 22
-  percent: 68
+  completed_plans: 23
+  percent: 71
 ---
 
 # State: SiteCare POS Desktop App
@@ -33,13 +33,13 @@ progress:
 ## Current Position
 
 **Current Phase:** 4 — Core Screens
-**Current Plan:** 08 — Wave 2: Settings Display Tab (SET-01, SET-02, SET-03)
-**Phase Status:** Phase 4 in progress — Plans 01-07 complete, Plan 08 next
-**Overall Status:** Phase 3 done; Phase 4 executing (7/9 plans done)
+**Current Plan:** 09 — Wave 2: Human Verify (Phase 4 full verification)
+**Phase Status:** Phase 4 in progress — Plans 01-08 complete, Plan 09 (human verify) next
+**Overall Status:** Phase 3 done; Phase 4 executing (8/9 plans done)
 
 ```
-Progress: [############################..........] 68%
-Phase 4 of 6 in progress — Plans 01-07 complete (test scaffolding + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation + Menu live toggle), 2 plans remaining
+Progress: [############################...........] 71%
+Phase 4 of 6 in progress — Plans 01-08 complete (test scaffolding + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation + Menu live toggle + Settings Display Tab), 1 plan remaining
 ```
 
 ---
@@ -51,7 +51,7 @@ Phase 4 of 6 in progress — Plans 01-07 complete (test scaffolding + shared inf
 | 1 | Foundation | Complete — all 5 plans done, human-verified 2026-04-22 |
 | 2 | Authentication | Complete — all 5 plans done and human-verified 2026-04-23 |
 | 3 | Shell + Data Foundation | Complete — all 6 plans done, human-verified 2026-04-24 |
-| 4 | Core Screens | In progress — Plans 01-07 complete (test stubs + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation + Menu live toggle), Plan 08 next |
+| 4 | Core Screens | In progress — Plans 01-08 complete (test stubs + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation + Menu live toggle + Settings Display Tab), Plan 09 (human verify) next |
 | 5 | Native Integration | Not started |
 | 6 | Build Pipeline | Not started |
 
@@ -62,9 +62,9 @@ Phase 4 of 6 in progress — Plans 01-07 complete (test scaffolding + shared inf
 | Metric | Value |
 |--------|-------|
 | Phases completed | 3 / 6 |
-| Requirements done | 26 / 41 |
-| Plans complete | 22 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 7/9) |
-| Sessions | 12 |
+| Requirements done | 29 / 41 |
+| Plans complete | 23 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 8/9) |
+| Sessions | 13 |
 
 ---
 
@@ -113,6 +113,9 @@ Phase 4 of 6 in progress — Plans 01-07 complete (test scaffolding + shared inf
 - **toggleAll removed from MenuScreen** — bulk "All available" / "All out" localStorage writes have no API equivalent; buttons removed entirely.
 - **Menu category filter uses cats.find()** — normalized items from useMenu() don't carry a static `.cat` field; category association resolved via `cats.find(c => c.items.some(ci => ci.id === it.id))`.
 - **Description column removed from menu table** — static MENU_ITEMS had `it.desc`; normalized API items have no description field; column count reduced from 6 to 5.
+- **Display tab uses storeLang for density labels** — density button labels render using `storeLang` (from Zustand) not the `lang` prop so labels always match stored language preference; the two should be in sync but Zustand is authoritative.
+- **ACCENT_SWATCHES module-level const** — avoids per-render array allocation; swatch active state communicated via box-shadow ring + scale(1.1) transform.
+- **display_tab i18n key added to both sections** — other display keys (display_lang_label, display_density_label, display_accent_label) were already present from prior plans; only display_tab was missing.
 
 ### Open Questions (from research)
 
@@ -150,9 +153,9 @@ Phase 4 of 6 in progress — Plans 01-07 complete (test scaffolding + shared inf
 
 ## Session Continuity
 
-**Last session:** 2026-04-24T17:47:00Z
-**Stopped at:** Phase 4 Plan 07 complete — Menu screen live toggle (MENU-01, MENU-02): localStorage removed, useMenu() normalization, toggleStock mutation with body.productId (no path param), AvailSwitch wired, 114 tests passing
-**Next action:** `/gsd-execute-phase 4` — execute Plan 08 (Settings Display Tab, SET-01, SET-02, SET-03)
+**Last session:** 2026-04-24T17:55:00Z
+**Stopped at:** Phase 4 Plan 08 complete — Settings Display Tab (SET-01, SET-02, SET-03): Display tab with lang/density/accent controls wired to useAppStore, display_tab i18n key added, 124 tests passing
+**Next action:** `/gsd-execute-phase 4` — execute Plan 09 (human verify, Phase 4 full verification)
 
 ---
 *State initialized: 2026-04-22*
