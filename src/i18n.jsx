@@ -156,6 +156,7 @@ export const I18N = {
     order_error: 'Eroare la trimitere',
     discount: 'Discount',
     // Settings Display tab (SET-01, SET-02, SET-03)
+    display_tab: 'Afișaj',
     display_lang_label: 'Limbă',
     display_density_label: 'Densitate',
     display_accent_label: 'Culoare accent',
@@ -311,6 +312,7 @@ export const I18N = {
     order_error: 'Order failed',
     discount: 'Discount',
     // Settings Display tab (SET-01, SET-02, SET-03)
+    display_tab: 'Display',
     display_lang_label: 'Language',
     display_density_label: 'Density',
     display_accent_label: 'Accent colour',

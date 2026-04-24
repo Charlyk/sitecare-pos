@@ -23,7 +23,7 @@ const mockSetAccent = vi.fn()
 vi.mock('../store.js', () => ({
   useAppStore: vi.fn((selector) => {
     const state = {
-      lang: 'ro',
+      lang: 'en',
       density: 'balanced',
       accent: 'sage',
       setLang: mockSetLang,

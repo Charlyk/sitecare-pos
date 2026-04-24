@@ -1,18 +1,34 @@
 import { useState } from 'react';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
+import { useAppStore } from './store.js';
 import { USERS } from './data.jsx';
+
+const ACCENT_SWATCHES = [
+  { id: 'sage',       color: 'hsl(120 14% 49%)' },
+  { id: 'indigo',     color: 'hsl(230 50% 55%)' },
+  { id: 'terracotta', color: 'hsl(0 53% 52%)' },
+  { id: 'charcoal',   color: 'hsl(120 8% 25%)' },
+];
 
 function SettingsScreen({ lang }) {
   const t = useT(lang);
   const users = USERS;
   const [tab, setTab] = useState('users');
 
+  const storeLang    = useAppStore((s) => s.lang);
+  const setLang      = useAppStore((s) => s.setLang);
+  const density      = useAppStore((s) => s.density);
+  const setDensity   = useAppStore((s) => s.setDensity);
+  const accent       = useAppStore((s) => s.accent);
+  const setAccent    = useAppStore((s) => s.setAccent);
+
   const tabs = [
     { id: 'users', label: t('users'), icon: 'users' },
     { id: 'tax', label: lang === 'ro' ? 'Taxe & TVA' : 'Tax & VAT', icon: 'percent' },
     { id: 'store', label: lang === 'ro' ? 'Restaurant' : 'Restaurant', icon: 'storefront' },
     { id: 'integrations', label: lang === 'ro' ? 'Integrări' : 'Integrations', icon: 'wifi' },
+    { id: 'display', label: t('display_tab'), icon: 'grid' },
   ];
 
   return (
@@ -98,6 +114,83 @@ function SettingsScreen({ lang }) {
               <div style={{ fontWeight: 600, fontSize: 13 }}>42 {lang === 'ro' ? 'locuri · 12 mese' : 'seats · 12 tables'}</div>
             </div>
           </div>
+        </div>
+      )}
+
+      {tab === 'display' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 560 }}>
+
+          {/* Language section */}
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--sc-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+              {t('display_lang_label')}
+            </div>
+            <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3 }}>
+              {[
+                { id: 'ro', label: 'Română' },
+                { id: 'en', label: 'English' },
+              ].map(l => (
+                <button key={l.id} onClick={() => setLang(l.id)}
+                  style={{
+                    border: 0, background: storeLang === l.id ? 'var(--sc-primary)' : 'transparent',
+                    color: storeLang === l.id ? '#fff' : '#555',
+                    padding: '7px 20px', borderRadius: 8,
+                    fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+                  }}>
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Density section */}
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--sc-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+              {t('display_density_label')}
+            </div>
+            <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3 }}>
+              {[
+                { id: 'balanced', labelRo: 'Echilibrat', labelEn: 'Balanced' },
+                { id: 'dense',    labelRo: 'Compact',    labelEn: 'Dense' },
+              ].map(d => (
+                <button key={d.id} onClick={() => setDensity(d.id)}
+                  style={{
+                    border: 0, background: density === d.id ? 'var(--sc-primary)' : 'transparent',
+                    color: density === d.id ? '#fff' : '#555',
+                    padding: '7px 20px', borderRadius: 8,
+                    fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+                  }}>
+                  {storeLang === 'ro' ? d.labelRo : d.labelEn}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Accent color section */}
+          <div className="card" style={{ padding: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--sc-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+              {t('display_accent_label')}
+            </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              {ACCENT_SWATCHES.map(a => (
+                <button
+                  key={a.id}
+                  onClick={() => setAccent(a.id)}
+                  title={a.id}
+                  style={{
+                    width: 40, height: 40, borderRadius: '50%',
+                    background: a.color,
+                    border: 'none',
+                    boxShadow: accent === a.id ? `0 0 0 2px #fff, 0 0 0 4px ${a.color}` : 'none',
+                    cursor: 'pointer',
+                    transform: accent === a.id ? 'scale(1.1)' : 'scale(1)',
+                    transition: 'transform 150ms, box-shadow 150ms',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
         </div>
       )}
 
