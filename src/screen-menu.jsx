@@ -1,43 +1,65 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
-import { MENU_CATEGORIES, MENU_ITEMS, formatRON } from './data.jsx';
+import { formatRON } from './data.jsx';
+import { useMenu } from './use-menu.js';
+import { useAuth } from './auth.jsx';
+import { useAppStore } from './store.js';
 
 function MenuScreen({ lang }) {
-  const cats = MENU_CATEGORIES;
-  const allItems = MENU_ITEMS;
+  const t = useT(lang);
+  const { client } = useAuth();
+  const queryClient = useQueryClient();
+  const pushToast = useAppStore((s) => s.pushToast);
+  const { data: menuData, isLoading } = useMenu();
 
-  // Local availability state — keyed by item id
-  const [avail, setAvail] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('sc_avail') || '{}');
-      const init = {};
-      allItems.forEach(it => { init[it.id] = saved[it.id] !== undefined ? saved[it.id] : true; });
-      // Seed a couple as out-of-stock for realism
-      if (saved._seeded == null) {
-        init['p4'] = false;
-        init['ds2'] = false;
-      }
-      return init;
-    } catch { return Object.fromEntries(allItems.map(it => [it.id, true])); }
-  });
+  const cats = useMemo(() => (menuData?.categories ?? []).map(c => ({
+    id: c.id ?? String(c.categoryId ?? ''),
+    ro: c.name ?? '',
+    en: c.nameEn ?? c.name ?? '',
+    icon: c.icon ?? 'utensils',
+    items: (c.products ?? c.items ?? []).map(p => ({
+      id: p.id ?? String(p.productId ?? ''),
+      ro: p.name ?? '',
+      en: p.nameEn ?? p.name ?? '',
+      price: typeof p.price === 'number' ? p.price / 100 : 0,
+      inStock: p.inStock !== false,
+    })),
+  })), [menuData]);
+
+  const allItems = useMemo(() => cats.flatMap(c => c.items), [cats]);
 
   const [cat, setCat] = useState('all');
   const [showOnly, setShowOnly] = useState('all'); // all | available | out
 
-  let items = cat === 'all' ? allItems : allItems.filter(i => i.cat === cat);
-  if (showOnly === 'available') items = items.filter(i => avail[i.id]);
-  if (showOnly === 'out') items = items.filter(i => !avail[i.id]);
+  const toggleStock = useMutation({
+    mutationFn: ({ productId, inStock }) =>
+      client.kitchen.products.updateStock({ body: { productId, inStock } }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['menu'] }),
+    onError: () => pushToast({
+      id: Date.now(),
+      kind: 'error',
+      title: lang === 'ro' ? 'Eroare la actualizare stoc' : 'Stock update failed',
+      detail: '',
+    }),
+  });
 
-  const outCount = allItems.filter(i => !avail[i.id]).length;
+  let items = cat === 'all' ? allItems : allItems.filter(i => {
+    const catObj = cats.find(c => c.id === cat);
+    return catObj?.items.some(ci => ci.id === i.id);
+  });
+  if (showOnly === 'available') items = items.filter(i => i.inStock);
+  if (showOnly === 'out') items = items.filter(i => !i.inStock);
+
+  const outCount = allItems.filter(i => !i.inStock).length;
   const availCount = allItems.length - outCount;
 
-  const toggleAll = (on) => {
-    const scope = cat === 'all' ? allItems : allItems.filter(i => i.cat === cat);
-    const next = { ...avail };
-    scope.forEach(i => { next[i.id] = on; });
-    setAvail(next);
-  };
+  if (isLoading) return (
+    <div style={{ padding: 48, color: 'var(--sc-muted-foreground)', fontSize: 14 }}>
+      {lang === 'ro' ? 'Se încarcă meniul…' : 'Loading menu…'}
+    </div>
+  );
 
   return (
     <div className="content-pad">
@@ -81,15 +103,6 @@ function MenuScreen({ lang }) {
             </button>
           ))}
         </div>
-
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <button className="btn-secondary" onClick={() => toggleAll(true)}>
-            <Icon name="check2" size={14} /> {lang === 'ro' ? 'Toate disponibile' : 'All available'}
-          </button>
-          <button className="btn-secondary" onClick={() => toggleAll(false)}>
-            <Icon name="x" size={14} /> {lang === 'ro' ? 'Toate epuizate' : 'All out'}
-          </button>
-        </div>
       </div>
 
       {/* Layout: category rail + list */}
@@ -99,45 +112,46 @@ function MenuScreen({ lang }) {
             <Icon name="grid" size={15} /><span style={{ flex: 1, textAlign: 'left' }}>{lang === 'ro' ? 'Toate' : 'All'}</span><span style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 700 }}>{allItems.length}</span>
           </button>
           {cats.map(c => {
-            const catItems = allItems.filter(i => i.cat === c.id);
-            const catOut = catItems.filter(i => !avail[i.id]).length;
+            const catOut = c.items.filter(i => !i.inStock).length;
             return (
               <button key={c.id} onClick={() => setCat(c.id)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 8, border: 0, background: cat === c.id ? 'hsl(120 14% 49% / 0.1)' : 'transparent', color: cat === c.id ? 'var(--sc-primary)' : '#444', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
                 <Icon name={c.icon} size={15} />
-                <span style={{ flex: 1, textAlign: 'left' }}>{c[lang]}</span>
+                <span style={{ flex: 1, textAlign: 'left' }}>{lang === 'ro' ? c.ro : c.en}</span>
                 {catOut > 0 && <span style={{ fontSize: 10, background: 'hsl(0 53% 58% / 0.14)', color: 'hsl(0 53% 42%)', padding: '1px 6px', borderRadius: 999, fontWeight: 700 }}>{catOut}</span>}
-                <span style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 700 }}>{catItems.length}</span>
+                <span style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 700 }}>{c.items.length}</span>
               </button>
             );
           })}
         </div>
 
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '52px 1.6fr 2fr 110px 90px 70px', padding: '12px 18px', borderBottom: '1px solid hsl(120 10% 92%)', fontSize: 10, fontWeight: 700, color: 'var(--sc-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '52px 1.6fr 110px 90px 70px', padding: '12px 18px', borderBottom: '1px solid hsl(120 10% 92%)', fontSize: 10, fontWeight: 700, color: 'var(--sc-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             <div></div>
             <div>{lang === 'ro' ? 'Produs' : 'Item'}</div>
-            <div>{lang === 'ro' ? 'Descriere' : 'Description'}</div>
             <div>{lang === 'ro' ? 'Categorie' : 'Category'}</div>
             <div style={{ textAlign: 'right' }}>{lang === 'ro' ? 'Preț' : 'Price'}</div>
             <div style={{ textAlign: 'right' }}>{lang === 'ro' ? 'Stoc' : 'Stock'}</div>
           </div>
           {items.map((it) => {
-            const c = cats.find(c => c.id === it.cat);
-            const on = avail[it.id];
+            const c = cats.find(c => c.items.some(ci => ci.id === it.id));
+            const isPending = toggleStock.isPending && toggleStock.variables?.productId === it.id;
             return (
-              <div key={it.id} style={{ display: 'grid', gridTemplateColumns: '52px 1.6fr 2fr 110px 90px 70px', padding: '12px 18px', alignItems: 'center', borderBottom: '1px solid hsl(120 10% 94%)', fontSize: 13, opacity: on ? 1 : 0.58, transition: 'opacity 150ms' }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: on ? 'hsl(120 14% 49% / 0.1)' : 'hsl(0 53% 58% / 0.08)', color: on ? 'var(--sc-primary)' : 'hsl(0 53% 48%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon name={c?.icon} size={16} />
+              <div key={it.id} style={{ display: 'grid', gridTemplateColumns: '52px 1.6fr 110px 90px 70px', padding: '12px 18px', alignItems: 'center', borderBottom: '1px solid hsl(120 10% 94%)', fontSize: 13, opacity: isPending ? 0.6 : (it.inStock ? 1 : 0.58), transition: 'opacity 150ms' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: it.inStock ? 'hsl(120 14% 49% / 0.1)' : 'hsl(0 53% 58% / 0.08)', color: it.inStock ? 'var(--sc-primary)' : 'hsl(0 53% 48%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name={c?.icon ?? 'utensils'} size={16} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, textDecoration: on ? 'none' : 'line-through', textDecorationColor: 'hsl(0 53% 58% / 0.5)' }}>{it[lang]}</div>
-                  <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)' }}>{lang === 'ro' ? 'EN' : 'RO'}: {it[lang === 'ro' ? 'en' : 'ro']}</div>
+                  <div style={{ fontWeight: 700, textDecoration: it.inStock ? 'none' : 'line-through', textDecorationColor: 'hsl(0 53% 58% / 0.5)' }}>{lang === 'ro' ? it.ro : it.en}</div>
+                  <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)' }}>{lang === 'ro' ? 'EN' : 'RO'}: {lang === 'ro' ? it.en : it.ro}</div>
                 </div>
-                <div style={{ color: 'var(--sc-muted-foreground)', opacity: on ? 1 : 0.7 }}>{it.desc}</div>
-                <div><span className="chip chip-slate">{c?.[lang]}</span></div>
+                <div><span className="chip chip-slate">{lang === 'ro' ? c?.ro : c?.en}</span></div>
                 <div style={{ textAlign: 'right', fontWeight: 700 }}>{formatRON(it.price)}</div>
                 <div style={{ textAlign: 'right' }}>
-                  <AvailSwitch on={on} onChange={v => setAvail({ ...avail, [it.id]: v })} lang={lang} />
+                  <AvailSwitch
+                    on={it.inStock}
+                    onChange={v => toggleStock.mutate({ productId: it.id, inStock: v })}
+                    lang={lang}
+                  />
                 </div>
               </div>
             );
