@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 4 — Core Screens
-current_plan: "04 — Wave 2: Orders screen search"
+current_plan: "05 — Wave 2: Orders screen search (ORD-03)"
 status: in-progress
-stopped_at: "Phase 4 Plan 03 complete — CancelDialog component, cancel order flow ACT-03 wired, 2026-04-24"
-last_updated: "2026-04-24T14:22:00Z"
+stopped_at: "Phase 4 Plan 04 complete — KDS timer 60s + mute toggle (KDS-02, KDS-03, KDS-04, KDS-05), 2026-04-24"
+last_updated: "2026-04-24T17:26:39Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 31
-  completed_plans: 18
-  percent: 55
+  completed_plans: 19
+  percent: 58
 ---
 
 # State: SiteCare POS Desktop App
@@ -33,13 +33,13 @@ progress:
 ## Current Position
 
 **Current Phase:** 4 — Core Screens
-**Current Plan:** 04 — Wave 2: Orders screen search
-**Phase Status:** Phase 4 in progress — Plans 01-03 complete, Plan 04 next
-**Overall Status:** Phase 3 done; Phase 4 executing (3/9 plans done)
+**Current Plan:** 05 — Wave 2: Orders screen search (ORD-03)
+**Phase Status:** Phase 4 in progress — Plans 01-04 complete, Plan 05 next
+**Overall Status:** Phase 3 done; Phase 4 executing (4/9 plans done)
 
 ```
-Progress: [#####################.................] 58%
-Phase 4 of 6 in progress — Plans 01-03 complete (test scaffolding + shared infra + cancel flow), 6 plans remaining
+Progress: [######################................] 58%
+Phase 4 of 6 in progress — Plans 01-04 complete (test scaffolding + shared infra + cancel flow + KDS timer/mute), 5 plans remaining
 ```
 
 ---
@@ -51,7 +51,7 @@ Phase 4 of 6 in progress — Plans 01-03 complete (test scaffolding + shared inf
 | 1 | Foundation | Complete — all 5 plans done, human-verified 2026-04-22 |
 | 2 | Authentication | Complete — all 5 plans done and human-verified 2026-04-23 |
 | 3 | Shell + Data Foundation | Complete — all 6 plans done, human-verified 2026-04-24 |
-| 4 | Core Screens | In progress — Plans 01-02 complete (test stubs + shared infra), Plan 03 next |
+| 4 | Core Screens | In progress — Plans 01-04 complete (test stubs + shared infra + cancel flow + KDS timer/mute), Plan 05 next |
 | 5 | Native Integration | Not started |
 | 6 | Build Pipeline | Not started |
 
@@ -63,7 +63,7 @@ Phase 4 of 6 in progress — Plans 01-03 complete (test scaffolding + shared inf
 |--------|-------|
 | Phases completed | 3 / 6 |
 | Requirements done | 21 / 41 |
-| Plans complete | 18 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 2/9) |
+| Plans complete | 19 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 4/9) |
 | Sessions | 11 |
 
 ---
@@ -102,6 +102,8 @@ Phase 4 of 6 in progress — Plans 01-03 complete (test scaffolding + shared inf
 - **handleLiveOrder with useCallback** — sound trigger callback wrapped in `useCallback([soundMuted])` to maintain stable identity in useSSE dependency array and prevent unnecessary SSE reconnects on re-renders.
 - **CancelDialog is dumb** — calls `onConfirm(reason)`, app.jsx handles `updateStatus.mutate`; same pattern as AcceptDialog. Dialog stays open on error (setCancelDialog NOT called in onError).
 - **Cancel button visibility guard** — `order.state !== 'done' && order.state !== 'cancelled'` prevents Cancel appearing on terminal orders; API also enforces transition validity server-side.
+- **KDS timer 60000ms** — KDS-02 spec says "updated every minute"; 60s rerender is sufficient for minute-resolution elapsed display; do not revert to 30000.
+- **KDS mute toggle uses bell icon for both states** — `bell-off` does not exist in icons.jsx; muted state communicated via `t('sound_off')` label + opacity 0.6 on the btn-secondary button.
 
 ### Open Questions (from research)
 
@@ -139,9 +141,9 @@ Phase 4 of 6 in progress — Plans 01-03 complete (test scaffolding + shared inf
 
 ## Session Continuity
 
-**Last session:** 2026-04-24T14:22:00Z
-**Stopped at:** Phase 4 Plan 03 complete — CancelDialog component (ACT-03), Cancel button in screen-detail, app.jsx wired with cancelDialog state + CANCELLED mutation; 88 tests passing
-**Next action:** `/gsd-execute-phase 4` — execute Plan 04 (Orders screen search)
+**Last session:** 2026-04-24T17:26:39Z
+**Stopped at:** Phase 4 Plan 04 complete — KDS timer fixed to 60s (KDS-02), mute toggle button in KDS header (KDS-04), i18n sound_on/off keys added; 92 tests passing
+**Next action:** `/gsd-execute-phase 4` — execute Plan 05 (Orders screen search, ORD-03)
 
 ---
 *State initialized: 2026-04-22*
