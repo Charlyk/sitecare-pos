@@ -76,7 +76,9 @@ function App() {
     return () => clearInterval(id);
   }, []);
 
-  const { isConnected } = useSSE(token);
+  const { isConnected } = useSSE(token, () => {
+    if (!soundMutedRef.current) new Audio('/sounds/notification.mp3').play().catch(() => {});
+  });
   const isOffline = !isConnected;
 
   const handleAdvance = (order, toStatus) => {
