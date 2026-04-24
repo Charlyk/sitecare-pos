@@ -129,3 +129,14 @@ None — no external service configuration required.
 ---
 *Phase: 04-core-screens*
 *Completed: 2026-04-24*
+
+## Self-Check: PASSED
+
+- src/screen-menu.jsx: FOUND
+- src/__tests__/screen-menu.test.jsx: FOUND
+- .planning/phases/04-core-screens/04-07-SUMMARY.md: FOUND
+- Commit 810ca48 (RED tests): FOUND
+- Commit bb7337f (GREEN impl): FOUND
+- Commit fa9b965 (docs metadata): FOUND
+- 5/5 screen-menu tests: PASSING
+- 114/114 full suite: PASSING
