@@ -33,7 +33,7 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, isOffline 
 
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
           <div>
-            <div style={{ fontWeight: 900, fontSize: 32, letterSpacing: '-0.02em', lineHeight: 1 }}>{order.id}</div>
+            <div style={{ fontWeight: 900, fontSize: 32, letterSpacing: '-0.02em', lineHeight: 1 }}>#{order.dailyOrderNumber}</div>
             <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', marginTop: 4 }}>
               {orderTimeLabel(order.placedAt)} · {elapsed} {t('min')} {t('elapsed').toLowerCase()}
             </div>

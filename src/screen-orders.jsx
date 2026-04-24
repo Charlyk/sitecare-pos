@@ -62,7 +62,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em' }}>{order.id}</span>
+            <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em' }}>#{order.dailyOrderNumber}</span>
             <span className={`chip ${st.chip}`}>{st.label}</span>
             {state === 'new' && <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--sc-terracotta)' }} className="pulse" />}
           </div>

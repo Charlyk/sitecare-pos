@@ -4,6 +4,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './auth.jsx';
+import { normalizeOrder } from './data.jsx';
 
 export function useOrders(status) {
   const { client } = useAuth();
@@ -15,7 +16,8 @@ export function useOrders(status) {
         query: status ? { status } : {},
       });
       if (result.error) throw new Error(result.error.error ?? 'Failed to list orders');
-      return result.data; // OrderListResponse: { orders: Order[] }
+      const { orders, ...rest } = result.data;
+      return { ...rest, orders: orders.map(normalizeOrder) };
     },
     enabled: !!client,
     staleTime: 30_000, // 30s — SSE keeps cache fresh; polling is fallback only

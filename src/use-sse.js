@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useQueryClient } from '@tanstack/react-query';
+import { normalizeOrder } from './data.jsx';
 
 // Dev: Vite proxy intercepts /v1/* → https://api.restaurant.sitecare.ro
 // Prod: direct URL — tauri.conf.json connect-src already whitelists this domain (Phase 1)
@@ -46,7 +47,7 @@ export function useSSE(token) {
         // D-03: order_new events → upsert into ['orders'] cache (no network refetch)
         if (msg.event === 'order_new') {
           try {
-            const order = JSON.parse(msg.data);
+            const order = normalizeOrder(JSON.parse(msg.data));
             queryClient.setQueryData(['orders'], (old) => {
               const list = old?.orders ?? [];
               const idx = list.findIndex((o) => o.id === order.id);

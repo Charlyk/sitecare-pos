@@ -178,3 +178,31 @@ export const orderTimeLabel = (iso) => {
   const d = new Date(iso);
   return d.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
 };
+
+// Normalize an Order from the SDK (cents, flat fields) to the prototype shape (RON, nested).
+// Apply at the data layer (useOrders queryFn, useSSE onmessage) so screens are shape-agnostic.
+export function normalizeOrder(o) {
+  const cRON = (v) => (v ?? 0) / 100; // SDK returns monetary values in cents
+  return {
+    ...o,
+    dailyOrderNumber: o.dailyOrderNumber ?? o.id,
+    state: o.state ?? o.status?.toLowerCase() ?? 'new',
+    type: o.type ?? o.orderType ?? 'dinein',
+    source: o.source ?? 'counter',
+    payment: o.payment ?? o.paymentType ?? 'cash',
+    placedAt: o.placedAt ?? o.createdAt ?? o.orderDate,
+    customer: o.customer ?? { name: o.customerName ?? '', phone: o.customerPhone ?? null },
+    subtotal: cRON(o.subtotal),
+    total: cRON(o.total),
+    deliveryFee: cRON(o.deliveryFee),
+    tax: o.tax != null ? cRON(o.tax) : 0,
+    tip: o.tip != null ? cRON(o.tip) : 0,
+    items: (o.items ?? []).map((it) => ({
+      ...it,
+      name: it.name ?? it.productName ?? '',
+      qty: it.qty ?? it.quantity ?? 1,
+      price: cRON(it.price ?? it.basePrice ?? 0),
+      mods: it.mods ?? (it.selectedOptions ?? []).map((s) => s.optionName).filter(Boolean),
+    })),
+  };
+}
