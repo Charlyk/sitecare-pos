@@ -187,16 +187,19 @@ function PosScreen({ lang, isOffline }) {
               <input placeholder={lang === 'ro' ? 'Telefon' : 'Phone'} value={customer.phone} onChange={e => setCustomer({...customer, phone: e.target.value})} style={{ padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
               {type === 'delivery' && (
                 <>
-                  <select
-                    value={deliveryAreaId}
-                    onChange={e => setDeliveryAreaId(e.target.value)}
-                    style={{ width: '100%', padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: '#111', boxSizing: 'border-box' }}
-                  >
-                    <option value="">{deliveryAreas.length === 0 ? t('no_areas') : t('choose_area')}</option>
-                    {deliveryAreas.map(a => (
-                      <option key={a.id} value={a.id}>{a.name} — {formatRON(a.fee)}</option>
-                    ))}
-                  </select>
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      value={deliveryAreaId}
+                      onChange={e => setDeliveryAreaId(e.target.value)}
+                      style={{ width: '100%', padding: '8px 32px 8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: deliveryAreaId ? '#111' : 'hsl(120 5% 55%)', boxSizing: 'border-box', appearance: 'none', WebkitAppearance: 'none', outline: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="">{deliveryAreas.length === 0 ? t('no_areas') : t('choose_area')}</option>
+                      {deliveryAreas.map(a => (
+                        <option key={a.id} value={a.id}>{a.name} — {formatRON(a.fee)}</option>
+                      ))}
+                    </select>
+                    <Icon name="chevDown" size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'hsl(120 5% 55%)' }} />
+                  </div>
                   <div style={{ display: 'flex', gap: 6, minWidth: 0 }}>
                     <input placeholder={t('street')} value={customer.street} onChange={e => setCustomer({...customer, street: e.target.value})} style={{ flex: 3, minWidth: 0, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
                     <input placeholder={t('street_number')} value={customer.number} onChange={e => setCustomer({...customer, number: e.target.value})} style={{ flex: 1, minWidth: 0, padding: '8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13 }} />
