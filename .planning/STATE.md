@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 4 — Core Screens
-current_plan: "02 — Wave 1: Shared infrastructure"
+current_plan: "03 — Wave 2: Orders screen search"
 status: in-progress
-stopped_at: "Phase 4 Plan 01 complete — test stubs for all 20 Phase 4 requirements, 2026-04-24"
-last_updated: "2026-04-24T14:06:38Z"
+stopped_at: "Phase 4 Plan 02 complete — soundMuted store, SSE onLiveOrder, statusToSDK, AcceptDialog API wiring, i18n keys, 2026-04-24"
+last_updated: "2026-04-24T14:14:51Z"
 progress:
   total_phases: 6
   completed_phases: 3
@@ -33,13 +33,13 @@ progress:
 ## Current Position
 
 **Current Phase:** 4 — Core Screens
-**Current Plan:** 02 — Wave 1: Shared infrastructure
-**Phase Status:** Phase 4 in progress — Plan 01 complete (test stubs), Plan 02 next
-**Overall Status:** Phase 3 done; Phase 4 executing (1/9 plans done)
+**Current Plan:** 03 — Wave 2: Orders screen search
+**Phase Status:** Phase 4 in progress — Plans 01-02 complete, Plan 03 next
+**Overall Status:** Phase 3 done; Phase 4 executing (2/9 plans done)
 
 ```
-Progress: [####################..................] 52%
-Phase 4 of 6 in progress — Plan 01 complete (test scaffolding), 8 plans remaining
+Progress: [####################..................] 55%
+Phase 4 of 6 in progress — Plans 01-02 complete (test scaffolding + shared infra), 7 plans remaining
 ```
 
 ---
@@ -51,7 +51,7 @@ Phase 4 of 6 in progress — Plan 01 complete (test scaffolding), 8 plans remain
 | 1 | Foundation | Complete — all 5 plans done, human-verified 2026-04-22 |
 | 2 | Authentication | Complete — all 5 plans done and human-verified 2026-04-23 |
 | 3 | Shell + Data Foundation | Complete — all 6 plans done, human-verified 2026-04-24 |
-| 4 | Core Screens | In progress — Plan 01 complete (test stubs), Plan 02 next |
+| 4 | Core Screens | In progress — Plans 01-02 complete (test stubs + shared infra), Plan 03 next |
 | 5 | Native Integration | Not started |
 | 6 | Build Pipeline | Not started |
 
@@ -63,8 +63,8 @@ Phase 4 of 6 in progress — Plan 01 complete (test scaffolding), 8 plans remain
 |--------|-------|
 | Phases completed | 3 / 6 |
 | Requirements done | 21 / 41 |
-| Plans complete | 17 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 1/9) |
-| Sessions | 10 |
+| Plans complete | 18 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 2/9) |
+| Sessions | 11 |
 
 ---
 
@@ -96,6 +96,10 @@ Phase 4 of 6 in progress — Plan 01 complete (test scaffolding), 8 plans remain
 - **ES module migration complete** — all 12 prototype files migrated; zero `window.*` module globals remain in any `src/*.jsx` file (verified by grep audit after Plan 05).
 - **Phase 3 SSE approach confirmed** — @microsoft/fetch-event-source (not native EventSource) required for Bearer auth header. Token exposed from AuthProvider context (token state alongside tokenRef). useSSE mounted in App authenticated branch (not Shell component). isConnected is sole offline signal (no navigator.onLine). Cache key ['orders'] is canonical root shared by useSSE.setQueryData and useOrderActions.invalidateQueries.
 - **Phase 3 hook placement** — useSSE and useOrders called unconditionally at top of App() function (before conditional returns) so React hook rules are respected. The `if (!token)` guard inside useSSE handles null token during cold-start safely.
+- **statusToSDK map** — module-level const in app.jsx mapping UI state names to SDK enum values; `done→COMPLETED`, `out→OUT_FOR_DELIVERY`; fallback `.toUpperCase()` for unknown states.
+- **snapshotDone ref (100ms)** — useSSE uses a `useRef` flag set via `setTimeout(100)` in `onopen` to distinguish initial SSE snapshot events from live events; prevents sound burst on app load.
+- **App() t binding** — `const t = useT(lang)` added to App() scope so AcceptDialog onConfirm callbacks can call `t()` for toast strings; AcceptDialog child component has its own `t` binding for its own render.
+- **handleLiveOrder with useCallback** — sound trigger callback wrapped in `useCallback([soundMuted])` to maintain stable identity in useSSE dependency array and prevent unnecessary SSE reconnects on re-renders.
 
 ### Open Questions (from research)
 
@@ -133,9 +137,9 @@ Phase 4 of 6 in progress — Plan 01 complete (test scaffolding), 8 plans remain
 
 ## Session Continuity
 
-**Last session:** 2026-04-24T14:06:38Z
-**Stopped at:** Phase 4 Plan 01 complete — 10 test files (7 new + 3 extended), 66 todo stubs, 80 passing tests
-**Next action:** `/gsd-execute-phase 4` — execute Plan 02 (Wave 1: shared infrastructure)
+**Last session:** 2026-04-24T14:14:51Z
+**Stopped at:** Phase 4 Plan 02 complete — soundMuted store state, SSE snapshot detection, statusToSDK map, AcceptDialog API wiring, 19 i18n keys; 88 tests passing
+**Next action:** `/gsd-execute-phase 4` — execute Plan 03 (Wave 2: Orders screen search)
 
 ---
 *State initialized: 2026-04-22*
