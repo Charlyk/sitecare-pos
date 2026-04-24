@@ -3,13 +3,16 @@ import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { elapsedMinutes } from './data.jsx';
 import { typeMeta } from './screen-orders.jsx';
+import { useAppStore } from './store.js';
 
 function KitchenScreen({ orders, lang, onAdvance, isOffline }) {
   const t = useT(lang);
   const [, force] = useState(0);
+  const soundMuted = useAppStore((s) => s.soundMuted);
+  const setSoundMuted = useAppStore((s) => s.setSoundMuted);
 
   useEffect(() => {
-    const id = setInterval(() => force(v => v + 1), 30000);
+    const id = setInterval(() => force(v => v + 1), 60000);
     return () => clearInterval(id);
   }, []);
 
@@ -40,6 +43,17 @@ function KitchenScreen({ orders, lang, onAdvance, isOffline }) {
 
   return (
     <div className="content-pad" style={{ height: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 12 }}>
+        <button
+          className="btn-secondary"
+          onClick={() => setSoundMuted(!soundMuted)}
+          title={soundMuted ? t('sound_off_tooltip') : t('sound_on_tooltip')}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: soundMuted ? 0.6 : 1 }}
+        >
+          <Icon name="bell" size={14} />
+          {soundMuted ? t('sound_off') : t('sound_on')}
+        </button>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
         <Column title={t('queue')} items={queue} accent="hsl(0 53% 58%)" emptyLabel={lang === 'ro' ? 'Nicio comandă în așteptare' : 'No orders in queue'} />
         <Column title={t('active')} items={active} accent="hsl(38 92% 50%)" emptyLabel={lang === 'ro' ? 'Nimic în pregătire' : 'Nothing cooking'} />

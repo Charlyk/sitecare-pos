@@ -159,6 +159,11 @@ export const I18N = {
     display_lang_label: 'Limbă',
     display_density_label: 'Densitate',
     display_accent_label: 'Culoare accent',
+    // KDS mute toggle (KDS-04)
+    sound_on: 'Sunet activ',
+    sound_off: 'Sunet oprit',
+    sound_on_tooltip: 'Dezactivează sunetul',
+    sound_off_tooltip: 'Activează sunetul',
   },
   en: {
     nav_orders: 'Live orders',
@@ -306,6 +311,11 @@ export const I18N = {
     display_lang_label: 'Language',
     display_density_label: 'Density',
     display_accent_label: 'Accent colour',
+    // KDS mute toggle (KDS-04)
+    sound_on: 'Sound on',
+    sound_off: 'Muted',
+    sound_on_tooltip: 'Mute sound',
+    sound_off_tooltip: 'Unmute',
   },
 };
 
