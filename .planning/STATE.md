@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 4 — Core Screens
-current_plan: "03 — Wave 2: Orders screen search"
+current_plan: "04 — Wave 2: Orders screen search"
 status: in-progress
-stopped_at: "Phase 4 Plan 02 complete — soundMuted store, SSE onLiveOrder, statusToSDK, AcceptDialog API wiring, i18n keys, 2026-04-24"
-last_updated: "2026-04-24T14:14:51Z"
+stopped_at: "Phase 4 Plan 03 complete — CancelDialog component, cancel order flow ACT-03 wired, 2026-04-24"
+last_updated: "2026-04-24T14:22:00Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 31
-  completed_plans: 17
-  percent: 52
+  completed_plans: 18
+  percent: 55
 ---
 
 # State: SiteCare POS Desktop App
@@ -33,13 +33,13 @@ progress:
 ## Current Position
 
 **Current Phase:** 4 — Core Screens
-**Current Plan:** 03 — Wave 2: Orders screen search
-**Phase Status:** Phase 4 in progress — Plans 01-02 complete, Plan 03 next
-**Overall Status:** Phase 3 done; Phase 4 executing (2/9 plans done)
+**Current Plan:** 04 — Wave 2: Orders screen search
+**Phase Status:** Phase 4 in progress — Plans 01-03 complete, Plan 04 next
+**Overall Status:** Phase 3 done; Phase 4 executing (3/9 plans done)
 
 ```
-Progress: [####################..................] 55%
-Phase 4 of 6 in progress — Plans 01-02 complete (test scaffolding + shared infra), 7 plans remaining
+Progress: [#####################.................] 58%
+Phase 4 of 6 in progress — Plans 01-03 complete (test scaffolding + shared infra + cancel flow), 6 plans remaining
 ```
 
 ---
@@ -100,6 +100,8 @@ Phase 4 of 6 in progress — Plans 01-02 complete (test scaffolding + shared inf
 - **snapshotDone ref (100ms)** — useSSE uses a `useRef` flag set via `setTimeout(100)` in `onopen` to distinguish initial SSE snapshot events from live events; prevents sound burst on app load.
 - **App() t binding** — `const t = useT(lang)` added to App() scope so AcceptDialog onConfirm callbacks can call `t()` for toast strings; AcceptDialog child component has its own `t` binding for its own render.
 - **handleLiveOrder with useCallback** — sound trigger callback wrapped in `useCallback([soundMuted])` to maintain stable identity in useSSE dependency array and prevent unnecessary SSE reconnects on re-renders.
+- **CancelDialog is dumb** — calls `onConfirm(reason)`, app.jsx handles `updateStatus.mutate`; same pattern as AcceptDialog. Dialog stays open on error (setCancelDialog NOT called in onError).
+- **Cancel button visibility guard** — `order.state !== 'done' && order.state !== 'cancelled'` prevents Cancel appearing on terminal orders; API also enforces transition validity server-side.
 
 ### Open Questions (from research)
 
@@ -137,9 +139,9 @@ Phase 4 of 6 in progress — Plans 01-02 complete (test scaffolding + shared inf
 
 ## Session Continuity
 
-**Last session:** 2026-04-24T14:14:51Z
-**Stopped at:** Phase 4 Plan 02 complete — soundMuted store state, SSE snapshot detection, statusToSDK map, AcceptDialog API wiring, 19 i18n keys; 88 tests passing
-**Next action:** `/gsd-execute-phase 4` — execute Plan 03 (Wave 2: Orders screen search)
+**Last session:** 2026-04-24T14:22:00Z
+**Stopped at:** Phase 4 Plan 03 complete — CancelDialog component (ACT-03), Cancel button in screen-detail, app.jsx wired with cancelDialog state + CANCELLED mutation; 88 tests passing
+**Next action:** `/gsd-execute-phase 4` — execute Plan 04 (Orders screen search)
 
 ---
 *State initialized: 2026-04-22*
