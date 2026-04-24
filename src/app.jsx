@@ -17,6 +17,7 @@ import { LoginScreen } from './screen-login.jsx';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useSSE } from './use-sse.js';
 import { useOrders } from './use-orders.js';
+import { useOrderActions } from './use-order-actions.js';
 
 function App() {
   const lang = useAppStore((s) => s.lang);
@@ -45,6 +46,11 @@ function App() {
   const isOffline = !isConnected;
   const { data: ordersData } = useOrders();
   const orders = ordersData?.orders ?? [];
+  const { updateStatus } = useOrderActions();
+
+  const handleAdvance = (order, toStatus) => {
+    updateStatus.mutate({ id: order.id, currentStatus: order.state.toUpperCase(), toStatus: toStatus.toUpperCase() });
+  };
 
   // Accent CSS custom property mutation (verbatim from prototype, Zustand-driven):
   useEffect(() => {
@@ -103,10 +109,10 @@ function App() {
              orderCount={orderCount} sidebarCollapsed={sidebarCollapsed}
              setSidebarCollapsed={setSidebarCollapsed} isOffline={isOffline}>
         {/* Screen router: Phase 3 — orders from useOrders(), isOffline wired to all screens */}
-        {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={() => {}} onPrint={() => {}} isOffline={isOffline} />}
-        {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={() => {}} isOffline={isOffline} />}
+        {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={handleAdvance} onPrint={() => {}} isOffline={isOffline} />}
+        {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={handleAdvance} isOffline={isOffline} />}
         {screen === 'pos'     && <PosScreen     lang={lang} onCreate={() => {}} isOffline={isOffline} />}
-        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} onBack={() => setScreen('orders')} onAdvance={() => {}} onPrint={() => {}} isOffline={isOffline} />}
+        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={() => {}} isOffline={isOffline} />}
         {screen === 'menu'    && <MenuScreen    lang={lang} isOffline={isOffline} />}
         {screen === 'printer' && <PrinterScreen lang={lang} onTestPrint={() => pushToast({ id: Date.now(), kind: 'info', title: 'Test print sent', detail: '' })} isOffline={isOffline} />}
         {screen === 'settings'&& <SettingsScreen lang={lang} isOffline={isOffline} />}
