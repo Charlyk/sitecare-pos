@@ -257,7 +257,7 @@ function ThermalTicket({ order, lang, kind }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <span>{typeMeta(order.type, t).label.toUpperCase()}{order.table ? ` · MASA ${order.table}` : ''}</span>
-        <span>{order.source.toUpperCase()}</span>
+        <span>{(order.source ?? 'counter').toUpperCase()}</span>
       </div>
       {order.customer.name && <div>Client: {order.customer.name}</div>}
       {order.address && <div style={{ fontSize: 10 }}>{order.address.line1}</div>}
@@ -290,7 +290,7 @@ function ThermalTicket({ order, lang, kind }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 13, marginTop: 4 }}>
             <span>TOTAL RON</span><span>{money(order.total)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}><span>Plată</span><span>{order.payment.toUpperCase()}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}><span>Plată</span><span>{(order.payment ?? 'cash').toUpperCase()}</span></div>
         </>
       )}
 
