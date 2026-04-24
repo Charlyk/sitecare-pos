@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 4 — Core Screens
-current_plan: "06 — Wave 2: POS screen live menu + order creation (POS-01 to POS-05)"
+current_plan: "07 — Wave 2: Menu screen live toggle (MENU-01, MENU-02)"
 status: in-progress
-stopped_at: "Phase 4 Plan 05 complete — Orders screen search (ORD-03), 2026-04-24"
-last_updated: "2026-04-24T14:33:43Z"
+stopped_at: "Phase 4 Plan 06 complete — POS live menu + discount + createOrder (POS-01 to POS-05), 2026-04-24"
+last_updated: "2026-04-24T14:41:16Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 31
-  completed_plans: 20
-  percent: 61
+  completed_plans: 21
+  percent: 64
 ---
 
 # State: SiteCare POS Desktop App
@@ -33,13 +33,13 @@ progress:
 ## Current Position
 
 **Current Phase:** 4 — Core Screens
-**Current Plan:** 06 — Wave 2: POS screen live menu + order creation (POS-01 to POS-05)
-**Phase Status:** Phase 4 in progress — Plans 01-05 complete, Plan 06 next
-**Overall Status:** Phase 3 done; Phase 4 executing (5/9 plans done)
+**Current Plan:** 07 — Wave 2: Menu screen live toggle (MENU-01, MENU-02)
+**Phase Status:** Phase 4 in progress — Plans 01-06 complete, Plan 07 next
+**Overall Status:** Phase 3 done; Phase 4 executing (6/9 plans done)
 
 ```
-Progress: [########################..............] 61%
-Phase 4 of 6 in progress — Plans 01-05 complete (test scaffolding + shared infra + cancel flow + KDS timer/mute + Orders search), 4 plans remaining
+Progress: [##########################............] 64%
+Phase 4 of 6 in progress — Plans 01-06 complete (test scaffolding + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation), 3 plans remaining
 ```
 
 ---
@@ -51,7 +51,7 @@ Phase 4 of 6 in progress — Plans 01-05 complete (test scaffolding + shared inf
 | 1 | Foundation | Complete — all 5 plans done, human-verified 2026-04-22 |
 | 2 | Authentication | Complete — all 5 plans done and human-verified 2026-04-23 |
 | 3 | Shell + Data Foundation | Complete — all 6 plans done, human-verified 2026-04-24 |
-| 4 | Core Screens | In progress — Plans 01-05 complete (test stubs + shared infra + cancel flow + KDS timer/mute + Orders search), Plan 06 next |
+| 4 | Core Screens | In progress — Plans 01-06 complete (test stubs + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation), Plan 07 next |
 | 5 | Native Integration | Not started |
 | 6 | Build Pipeline | Not started |
 
@@ -62,8 +62,8 @@ Phase 4 of 6 in progress — Plans 01-05 complete (test scaffolding + shared inf
 | Metric | Value |
 |--------|-------|
 | Phases completed | 3 / 6 |
-| Requirements done | 21 / 41 |
-| Plans complete | 20 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 5/9) |
+| Requirements done | 26 / 41 |
+| Plans complete | 21 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 6/9) |
 | Sessions | 12 |
 
 ---
@@ -105,6 +105,10 @@ Phase 4 of 6 in progress — Plans 01-05 complete (test scaffolding + shared inf
 - **KDS timer 60000ms** — KDS-02 spec says "updated every minute"; 60s rerender is sufficient for minute-resolution elapsed display; do not revert to 30000.
 - **KDS mute toggle uses bell icon for both states** — `bell-off` does not exist in icons.jsx; muted state communicated via `t('sound_off')` label + opacity 0.6 on the btn-secondary button.
 - **search_placeholder key pre-existed in i18n.jsx** — key at line 15 (ro) / line 181 (en) was added in Phase 3 for Shell topbar; ORD-03 plan reused the same key; only net-new keys `search_no_results` and `search_no_results_sub` were added to avoid duplicates.
+- **orderTypeMap module-level const in screen-pos.jsx** — maps UI order types to SDK enum values; `dinein→local` is critical (SDK rejects 'dinein'); defined as const prevents user tampering.
+- **Discount is client-side display only** — SDK `CreateKitchenOrderBody` has no discount field; server computes authoritative total; client-side discount shown for staff awareness only.
+- **createOrder.isPending disables Ring Up** — prevents double-submit on rapid clicks; follows T-04-06-04 threat mitigation.
+- **onCreate prop removed from PosScreen** — mutation is now internal to PosScreen; app.jsx no longer passes an empty `onCreate={() => {}}` stub.
 
 ### Open Questions (from research)
 
@@ -142,9 +146,9 @@ Phase 4 of 6 in progress — Plans 01-05 complete (test scaffolding + shared inf
 
 ## Session Continuity
 
-**Last session:** 2026-04-24T14:33:43Z
-**Stopped at:** Phase 4 Plan 05 complete — Orders screen search (ORD-03): searchQuery state + filter + SearchInput UI + search-no-results empty state + i18n keys; 96 tests passing
-**Next action:** `/gsd-execute-phase 4` — execute Plan 06 (POS screen live menu + order creation, POS-01 to POS-05)
+**Last session:** 2026-04-24T14:41:16Z
+**Stopped at:** Phase 4 Plan 06 complete — POS live menu + discount field + createOrder mutation (POS-01 to POS-05): useMenu() normalization, orderTypeMap, discountValue/discountMode, Ring Up wired; 109 tests passing
+**Next action:** `/gsd-execute-phase 4` — execute Plan 07 (Menu screen live toggle, MENU-01, MENU-02)
 
 ---
 *State initialized: 2026-04-22*
