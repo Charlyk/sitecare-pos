@@ -73,7 +73,7 @@ function KitchenTicket({ order, lang, t, onAdvance, isOffline }) {
     <div className="card" style={{ padding: 0, border: `1.5px solid ${borderColor}`, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', padding: '12px 14px', background: state === 'ready' ? 'hsl(120 14% 49% / 0.08)' : state === 'preparing' ? 'hsl(38 92% 50% / 0.08)' : 'hsl(0 53% 58% / 0.06)' }}>
         <div>
-          <div style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', lineHeight: 1 }}>{order.id}</div>
+          <div style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', lineHeight: 1 }}>#{order.dailyOrderNumber}</div>
           <div style={{ display: 'flex', gap: 6, marginTop: 4, alignItems: 'center' }}>
             <Icon name={tm.icon} size={12} />
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--sc-muted-foreground)' }}>{tm.label}{order.table ? ` · ${t('table')} ${order.table}` : ''}</span>
@@ -84,13 +84,13 @@ function KitchenTicket({ order, lang, t, onAdvance, isOffline }) {
             {elapsed}:00
           </div>
           <div style={{ fontSize: 10, color: 'var(--sc-muted-foreground)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            {t('promised')} {order.promisedIn} {t('min')}
+            {t('promised')} {order.promisedIn ?? order.estimatedMinutes ?? '—'} {t('min')}
           </div>
         </div>
       </div>
 
       <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {order.items.map((it, i) => (
+        {order.items.filter(it => it.source !== 'global_product').map((it, i) => (
           <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
             <div style={{ minWidth: 28, height: 28, borderRadius: 6, background: 'var(--sc-primary)', color: '#fff', fontWeight: 900, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 6px' }}>{it.qty}</div>
             <div>

@@ -118,6 +118,7 @@ Phase 3 of 6 complete — Phase 4 ready to plan
 | Date | Slug | Description |
 |------|------|-------------|
 | 2026-04-24 | order-card-item-groups | Split OrderCard items preview into menu items + global products/delivery fee groups with dashed divider |
+| 2026-04-24 | kitchen-ticket-data-mapping | Fix KitchenTicket: use dailyOrderNumber, add estimatedMinutes fallback, filter out global products |
 
 ### Todos
 
