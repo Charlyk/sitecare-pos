@@ -66,9 +66,9 @@ function App() {
   }, [role]);
 
   const orderCount = {
-    live: orders.filter(o => !['COMPLETED', 'CANCELLED'].includes(o.status)).length,
-    new: orders.filter(o => o.status === 'NEW').length,
-    active: orders.filter(o => ['ACCEPTED', 'PREPARING'].includes(o.status)).length,
+    live:   orders.filter(o => !['done', 'cancelled'].includes(o.state)).length,
+    new:    orders.filter(o => o.state === 'new').length,
+    active: orders.filter(o => ['accepted', 'preparing'].includes(o.state)).length,
   };
 
   // Auth guard (AUTH-05): render LoginScreen for unauthenticated users
