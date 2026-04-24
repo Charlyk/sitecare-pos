@@ -33,11 +33,13 @@ export function useSSE(token) {
       headers: { Authorization: `Bearer ${token}` }, // Bearer token in header only — NEVER in URL (T-3-01)
       signal: ctrl.signal,
 
-      onopen(response) {
-        // fetchEventSource throws FatalError on non-2xx by default
+      async onopen(response) {
         if (response.ok) {
           setIsConnected(true); // D-06: connected = stream open and receiving
+          return;
         }
+        // Non-2xx: throw so fetchEventSource routes to onerror and retries
+        throw new Error(`SSE: server returned ${response.status}`);
       },
 
       onmessage(msg) {
