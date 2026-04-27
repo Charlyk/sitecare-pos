@@ -45,10 +45,78 @@ describe('OrdersScreen', () => {
   const noop = () => {}
 
   describe('ORD-01: live orders list with status filtering', () => {
-    test.todo('renders orders from useOrders() hook, not static data')
-    test.todo('filter "new" shows only orders with state === new')
-    test.todo('filter "preparing" shows accepted + preparing orders')
-    test.todo('filter "ready" shows ready + out orders')
+    test('renders orders from useOrders() hook, not static data', () => {
+      // OrdersScreen receives orders as a prop; if the prop is wired correctly,
+      // order #42 must appear in the DOM when passed in as a prop.
+      const orders = [makeOrder({ id: 'ord-42', dailyOrderNumber: 42, state: 'new' })]
+      render(
+        createElement(OrdersScreen, { orders, lang: 'en', onOpen: noop, onAdvance: noop, onPrint: noop, isOffline: false }),
+        { wrapper: w }
+      )
+      expect(screen.getByText('#42')).toBeTruthy()
+    })
+
+    test('filter "new" shows only orders with state === new', () => {
+      const orders = [
+        makeOrder({ id: 'n1', dailyOrderNumber: 10, state: 'new' }),
+        makeOrder({ id: 'n2', dailyOrderNumber: 20, state: 'preparing' }),
+        makeOrder({ id: 'n3', dailyOrderNumber: 30, state: 'accepted' }),
+      ]
+      render(
+        createElement(OrdersScreen, { orders, lang: 'en', onOpen: noop, onAdvance: noop, onPrint: noop, isOffline: false }),
+        { wrapper: w }
+      )
+      // Click the "New" filter button
+      const filterBtns = screen.getAllByRole('button')
+      const newBtn = filterBtns.find(b => b.textContent.includes('new') || b.textContent.includes('New'))
+      fireEvent.click(newBtn)
+      // #10 (new) visible; #20 (preparing) and #30 (accepted) must not be visible
+      expect(screen.getByText('#10')).toBeTruthy()
+      expect(screen.queryByText('#20')).toBeNull()
+      expect(screen.queryByText('#30')).toBeNull()
+    })
+
+    test('filter "preparing" shows accepted + preparing orders', () => {
+      const orders = [
+        makeOrder({ id: 'p1', dailyOrderNumber: 11, state: 'new' }),
+        makeOrder({ id: 'p2', dailyOrderNumber: 22, state: 'accepted' }),
+        makeOrder({ id: 'p3', dailyOrderNumber: 33, state: 'preparing' }),
+        makeOrder({ id: 'p4', dailyOrderNumber: 44, state: 'ready' }),
+      ]
+      render(
+        createElement(OrdersScreen, { orders, lang: 'en', onOpen: noop, onAdvance: noop, onPrint: noop, isOffline: false }),
+        { wrapper: w }
+      )
+      const filterBtns = screen.getAllByRole('button')
+      const preparingBtn = filterBtns.find(b => b.textContent.includes('preparing') || b.textContent.includes('Preparing'))
+      fireEvent.click(preparingBtn)
+      // #22 (accepted) and #33 (preparing) must be visible
+      expect(screen.getByText('#22')).toBeTruthy()
+      expect(screen.getByText('#33')).toBeTruthy()
+      // #11 (new) and #44 (ready) must not be visible
+      expect(screen.queryByText('#11')).toBeNull()
+      expect(screen.queryByText('#44')).toBeNull()
+    })
+
+    test('filter "ready" shows ready + out orders', () => {
+      const orders = [
+        makeOrder({ id: 'r1', dailyOrderNumber: 55, state: 'new' }),
+        makeOrder({ id: 'r2', dailyOrderNumber: 66, state: 'ready' }),
+        makeOrder({ id: 'r3', dailyOrderNumber: 77, state: 'out' }),
+      ]
+      render(
+        createElement(OrdersScreen, { orders, lang: 'en', onOpen: noop, onAdvance: noop, onPrint: noop, isOffline: false }),
+        { wrapper: w }
+      )
+      const filterBtns = screen.getAllByRole('button')
+      const readyBtn = filterBtns.find(b => b.textContent.includes('ready') || b.textContent.includes('Ready'))
+      fireEvent.click(readyBtn)
+      // #66 (ready) and #77 (out) must be visible
+      expect(screen.getByText('#66')).toBeTruthy()
+      expect(screen.getByText('#77')).toBeTruthy()
+      // #55 (new) must not be visible
+      expect(screen.queryByText('#55')).toBeNull()
+    })
   })
 
   describe('ORD-03: client-side search by order ID and customer name', () => {

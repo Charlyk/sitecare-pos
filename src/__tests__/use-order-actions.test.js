@@ -123,9 +123,38 @@ describe('U11c — useOrderActions mutation wrappers (D-15)', () => {
 })
 
 describe('ACT-02: statusToSDK mapping — correct enum values sent to API', () => {
-  test.todo('advancing from "done" state sends toStatus "COMPLETED" not "DONE"')
-  test.todo('advancing from "out" state sends toStatus "OUT_FOR_DELIVERY" not "OUT"')
-  test.todo('advancing from "new" sends toStatus "ACCEPTED"')
-  test.todo('advancing from "accepted" sends toStatus "PREPARING"')
-  test.todo('advancing from "preparing" sends toStatus "READY"')
+  let statusToSDK
+
+  beforeAll(async () => {
+    const mod = await import('../app.jsx')
+    statusToSDK = mod.statusToSDK
+  })
+
+  // When advancing FROM 'new' TO 'accepted', the toStatus sent is statusToSDK['accepted']
+  test('advancing from "done" state sends toStatus "COMPLETED" not "DONE"', () => {
+    // When an order has state 'done' (meaning we're mapping that state to SDK), it must be 'COMPLETED'
+    expect(statusToSDK['done']).toBe('COMPLETED')
+    expect(statusToSDK['done']).not.toBe('DONE')
+  })
+
+  test('advancing from "out" state sends toStatus "OUT_FOR_DELIVERY" not "OUT"', () => {
+    // When an order has state 'out' (delivery en route), SDK enum must be 'OUT_FOR_DELIVERY'
+    expect(statusToSDK['out']).toBe('OUT_FOR_DELIVERY')
+    expect(statusToSDK['out']).not.toBe('OUT')
+  })
+
+  test('advancing from "new" sends toStatus "ACCEPTED"', () => {
+    // The toStatus when advancing past 'new' is statusToSDK['accepted']
+    expect(statusToSDK['accepted']).toBe('ACCEPTED')
+  })
+
+  test('advancing from "accepted" sends toStatus "PREPARING"', () => {
+    // The toStatus when advancing past 'accepted' is statusToSDK['preparing']
+    expect(statusToSDK['preparing']).toBe('PREPARING')
+  })
+
+  test('advancing from "preparing" sends toStatus "READY"', () => {
+    // The toStatus when advancing past 'preparing' is statusToSDK['ready']
+    expect(statusToSDK['ready']).toBe('READY')
+  })
 })

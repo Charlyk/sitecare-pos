@@ -91,6 +91,18 @@ describe('soundMuted state (KDS-04, D-07)', () => {
 })
 
 describe('ORD-02: role switch reflects in store', () => {
-  test.todo('setRole("boh") updates role to boh')
-  test.todo('setRole("foh") updates role back to foh')
+  test('setRole("boh") updates role to boh', () => {
+    useAppStore.getState().setRole('boh')
+    expect(useAppStore.getState().role).toBe('boh')
+    // reset to default
+    useAppStore.getState().setRole('cashier')
+  })
+
+  test('setRole("foh") updates role back to foh', () => {
+    useAppStore.getState().setRole('boh')
+    useAppStore.getState().setRole('foh')
+    expect(useAppStore.getState().role).toBe('foh')
+    // reset to default
+    useAppStore.getState().setRole('cashier')
+  })
 })

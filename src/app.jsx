@@ -24,7 +24,7 @@ import { useRestaurantSettings } from './use-restaurant-settings.js';
 import { useDeliveryAreas } from './use-delivery-areas.js';
 import { CancelDialog } from './cancel-dialog.jsx';
 
-const statusToSDK = {
+export const statusToSDK = {
   new: 'NEW',
   accepted: 'ACCEPTED',
   preparing: 'PREPARING',
@@ -242,7 +242,7 @@ function App() {
   );
 }
 
-function AcceptDialog({ lang, order, onCancel, onConfirm }) {
+export function AcceptDialog({ lang, order, onCancel, onConfirm }) {
   const t = useT(lang);
   const suggested = order.promisedIn || 25;
   const presets = order.type === 'delivery'

@@ -35,9 +35,66 @@ describe('KitchenScreen', () => {
   })
 
   describe('KDS-03: urgency colors by age', () => {
-    test.todo('ticket with remaining > 8 min has neutral border hsl(120 10% 90%)')
-    test.todo('ticket with remaining <= 8 min has amber border hsl(38 92% 50%)')
-    test.todo('ticket with remaining <= 3 min has terracotta border var(--sc-terracotta)')
+    // Set placedAt = now so elapsed ≈ 0; control remaining via promisedIn.
+    function makeTicketOrder(promisedIn, state = 'new') {
+      return {
+        id: 'ticket-' + promisedIn,
+        dailyOrderNumber: promisedIn,
+        state,
+        _state: state,
+        type: 'dinein',
+        placedAt: new Date().toISOString(),
+        promisedIn,
+        items: [{ name: 'Burger', qty: 1, price: 20, mods: [] }],
+      }
+    }
+
+    test('ticket with remaining > 8 min has neutral border hsl(120 10% 90%)', async () => {
+      const { KitchenScreen } = await import('../screen-kitchen.jsx')
+      const order = makeTicketOrder(20) // remaining ≈ 20, neutral
+      const { container } = render(
+        createElement(w, null, createElement(KitchenScreen, {
+          orders: [order], lang: 'en', onAdvance: vi.fn(), isOffline: false,
+        }))
+      )
+      const card = container.querySelector('.card')
+      expect(card).toBeTruthy()
+      // jsdom normalizes hsl(120 10% 90%) → rgb(227, 232, 227) in inline styles.
+      // Verify the neutral color is applied (not amber rgb(245,159,10) or terracotta).
+      const styleAttr = card.getAttribute('style') ?? ''
+      // Must contain rgb(227, 232, 227) — the RGB equivalent of hsl(120 10% 90%)
+      expect(styleAttr).toContain('rgb(227, 232, 227)')
+    })
+
+    test('ticket with remaining <= 8 min has amber border hsl(38 92% 50%)', async () => {
+      const { KitchenScreen } = await import('../screen-kitchen.jsx')
+      const order = makeTicketOrder(5) // remaining ≈ 5 (≤8 and >3), amber
+      const { container } = render(
+        createElement(w, null, createElement(KitchenScreen, {
+          orders: [order], lang: 'en', onAdvance: vi.fn(), isOffline: false,
+        }))
+      )
+      const card = container.querySelector('.card')
+      expect(card).toBeTruthy()
+      // jsdom normalizes hsl(38 92% 50%) → rgb(245, 159, 10) in inline styles.
+      const styleAttr = card.getAttribute('style') ?? ''
+      expect(styleAttr).toContain('rgb(245, 159, 10)')
+    })
+
+    test('ticket with remaining <= 3 min has terracotta border var(--sc-terracotta)', async () => {
+      const { KitchenScreen } = await import('../screen-kitchen.jsx')
+      const order = makeTicketOrder(2) // remaining ≈ 2 (≤3), terracotta
+      const { container } = render(
+        createElement(w, null, createElement(KitchenScreen, {
+          orders: [order], lang: 'en', onAdvance: vi.fn(), isOffline: false,
+        }))
+      )
+      const card = container.querySelector('.card')
+      expect(card).toBeTruthy()
+      // CSS variables are kept as-is by jsdom — var(--sc-terracotta) stays in the attribute.
+      const styleAttr = card.getAttribute('style') ?? ''
+      expect(styleAttr).toContain('var(--sc-terracotta)')
+    })
   })
 
   describe('KDS-04: mute toggle button', () => {
@@ -68,6 +125,34 @@ describe('KitchenScreen', () => {
   })
 
   describe('KDS-05: bump button advances ticket', () => {
-    test.todo('clicking bump button calls onAdvance with the ticket order and next state')
+    test('clicking bump button calls onAdvance with the ticket order and next state', async () => {
+      const { KitchenScreen } = await import('../screen-kitchen.jsx')
+      const onAdvance = vi.fn()
+      const order = {
+        id: 'bump-order-1',
+        dailyOrderNumber: 99,
+        state: 'new',
+        _state: 'new',
+        type: 'dinein',
+        placedAt: new Date().toISOString(),
+        promisedIn: 20,
+        items: [{ name: 'Pizza', qty: 1, price: 30, mods: [] }],
+      }
+      render(
+        createElement(w, null, createElement(KitchenScreen, {
+          orders: [order], lang: 'en', onAdvance, isOffline: false,
+        }))
+      )
+      // The bump button in a 'new' ticket advances to 'accepted'
+      // Its label comes from t('accept') which falls back to the key 'accept'
+      const buttons = screen.getAllByRole('button')
+      // Find the advance/bump button — it has btn-primary class and contains 'accept' text
+      const bumpBtn = buttons.find(b => b.className.includes('btn-primary') && !b.disabled)
+      expect(bumpBtn).toBeTruthy()
+      fireEvent.click(bumpBtn)
+      expect(onAdvance).toHaveBeenCalledTimes(1)
+      // First arg is the order (with _state normalisation), second is 'accepted'
+      expect(onAdvance.mock.calls[0][1]).toBe('accepted')
+    })
   })
 })
