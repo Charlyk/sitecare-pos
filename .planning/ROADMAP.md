@@ -13,7 +13,7 @@
 - [x] **Phase 1: Foundation** - Working Tauri + Vite scaffold with all 7 prototype screens converted to ES modules, design tokens wired, and CSP configured
 - [x] **Phase 2: Authentication** - Staff can log in with username + password, stay logged in across restarts, and be redirected to login when their session expires
 - [x] **Phase 3: Shell + Data Foundation** - App shell renders from real Zustand state, data hooks connect to live API, SSE connection established, offline banner works
-- [ ] **Phase 4: Core Screens** - All 7 screens render live API data with full UX — orders, KDS timers/urgency/sound/bump, POS checkout flow, menu toggles, settings persistence
+- [x] **Phase 4: Core Screens** - All 7 screens render live API data with full UX — orders, KDS timers/urgency/sound/bump, POS checkout flow, menu toggles, settings persistence
 - [ ] **Phase 5: Native Integration** - Staff can configure a thermal printer and print receipts end-to-end via Tauri native plugin
 - [ ] **Phase 6: Build Pipeline** - Every release tag produces signed, notarized macOS and Windows installers; auto-update works
 
@@ -85,7 +85,7 @@ Plans:
   3. A cashier can browse the live menu, build a cart with quantity adjustments and a discount, select dine-in/pickup/delivery, and submit the order to the kitchen — the order appears on the KDS
   4. A manager can toggle any menu item out-of-stock and back in-stock from the Menu screen — the change persists in the API and reflects immediately
   5. Changing language, density, or accent in Settings persists after closing and reopening the app
-**Plans**: 9 plans
+**Plans**: 10 plans
 Plans:
 - [x] 04-01-PLAN.md — Wave 0: Create all failing test stubs for 20 Phase 4 requirement IDs
 - [x] 04-02-PLAN.md — Wave 1: Shared infrastructure — soundMuted store, SSE onLiveOrder callback, AcceptDialog API wiring, statusToSDK map
@@ -95,7 +95,8 @@ Plans:
 - [x] 04-06-PLAN.md — Wave 2: POS live menu + discount field + createOrder mutation + orderTypeMap (POS-01 through POS-05)
 - [x] 04-07-PLAN.md — Wave 2: Menu screen useMenu() + toggleStock mutation + localStorage removal (MENU-01, MENU-02)
 - [x] 04-08-PLAN.md — Wave 2: Settings Display tab with lang/density/accent controls (SET-01, SET-02, SET-03)
-- [ ] 04-09-PLAN.md — Wave 3: Human verification checklist — all 5 Phase 4 success criteria
+- [x] 04-09-PLAN.md — Wave 3: Human verification checklist — all 5 Phase 4 success criteria
+- [x] 04-10-PLAN.md — Wave 4: Gap closure — 4 verification blockers + 7 code-review warnings
 **UI hint**: yes
 
 ### Phase 5: Native Integration
@@ -128,7 +129,7 @@ Plans:
 | 1. Foundation | 5/5 | Complete | 2026-04-22 |
 | 2. Authentication | 5/5 | Complete | 2026-04-23 |
 | 3. Shell + Data Foundation | 6/6 | Complete | 2026-04-24 |
-| 4. Core Screens | 8/9 | In progress | - |
+| 4. Core Screens | 10/10 | Complete | 2026-04-27 |
 | 5. Native Integration | 0/? | Not started | - |
 | 6. Build Pipeline | 0/? | Not started | - |
 
@@ -186,4 +187,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-04-24 — Phase 4 planned (9 plans: Wave 0 + Wave 1 x3 + Wave 2 x4 + Wave 3 human verify)*
+*Last updated: 2026-04-27 — Phase 4 complete (10/10 plans done; 20/20 verification score; 125 tests passing)*
