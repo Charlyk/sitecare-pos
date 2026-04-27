@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 4 — Core Screens
-current_plan: "09 — Wave 2: Human Verify (Phase 4 full verification)"
-status: in-progress
-stopped_at: "Phase 4 Plan 08 complete — Settings Display Tab (SET-01, SET-02, SET-03): Display tab with lang/density/accent controls wired to useAppStore, display_tab i18n key added, 10 tests passing, 2026-04-24"
-last_updated: "2026-04-24T17:55:00Z"
+current_plan: "10 — Wave 4: Gap Closure (verification blockers + code review fixes)"
+status: ready-to-execute
+stopped_at: ""
+last_updated: "2026-04-27T23:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 31
-  completed_plans: 23
-  percent: 71
+  total_plans: 26
+  completed_plans: 24
+  percent: 92
 ---
 
 # State: SiteCare POS Desktop App
@@ -33,13 +33,13 @@ progress:
 ## Current Position
 
 **Current Phase:** 4 — Core Screens
-**Current Plan:** 09 — Wave 2: Human Verify (Phase 4 full verification)
-**Phase Status:** Phase 4 in progress — Plans 01-08 complete, Plan 09 (human verify) next
-**Overall Status:** Phase 3 done; Phase 4 executing (8/9 plans done)
+**Current Plan:** 10 — Wave 4: Gap Closure (verification blockers + code review fixes)
+**Phase Status:** Phase 4 planned — 10 plans (09 executed, 10 ready to execute)
+**Overall Status:** Phase 3 done; Phase 4 gap-closure plan ready to execute
 
 ```
 Progress: [############################...........] 71%
-Phase 4 of 6 in progress — Plans 01-08 complete (test scaffolding + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation + Menu live toggle + Settings Display Tab), 1 plan remaining
+Phase 4 of 6 in progress — Plans 01-09 complete, Plan 10 (gap closure) ready
 ```
 
 ---
@@ -51,7 +51,7 @@ Phase 4 of 6 in progress — Plans 01-08 complete (test scaffolding + shared inf
 | 1 | Foundation | Complete — all 5 plans done, human-verified 2026-04-22 |
 | 2 | Authentication | Complete — all 5 plans done and human-verified 2026-04-23 |
 | 3 | Shell + Data Foundation | Complete — all 6 plans done, human-verified 2026-04-24 |
-| 4 | Core Screens | In progress — Plans 01-08 complete (test stubs + shared infra + cancel flow + KDS timer/mute + Orders search + POS live menu + order creation + Menu live toggle + Settings Display Tab), Plan 09 (human verify) next |
+| 4 | Core Screens | In progress — Plans 01-09 complete (human verify done — 4 blockers found), Plan 10 (gap closure) ready to execute |
 | 5 | Native Integration | Not started |
 | 6 | Build Pipeline | Not started |
 
@@ -154,8 +154,8 @@ Phase 4 of 6 in progress — Plans 01-08 complete (test scaffolding + shared inf
 
 ## Session Continuity
 
-**Last session:** 2026-04-24T17:55:00Z
-**Stopped at:** Phase 4 Plan 08 complete — Settings Display Tab (SET-01, SET-02, SET-03): Display tab with lang/density/accent controls wired to useAppStore, display_tab i18n key added, 124 tests passing
+**Last session:** 2026-04-27T11:13:05.689Z
+**Stopped at:** context exhaustion at 76% (2026-04-27)
 **Next action:** `/gsd-execute-phase 4` — execute Plan 09 (human verify, Phase 4 full verification)
 
 ---
