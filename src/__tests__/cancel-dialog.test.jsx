@@ -25,6 +25,6 @@ describe('CancelDialog', () => {
     test.todo('onConfirm calls updateStatus.mutate with toStatus CANCELLED and the selected reason string')
     test.todo('on success: dialog closes, navigates to orders screen, pushes success toast')
     test.todo('on error: error toast pushed, dialog stays open')
-    test.todo('dismiss button (Renunță/Never mind) closes dialog without API call')
+    test.todo('dismiss button (Înapoi/Back) closes dialog without API call')
   })
 })

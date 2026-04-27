@@ -7,7 +7,7 @@ import { useMenu } from './use-menu.js';
 import { useAuth } from './auth.jsx';
 import { useAppStore } from './store.js';
 
-function MenuScreen({ lang }) {
+function MenuScreen({ lang, isOffline }) {
   const t = useT(lang);
   const { client } = useAuth();
   const queryClient = useQueryClient();

@@ -1,3 +1,5 @@
+import { describe, test, expect, beforeEach, vi } from 'vitest'
+
 // Tests for Zustand store partialize — U5 (AUTH-02)
 // Verifies isAuthenticated and authUser are NOT persisted to disk.
 

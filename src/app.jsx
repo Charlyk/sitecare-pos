@@ -17,7 +17,11 @@ import { LoginScreen } from './screen-login.jsx';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useSSE } from './use-sse.js';
 import { useOrders } from './use-orders.js';
+import { useOrderDetail } from './use-order-detail.js';
 import { useOrderActions } from './use-order-actions.js';
+import { useStats } from './use-stats.js';
+import { useRestaurantSettings } from './use-restaurant-settings.js';
+import { useDeliveryAreas } from './use-delivery-areas.js';
 import { CancelDialog } from './cancel-dialog.jsx';
 
 const statusToSDK = {
@@ -37,7 +41,7 @@ function App() {
   const accent = useAppStore((s) => s.accent);
   const density = useAppStore((s) => s.density);
   const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed);
-  const selectedOrder = useAppStore((s) => s.selectedOrder);
+  const selectedOrderId = useAppStore((s) => s.selectedOrder?.id);
   const toasts = useAppStore((s) => s.toasts);
   const acceptDialog = useAppStore((s) => s.acceptDialog);
   const setScreen = useAppStore((s) => s.setScreen);
@@ -57,31 +61,45 @@ function App() {
 
   const { data: ordersData } = useOrders();
   const orders = ordersData?.orders ?? [];
+  const { data: selectedOrder } = useOrderDetail(selectedOrderId);
+  const { data: stats } = useStats();
+  const { data: restaurantSettings } = useRestaurantSettings();
+  const { data: deliveryAreas = [] } = useDeliveryAreas();
   const { updateStatus } = useOrderActions();
   const soundMuted = useAppStore((s) => s.soundMuted);
 
   // Refs keep interval closure fresh without resetting the 15s clock on every orders update
   const ordersRef = useRef(orders);
   const soundMutedRef = useRef(soundMuted);
+  const audioRef = useRef(null);
   useEffect(() => { ordersRef.current = orders; }, [orders]);
   useEffect(() => { soundMutedRef.current = soundMuted; }, [soundMuted]);
+  useEffect(() => { audioRef.current = new Audio('/sounds/new-order.mp3'); }, []);
+
+  const playNotification = () => {
+    const audio = audioRef.current;
+    if (!audio || soundMutedRef.current || !audio.paused) return;
+    audio.play().catch(() => {});
+  };
 
   useEffect(() => {
     const id = setInterval(() => {
       const hasNew = ordersRef.current.some(o => o.state === 'new');
-      if (hasNew && !soundMutedRef.current) {
-        new Audio('/sounds/notification.mp3').play().catch(() => {});
-      }
-    }, 15000);
+      if (hasNew) playNotification();
+    }, 5000);
     return () => clearInterval(id);
   }, []);
 
-  const { isConnected } = useSSE(token, () => {
-    if (!soundMutedRef.current) new Audio('/sounds/notification.mp3').play().catch(() => {});
+  const { isConnected } = useSSE(token, (order) => {
+    if (order?.state === 'new') playNotification();
   });
   const isOffline = !isConnected;
 
   const handleAdvance = (order, toStatus) => {
+    if (toStatus === 'accepted') {
+      setAcceptDialog({ order });
+      return;
+    }
     updateStatus.mutate({
       id: order.id,
       currentStatus: statusToSDK[order.state] ?? order.state.toUpperCase(),
@@ -146,10 +164,10 @@ function App() {
              orderCount={orderCount} sidebarCollapsed={sidebarCollapsed}
              setSidebarCollapsed={setSidebarCollapsed} isOffline={isOffline}>
         {/* Screen router: Phase 3 — orders from useOrders(), isOffline wired to all screens */}
-        {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={handleAdvance} onPrint={() => {}} isOffline={isOffline} />}
+        {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={handleAdvance} onPrint={() => {}} isOffline={isOffline} stats={stats} />}
         {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={handleAdvance} isOffline={isOffline} />}
         {screen === 'pos'     && <PosScreen     lang={lang} isOffline={isOffline} />}
-        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={() => {}} onCancel={() => setCancelDialog({ order: selectedOrder })} isOffline={isOffline} />}
+        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} restaurantSettings={restaurantSettings} deliveryAreas={deliveryAreas} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={() => {}} onCancel={() => setCancelDialog({ order: selectedOrder })} isOffline={isOffline} />}
         {screen === 'menu'    && <MenuScreen    lang={lang} isOffline={isOffline} />}
         {screen === 'printer' && <PrinterScreen lang={lang} onTestPrint={() => pushToast({ id: Date.now(), kind: 'info', title: 'Test print sent', detail: '' })} isOffline={isOffline} />}
         {screen === 'settings'&& <SettingsScreen lang={lang} isOffline={isOffline} />}
@@ -255,8 +273,8 @@ function AcceptDialog({ lang, order, onCancel, onConfirm }) {
               <Icon name={typ.icon} size={16} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-0.02em' }}>{order.id} {typ.label}{order.table ? ' ' + t('table') + ' ' + order.table : ''}</div>
-              <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)' }}>{order.customer.name} {order.items.length} {t('items')} {formatRON(order.total)}</div>
+              <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-0.02em' }}>#{order.dailyOrderNumber} {typ.label}{order.table ? ' ' + t('table') + ' ' + order.table : ''}</div>
+              <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)' }}>{order.customer?.name} {order.items?.length ?? 0} {t('items')} {formatRON(order.total)}</div>
             </div>
           </div>
 

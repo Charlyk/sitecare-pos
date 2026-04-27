@@ -225,17 +225,23 @@ describe('PosScreen', () => {
   })
 
   describe('POS-05: order submission to API', () => {
+    // Helper: click Ring Up then confirm the prep-time dialog
+    async function ringUpAndConfirm() {
+      const ringUpBtn = screen.getAllByRole('button').find(b => b.textContent.includes('Încasează') && !b.textContent.includes('·'))
+      expect(ringUpBtn).toBeTruthy()
+      await act(async () => { fireEvent.click(ringUpBtn) })
+      // PrepTimeDialog is now open — find its confirm button (contains '·')
+      const confirmBtn = await screen.findByRole('button', { name: /·/ })
+      await act(async () => { fireEvent.click(confirmBtn) })
+    }
+
     test('Ring Up calls kitchen.orders.create with orderType local (not dinein) for dine-in', async () => {
       mockCreate.mockResolvedValue({ data: { dailyNumber: 42, orderId: 'ord-1', trackToken: 't', cancelToken: 'c', estimatedMinutes: null } })
       const qc = makeQc()
       render(createElement(PosScreen, { lang: 'ro', isOffline: false }), { wrapper: w(qc) })
-      // Add item to cart
       const ciorbaButton = screen.getAllByRole('button').find(b => b.textContent.includes('Ciorbă') && !b.textContent.includes('Comandă'))
       fireEvent.click(ciorbaButton)
-      // Click Ring Up
-      const ringUpBtn = screen.getAllByRole('button').find(b => b.textContent.includes('Încasează'))
-      expect(ringUpBtn).toBeTruthy()
-      await act(async () => { fireEvent.click(ringUpBtn) })
+      await ringUpAndConfirm()
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({ body: expect.objectContaining({ orderType: 'local' }) })
       )
@@ -247,8 +253,7 @@ describe('PosScreen', () => {
       render(createElement(PosScreen, { lang: 'ro', isOffline: false }), { wrapper: w(qc) })
       const ciorbaButton = screen.getAllByRole('button').find(b => b.textContent.includes('Ciorbă') && !b.textContent.includes('Comandă'))
       fireEvent.click(ciorbaButton)
-      const ringUpBtn = screen.getAllByRole('button').find(b => b.textContent.includes('Încasează'))
-      await act(async () => { fireEvent.click(ringUpBtn) })
+      await ringUpAndConfirm()
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           body: expect.objectContaining({
@@ -266,8 +271,7 @@ describe('PosScreen', () => {
       render(createElement(PosScreen, { lang: 'ro', isOffline: false }), { wrapper: w(qc) })
       const ciorbaButton = screen.getAllByRole('button').find(b => b.textContent.includes('Ciorbă') && !b.textContent.includes('Comandă'))
       fireEvent.click(ciorbaButton)
-      const ringUpBtn = screen.getAllByRole('button').find(b => b.textContent.includes('Încasează'))
-      await act(async () => { fireEvent.click(ringUpBtn) })
+      await ringUpAndConfirm()
       await waitFor(() => {
         expect(mockPushToast).toHaveBeenCalledWith(
           expect.objectContaining({ kind: 'success', detail: '#44' })
@@ -275,10 +279,19 @@ describe('PosScreen', () => {
       })
     })
 
-    test('Ring Up button disabled when cart is empty or isOffline', () => {
+    test('Ring Up button disabled when cart is empty', () => {
       const qc = makeQc()
       render(createElement(PosScreen, { lang: 'ro', isOffline: false }), { wrapper: w(qc) })
       // Cart is empty — Ring Up should be disabled
+      const ringUpBtn = screen.getAllByRole('button').find(b => b.textContent.includes('Încasează'))
+      expect(ringUpBtn.disabled).toBe(true)
+    })
+
+    test('Ring Up button disabled when isOffline=true even if cart has items', async () => {
+      const qc = makeQc()
+      render(createElement(PosScreen, { lang: 'ro', isOffline: true }), { wrapper: w(qc) })
+      await screen.findByText('Ciorbă')
+      fireEvent.click(screen.getByText('Ciorbă'))
       const ringUpBtn = screen.getAllByRole('button').find(b => b.textContent.includes('Încasează'))
       expect(ringUpBtn.disabled).toBe(true)
     })

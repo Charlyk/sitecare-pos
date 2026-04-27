@@ -19,6 +19,8 @@ export function useSSE(token, onLiveOrder) {
   const [isConnected, setIsConnected] = useState(false);
   const abortRef = useRef(null);
   const snapshotDone = useRef(false);
+  const onLiveOrderRef = useRef(onLiveOrder);
+  useEffect(() => { onLiveOrderRef.current = onLiveOrder; }, [onLiveOrder]);
 
   useEffect(() => {
     // Guard: do not attempt SSE without a token (D-07) — handles null during cold-start
@@ -27,6 +29,7 @@ export function useSSE(token, onLiveOrder) {
       return;
     }
 
+    snapshotDone.current = false; // reset so each (re)connect gets a fresh 100ms window
     const ctrl = new AbortController();
     abortRef.current = ctrl;
 
@@ -57,12 +60,12 @@ export function useSSE(token, onLiveOrder) {
               const idx = list.findIndex((o) => o.id === order.id);
               const next = idx >= 0
                 ? list.map((o) => (o.id === order.id ? order : o)) // update existing
-                : [...list, order];                                  // append new
+                : [order, ...list];                                  // prepend new
               return { orders: next };
             });
             // D-06: only call onLiveOrder for live events, not initial snapshot
-            if (snapshotDone.current && onLiveOrder) {
-              onLiveOrder();
+            if (snapshotDone.current && onLiveOrderRef.current) {
+              onLiveOrderRef.current(order);
             }
           } catch {
             // Malformed JSON from server — ignore silently (V5 input validation)
@@ -84,7 +87,7 @@ export function useSSE(token, onLiveOrder) {
 
     // Cleanup: abort SSE on unmount (prevents memory leak — server unregisters client on abort)
     return () => ctrl.abort();
-  }, [token, queryClient, onLiveOrder]); // Re-run if token or onLiveOrder changes
+  }, [token, queryClient]); // onLiveOrder intentionally excluded — stored in ref to avoid reconnection on every render
 
   return { isConnected };
 }
