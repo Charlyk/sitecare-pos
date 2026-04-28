@@ -261,6 +261,9 @@
   .tw-seg button { flex: 1; border: 0; background: transparent; padding: 6px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; color: #555; }
   .tw-seg button.on { background: #fff; color: var(--sc-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
 
+  /* Density — default (balanced) padding for class-based elements */
+  .order-row { padding: 16px; }
+  .kds-card-body { padding: 12px 14px; }
   /* Density — compact mode reduces padding on cards, order rows, and KDS card bodies */
   .density-compact .card { padding: 8px 12px; }
   .density-compact .order-row { padding-block: 6px; }
