@@ -36,6 +36,7 @@ export function useSSE(token, onLiveOrder) {
     fetchEventSource(SSE_URL, {
       headers: { Authorization: `Bearer ${token}` }, // Bearer token in header only — NEVER in URL (T-3-01)
       signal: ctrl.signal,
+      openWhenHidden: true, // UAT gap 1: keep SSE alive when app window is backgrounded
 
       async onopen(response) {
         if (response.ok) {
