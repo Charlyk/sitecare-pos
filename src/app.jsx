@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { load } from '@tauri-apps/plugin-store';
 import { Shell } from './shell.jsx';
 import { OrdersScreen } from './screen-orders.jsx';
 import { KitchenScreen } from './screen-kitchen.jsx';
@@ -107,6 +109,55 @@ function App() {
     });
   };
 
+  const handlePrint = async (order, kind) => {
+    try {
+      const store = await load('preferences.json', { autoSave: false });
+      const config = await store.get('printer');
+      if (!config?.port) {
+        pushToast({
+          id: Date.now(),
+          kind: 'error',
+          title: t('printer_not_configured'),
+          detail: t('printer_go_to_settings'),
+        });
+        return;
+      }
+      await invoke('print_receipt', {
+        port: config.port,
+        baud: config.baud ?? 9600,
+        paperWidth: config.paperWidth ?? '80mm',
+        order: {
+          daily_order_number: order.dailyOrderNumber,
+          placed_at: order.placedAt,
+          order_type: order.type,
+          source: order.source ?? null,
+          table: order.table ?? null,
+          customer_name: order.customer?.name ?? null,
+          delivery_address: order.address?.line1 ?? null,
+          notes: order.notes ?? null,
+          items: (order.items ?? []).map((it) => ({
+            name: it.name,
+            qty: it.qty,
+            price: it.price,
+            mods: it.mods ?? [],
+          })),
+          subtotal: order.subtotal,
+          tax: order.tax ?? 0,
+          delivery_fee: order.deliveryFee ?? 0,
+          discount: order.discount ?? 0,
+          total: order.total,
+          payment: order.payment ?? null,
+          restaurant_name: restaurantSettings?.restaurant_name ?? 'Restaurant',
+          restaurant_address: restaurantSettings?.branch_address ?? null,
+        },
+        kind,
+      });
+      pushToast({ id: Date.now(), kind: 'success', title: t('toast_printed'), detail: '' });
+    } catch (err) {
+      pushToast({ id: Date.now(), kind: 'error', title: t('print_failed'), detail: String(err) });
+    }
+  };
+
   // Accent CSS custom property mutation (verbatim from prototype, Zustand-driven):
   useEffect(() => {
     const map = {
@@ -164,12 +215,12 @@ function App() {
              orderCount={orderCount} sidebarCollapsed={sidebarCollapsed}
              setSidebarCollapsed={setSidebarCollapsed} isOffline={isOffline}>
         {/* Screen router: Phase 3 — orders from useOrders(), isOffline wired to all screens */}
-        {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={handleAdvance} onPrint={() => {}} isOffline={isOffline} stats={stats} />}
+        {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={handleAdvance} onPrint={handlePrint} isOffline={isOffline} stats={stats} />}
         {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={handleAdvance} isOffline={isOffline} />}
         {screen === 'pos'     && <PosScreen     lang={lang} isOffline={isOffline} />}
-        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} restaurantSettings={restaurantSettings} deliveryAreas={deliveryAreas} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={() => {}} onCancel={() => setCancelDialog({ order: selectedOrder })} isOffline={isOffline} />}
+        {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} restaurantSettings={restaurantSettings} deliveryAreas={deliveryAreas} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={handlePrint} onCancel={() => setCancelDialog({ order: selectedOrder })} isOffline={isOffline} />}
         {screen === 'menu'    && <MenuScreen    lang={lang} isOffline={isOffline} />}
-        {screen === 'printer' && <PrinterScreen lang={lang} onTestPrint={() => pushToast({ id: Date.now(), kind: 'info', title: 'Test print sent', detail: '' })} isOffline={isOffline} />}
+        {screen === 'printer' && <PrinterScreen lang={lang} restaurantSettings={restaurantSettings} isOffline={isOffline} />}
         {screen === 'settings'&& <SettingsScreen lang={lang} isOffline={isOffline} />}
       </Shell>
 
