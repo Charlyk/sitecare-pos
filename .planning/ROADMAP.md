@@ -108,7 +108,12 @@ Plans:
   1. A staff member can open Printer Setup, enter a USB port or TCP address, and save the printer configuration — the connection attempt gives immediate feedback (success or error)
   2. Clicking "Test Print" sends a print job to the configured printer and a test receipt comes out — no system print dialog appears
   3. Clicking "Print Receipt" on the Order Detail screen sends an ESC/POS-formatted receipt to the thermal printer — the receipt is legible and correctly formatted
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 05-01-PLAN.md — Wave 1: Failing test stubs for PRNT-01, PRNT-02, PRNT-03, ACT-04 (13 stubs)
+- [ ] 05-02-PLAN.md — Wave 2: Rust commands — list_serial_ports, save_printer_config, test_print, print_receipt
+- [ ] 05-03-PLAN.md — Wave 2: i18n keys (20 new), screen-printer redesign, app.jsx handlePrint wiring
+- [ ] 05-04-PLAN.md — Wave 3: Human verification checklist + ROADMAP/STATE update
 
 ### Phase 6: Build Pipeline
 **Goal**: Every GitHub release tag triggers a CI build that produces a notarized macOS .dmg and a signed Windows .msi installer; the installed app checks for and installs updates automatically on next launch.
@@ -131,7 +136,7 @@ Plans:
 | 2. Authentication | 5/5 | Complete | 2026-04-23 |
 | 3. Shell + Data Foundation | 6/6 | Complete | 2026-04-24 |
 | 4. Core Screens | 10/10 | Complete | 2026-04-27 |
-| 5. Native Integration | 0/? | Not started | - |
+| 5. Native Integration | 0/4 | In progress | - |
 | 6. Build Pipeline | 0/? | Not started | - |
 
 ---
@@ -188,4 +193,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-04-27 — Phase 4 complete (10/10 plans done; 20/20 verification score; 125 tests passing)*
+*Last updated: 2026-04-28 — Phase 5 planned (4 plans: Wave 0 stubs, Wave 1 Rust commands, Wave 2 JS/UI, Wave 3 verification)*
