@@ -259,14 +259,14 @@ async fn print_receipt(
 
         if let Some(ref cname) = order.customer_name {
             let safe = strip_diacritics(cname);
-            let truncated = &safe[..safe.len().min(40)];
+            let truncated: String = safe.chars().take(40).collect();
             p = p.writeln(&format!("Client: {}", truncated)).map_err(|e| e.to_string())?;
         }
         if order.order_type == "delivery" {
             if let Some(ref addr) = order.delivery_address {
                 let safe = strip_diacritics(addr);
-                let truncated = &safe[..safe.len().min(40)];
-                p = p.writeln(truncated).map_err(|e| e.to_string())?;
+                let truncated: String = safe.chars().take(40).collect();
+                p = p.writeln(&truncated).map_err(|e| e.to_string())?;
             }
         }
         p = p.writeln(&ruler).map_err(|e| e.to_string())?;
@@ -274,7 +274,7 @@ async fn print_receipt(
         // --- ITEMS ---
         for item in &order.items {
             let safe_name = strip_diacritics(&item.name);
-            let truncated_name = &safe_name[..safe_name.len().min(40)];
+            let truncated_name: String = safe_name.chars().take(40).collect();
             if kind == "customer" {
                 // "2x PIZZA          70.00" — name left, price right
                 let price_str = format!("{:.2}", item.price * item.qty as f64);
