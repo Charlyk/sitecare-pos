@@ -660,7 +660,7 @@ All unit tests mock `invoke` via `vi.mock('@tauri-apps/api/core', () => ({ invok
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does the specific printer model used by the restaurant support PC852 code page for Romanian diacritics?**
    - What we know: PC852 is standard Latin-2 and covers Romanian; `escpos` crate supports `page_code(Some(PageCode::PC852))`

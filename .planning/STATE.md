@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 5 — Native Integration
 current_plan: ""
-status: ready-to-plan
+status: ready-to-execute
 stopped_at: ""
 last_updated: "2026-04-27T23:59:00.000Z"
 progress:
@@ -34,8 +34,8 @@ progress:
 
 **Current Phase:** 5 — Native Integration
 **Current Plan:** —
-**Phase Status:** Phase 5 not started
-**Overall Status:** Phase 4 complete; ready to discuss/plan Phase 5
+**Phase Status:** Phase 5 planned — 4 plans ready (Wave 1: stubs, Wave 2: Rust + JS/UI, Wave 3: verification)
+**Overall Status:** Phase 5 planned; ready to execute
 
 ```
 Progress: [##################################.....] 67% (4/6 phases)
@@ -52,7 +52,7 @@ Phase 4 of 6 complete — 125 tests passing, 20/20 verification score
 | 2 | Authentication | Complete — all 5 plans done and human-verified 2026-04-23 |
 | 3 | Shell + Data Foundation | Complete — all 6 plans done, human-verified 2026-04-24 |
 | 4 | Core Screens | Complete — all 10 plans done, 20/20 verification, 125 tests passing (2026-04-27) |
-| 5 | Native Integration | Not started |
+| 5 | Native Integration | Planned — 4 plans, 3 waves (2026-04-28) |
 | 6 | Build Pipeline | Not started |
 
 ---
@@ -156,7 +156,7 @@ Phase 4 of 6 complete — 125 tests passing, 20/20 verification score
 
 **Last session:** 2026-04-27
 **Stopped at:** —
-**Next action:** `/gsd-discuss-phase 5` — discuss Native Integration before planning
+**Next action:** `/gsd-execute-phase 5` — execute Phase 5 plans
 
 ---
 *State initialized: 2026-04-22*
