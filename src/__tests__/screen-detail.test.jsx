@@ -49,12 +49,51 @@ describe('ACT-04: print receipt from Order Detail screen', () => {
   beforeEach(() => { vi.clearAllMocks() })
 
   test('Print kitchen button calls onPrint(order, "kitchen")', () => {
-    // STUB
-    expect(false).toBe(true)
+    const onPrint = vi.fn()
+    render(
+      createElement(OrderDetailScreen, {
+        order: MINIMAL_ORDER,
+        lang: 'en',
+        restaurantSettings: null,
+        deliveryAreas: [],
+        onBack: vi.fn(),
+        onAdvance: vi.fn(),
+        onPrint,
+        onCancel: vi.fn(),
+        isOffline: false,
+      }),
+      { wrapper: w }
+    )
+    // There are two "Print kitchen" elements: a tab toggle and an action button.
+    // The action button is inside .btn-secondary with the actual onPrint call.
+    const allKitchenBtns = screen.getAllByText('Print kitchen')
+    // The action button is the one inside a btn-secondary (has className on closest button)
+    const actionBtn = allKitchenBtns.find(el => el.closest('button.btn-secondary'))
+    fireEvent.click(actionBtn)
+    expect(onPrint).toHaveBeenCalledWith(MINIMAL_ORDER, 'kitchen')
   })
 
   test('Print customer button calls onPrint(order, "customer")', () => {
-    // STUB
-    expect(false).toBe(true)
+    const onPrint = vi.fn()
+    render(
+      createElement(OrderDetailScreen, {
+        order: MINIMAL_ORDER,
+        lang: 'en',
+        restaurantSettings: null,
+        deliveryAreas: [],
+        onBack: vi.fn(),
+        onAdvance: vi.fn(),
+        onPrint,
+        onCancel: vi.fn(),
+        isOffline: false,
+      }),
+      { wrapper: w }
+    )
+    // There are two "Print customer" elements: a tab toggle and an action button.
+    // The action button is inside .btn-primary with the actual onPrint call.
+    const allCustomerBtns = screen.getAllByText('Print customer')
+    const actionBtn = allCustomerBtns.find(el => el.closest('button.btn-primary'))
+    fireEvent.click(actionBtn)
+    expect(onPrint).toHaveBeenCalledWith(MINIMAL_ORDER, 'customer')
   })
 })
