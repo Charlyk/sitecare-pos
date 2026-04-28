@@ -40,26 +40,30 @@ function PrinterScreen({ lang, restaurantSettings, isOffline }) {
   const [hasConfig, setHasConfig] = useState(false);
 
   useEffect(() => {
-    invoke('list_serial_ports')
-      .then((list) => {
-        setPorts(list);
-        if (list.length > 0) setSelectedPort(list[0]);
-      })
-      .catch(() => setPorts([]));
-
-    // Load saved config to pre-populate form and enable Test Print
+    // Load config first, then discover ports
     load('preferences.json', { autoSave: false })
       .then((store) => store.get('printer'))
       .then((config) => {
-        if (config?.port) {
-          setSelectedPort(config.port);
+        const savedPort = config?.port ?? null;
+        if (savedPort) {
+          setSelectedPort(savedPort);
           setPrinterName(config.name ?? '');
           setWidth(config.paperWidth ?? '80mm');
           setHasConfig(true);
           setSaveStatus('success');
         }
+        // Now fetch ports, fall back to list[0] only if no saved port
+        return invoke('list_serial_ports').then((list) => {
+          setPorts(list);
+          if (!savedPort && list.length > 0) setSelectedPort(list[0]);
+        });
       })
-      .catch(() => {});
+      .catch(() => {
+        // Store unavailable — still load ports
+        invoke('list_serial_ports')
+          .then((list) => { setPorts(list); if (list.length > 0) setSelectedPort(list[0]); })
+          .catch(() => setPorts([]));
+      });
   }, []);
 
   const handleRefreshPorts = () => {
