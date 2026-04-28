@@ -144,6 +144,26 @@ describe('U9c — useSSE ignores ping events (KDS-01, D-04)', () => {
   })
 })
 
+describe('U9d — openWhenHidden: true is passed to fetchEventSource (UAT gap 1)', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  test('fetchEventSource is called with openWhenHidden: true', () => {
+    fetchEventSource.mockImplementation(() => Promise.resolve())
+    renderHook(() => useSSE('test-token'), { wrapper })
+    expect(fetchEventSource).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ openWhenHidden: true })
+    )
+  })
+
+  test('openWhenHidden: true is present regardless of token value', () => {
+    fetchEventSource.mockImplementation(() => Promise.resolve())
+    renderHook(() => useSSE('another-token'), { wrapper })
+    const [, opts] = fetchEventSource.mock.calls[0]
+    expect(opts.openWhenHidden).toBe(true)
+  })
+})
+
 describe('KDS-04: snapshot detection — sound plays only on live events', () => {
   beforeEach(() => { vi.clearAllMocks() })
 
