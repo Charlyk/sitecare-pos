@@ -1,109 +1,236 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { load } from '@tauri-apps/plugin-store';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
-import { PRINTERS, ORDERS } from './data.jsx';
 import { ThermalTicket } from './screen-detail.jsx';
+import { useAppStore } from './store.js';
 
-function PrinterScreen({ lang, onTestPrint }) {
+const PREVIEW_ORDER = {
+  id: 'preview',
+  dailyOrderNumber: 1,
+  placedAt: new Date().toISOString(),
+  state: 'accepted',
+  type: 'dinein',
+  source: 'counter',
+  table: '1',
+  customer: { name: 'Preview', phone: null },
+  address: null,
+  notes: null,
+  items: [{ name: 'Test Item', qty: 1, price: 10.00, mods: [], source: 'menu' }],
+  subtotal: 10.00,
+  tax: 1.90,
+  deliveryFee: 0,
+  discount: 0,
+  total: 11.90,
+  payment: 'cash',
+  paid: false,
+};
+
+function PrinterScreen({ lang, restaurantSettings, isOffline }) {
   const t = useT(lang);
-  const printers = PRINTERS;
-  const [selected, setSelected] = useState(printers[0].id);
-  const [opts, setOpts] = useState({ autoPrint: true, copies: 1, buzzer: true, cut: true, width: '80mm', openDrawer: false });
+  const pushToast = useAppStore((s) => s.pushToast);
+  const [ports, setPorts] = useState([]);
+  const [selectedPort, setSelectedPort] = useState('');
+  const [printerName, setPrinterName] = useState('');
+  const [width, setWidth] = useState('80mm');
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'pending' | 'success' | 'error'
+  const [saveError, setSaveError] = useState('');
+  const [testPending, setTestPending] = useState(false);
+  const [hasConfig, setHasConfig] = useState(false);
 
-  const p = printers.find(x => x.id === selected);
+  useEffect(() => {
+    invoke('list_serial_ports')
+      .then((list) => {
+        setPorts(list);
+        if (list.length > 0) setSelectedPort(list[0]);
+      })
+      .catch(() => setPorts([]));
+
+    // Load saved config to pre-populate form and enable Test Print
+    load('preferences.json', { autoSave: false })
+      .then((store) => store.get('printer'))
+      .then((config) => {
+        if (config?.port) {
+          setSelectedPort(config.port);
+          setPrinterName(config.name ?? '');
+          setWidth(config.paperWidth ?? '80mm');
+          setHasConfig(true);
+          setSaveStatus('success');
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleRefreshPorts = () => {
+    invoke('list_serial_ports')
+      .then((list) => {
+        setPorts(list);
+        if (list.length > 0 && !selectedPort) setSelectedPort(list[0]);
+      })
+      .catch(() => setPorts([]));
+  };
+
+  const handleSave = async () => {
+    if (!selectedPort) return;
+    setSaveStatus('pending');
+    setSaveError('');
+    try {
+      await invoke('save_printer_config', { port: selectedPort, baud: 9600 });
+      // Connection test passed — now persist to plugin-store (JS side per RESEARCH.md recommendation)
+      const store = await load('preferences.json', { autoSave: false });
+      await store.set('printer', { port: selectedPort, name: printerName, paperWidth: width, baud: 9600 });
+      await store.save();
+      setSaveStatus('success');
+      setHasConfig(true);
+    } catch (err) {
+      setSaveStatus('error');
+      setSaveError(String(err));
+      // Do NOT write to store on failure (D-11)
+    }
+  };
+
+  const handleTestPrint = async () => {
+    setTestPending(true);
+    try {
+      const store = await load('preferences.json', { autoSave: false });
+      const config = await store.get('printer');
+      await invoke('test_print', {
+        port: config.port,
+        baud: config.baud ?? 9600,
+        paperWidth: config.paperWidth ?? '80mm',
+        restaurantName: restaurantSettings?.restaurant_name ?? 'Restaurant',
+      });
+      pushToast({ id: Date.now(), kind: 'success', title: t('toast_printed'), detail: '' });
+    } catch (err) {
+      pushToast({ id: Date.now(), kind: 'error', title: t('print_failed'), detail: String(err) });
+    } finally {
+      setTestPending(false);
+    }
+  };
 
   return (
     <div className="content-pad">
+      {/* Screen heading block */}
       <div style={{ marginBottom: 20 }}>
-        <div className="eyebrow">thermal printers</div>
+        <div className="eyebrow">{t('printer_eyebrow')}</div>
         <div style={{ fontWeight: 900, fontSize: 24, letterSpacing: '-0.02em' }}>{t('printers')}</div>
-        <div style={{ color: 'var(--sc-muted-foreground)', fontSize: 14, marginTop: 2 }}>{lang === 'ro' ? 'Configurează imprimantele termice pentru bucătărie, bar și casă.' : 'Configure thermal printers for kitchen, bar, and front-of-house.'}</div>
+        <div style={{ color: 'var(--sc-muted-foreground)', fontSize: 13, marginTop: 2 }}>{t('printer_subtitle')}</div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 380px', gap: 16 }}>
-        {/* Printer list */}
-        <div className="card" style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 8, height: 'fit-content' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 6px' }}>
-            <div style={{ fontWeight: 700, fontSize: 13 }}>{lang === 'ro' ? 'Dispozitive' : 'Devices'}</div>
-            <button className="btn-ghost" style={{ fontSize: 11, padding: '4px 8px' }}><Icon name="plus" size={12} />{lang === 'ro' ? 'Adaugă' : 'Add'}</button>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 380px', gap: 16 }}>
+        {/* Left: single-printer form card */}
+        <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, height: 'fit-content' }}>
+
+          {/* Port picker row */}
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600, marginBottom: 4 }}>{t('printer_port_label')}</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select
+                value={selectedPort}
+                onChange={(e) => setSelectedPort(e.target.value)}
+                disabled={isOffline}
+                style={{ flex: 1, border: '1px solid hsl(120 10% 88%)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit', background: '#fff' }}
+              >
+                {ports.length === 0
+                  ? <option value="" disabled>{t('printer_no_ports')}</option>
+                  : ports.map((p) => <option key={p} value={p}>{p}</option>)
+                }
+              </select>
+              <button className="btn-secondary" onClick={handleRefreshPorts} style={{ padding: '8px 12px', flexShrink: 0 }}>
+                <Icon name="refresh" size={13} /> {t('printer_refresh_ports')}
+              </button>
+            </div>
           </div>
-          {printers.map(pr => (
-            <button key={pr.id} onClick={() => setSelected(pr.id)} style={{ border: 0, background: selected === pr.id ? 'hsl(120 14% 49% / 0.1)' : 'transparent', borderRadius: 10, padding: 10, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: '#fff', border: '1px solid hsl(120 10% 90%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: pr.status === 'online' ? 'var(--sc-primary)' : '#aaa' }}>
-                <Icon name="printer" size={18} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pr.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)' }}>{pr.conn}</div>
-              </div>
-              <span className={`chip ${pr.status === 'online' ? 'chip-sage' : 'chip-slate'} chip-dot`}>{pr.status}</span>
+
+          {/* Paper width toggle */}
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600, marginBottom: 4 }}>{t('printer_width_label')}</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {['58mm', '80mm'].map((w) => (
+                <button key={w} onClick={() => setWidth(w)}
+                  style={{ flex: 1, padding: '8px 10px', borderRadius: 8,
+                    border: width === w ? '1.5px solid var(--sc-primary)' : '1px solid hsl(120 10% 88%)',
+                    background: width === w ? 'hsl(120 14% 49% / 0.08)' : '#fff',
+                    color: width === w ? 'var(--sc-primary)' : '#555',
+                    fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>{w}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Printer name field */}
+          <div>
+            <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600, marginBottom: 4 }}>{t('printer_name_label')}</div>
+            <input
+              value={printerName}
+              onChange={(e) => setPrinterName(e.target.value)}
+              placeholder={t('printer_name_placeholder')}
+              style={{ width: '100%', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          {/* Status chip (shown after save attempt) */}
+          {saveStatus === 'success' && (
+            <span className="chip chip-sage chip-dot">{t('printer_connected')}</span>
+          )}
+          {saveStatus === 'error' && (
+            <div>
+              <span className="chip chip-red chip-dot">{t('printer_connection_failed')}</span>
+              {saveError && <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', marginTop: 4 }}>{saveError}</div>}
+            </div>
+          )}
+
+          {/* Action row */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              className={`btn-primary${isOffline ? ' btn-disabled-offline' : ''}`}
+              style={{ flex: 1, justifyContent: 'center', opacity: saveStatus === 'pending' ? 0.7 : 1 }}
+              disabled={isOffline || saveStatus === 'pending' || !selectedPort}
+              onClick={handleSave}
+            >
+              <Icon name="check" size={14} />
+              {saveStatus === 'pending' ? t('printer_saving_btn') : t('printer_save_btn')}
             </button>
-          ))}
-        </div>
-
-        {/* Settings */}
-        <div className="card" style={{ padding: 20, height: 'fit-content' }}>
-          <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-0.02em', marginBottom: 14 }}>{p.name}</div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <Field label={lang === 'ro' ? 'Model' : 'Model'} value={p.model} />
-            <Field label={lang === 'ro' ? 'Conexiune' : 'Connection'} value={p.conn} />
-            <Field label={lang === 'ro' ? 'Rol' : 'Role'} value={p.kind === 'kitchen' ? (lang === 'ro' ? 'Bucătărie' : 'Kitchen') : p.kind === 'customer' ? (lang === 'ro' ? 'Bon client' : 'Customer') : 'Bar'} />
-
-            <Toggle label={lang === 'ro' ? 'Print automat la comandă nouă' : 'Auto-print on new order'} on={opts.autoPrint} onChange={v => setOpts({ ...opts, autoPrint: v })} />
-            <Toggle label={lang === 'ro' ? 'Buzzer la început' : 'Buzzer on print'} on={opts.buzzer} onChange={v => setOpts({ ...opts, buzzer: v })} />
-            <Toggle label={lang === 'ro' ? 'Tăiere automată hârtie' : 'Auto paper cut'} on={opts.cut} onChange={v => setOpts({ ...opts, cut: v })} />
-            <Toggle label={lang === 'ro' ? 'Deschide sertarul' : 'Open cash drawer'} on={opts.openDrawer} onChange={v => setOpts({ ...opts, openDrawer: v })} />
-
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600, marginBottom: 4 }}>{lang === 'ro' ? 'Lățime hârtie' : 'Paper width'}</div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {['58mm', '80mm'].map(w => (
-                  <button key={w} onClick={() => setOpts({ ...opts, width: w })} style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: opts.width === w ? '1.5px solid var(--sc-primary)' : '1px solid hsl(120 10% 88%)', background: opts.width === w ? 'hsl(120 14% 49% / 0.08)' : '#fff', color: opts.width === w ? 'var(--sc-primary)' : '#555', fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>{w}</button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600, marginBottom: 4 }}>{lang === 'ro' ? 'Copii' : 'Copies'}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button onClick={() => setOpts({ ...opts, copies: Math.max(1, opts.copies - 1) })} className="icon-btn" style={{ width: 32, height: 32 }}>−</button>
-                <div style={{ flex: 1, textAlign: 'center', fontWeight: 900, fontSize: 16 }}>{opts.copies}</div>
-                <button onClick={() => setOpts({ ...opts, copies: opts.copies + 1 })} className="icon-btn" style={{ width: 32, height: 32 }}>+</button>
-              </div>
-            </div>
+            <button
+              className="btn-secondary"
+              style={{ flex: 1, justifyContent: 'center',
+                opacity: !hasConfig || isOffline || testPending ? 0.45 : 1,
+                pointerEvents: !hasConfig || isOffline || testPending ? 'none' : 'auto' }}
+              disabled={!hasConfig || isOffline || testPending}
+              onClick={handleTestPrint}
+            >
+              <Icon name="printer" size={14} />
+              {testPending ? t('printer_printing_btn') : t('printer_test_btn')}
+            </button>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <button className="btn-primary" style={{ flex: 1, justifyContent: 'center' }} onClick={onTestPrint}><Icon name="printer" size={14} />{t('test_print')}</button>
-            <button className="btn-secondary"><Icon name="settings" size={14} /></button>
+          {/* Auto-print toggle — greyed-out (unready feature per CLAUDE.md) */}
+          <div style={{ opacity: 0.45, pointerEvents: 'none', marginTop: 4 }}>
+            <Toggle label={t('printer_auto_print')} on={false} onChange={() => {}} />
           </div>
         </div>
 
-        {/* Live test print preview */}
-        <div style={{ background: '#ede9de', padding: 18, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Right: receipt preview panel */}
+        <div style={{ background: '#ede9de', padding: 16, borderRadius: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div className="eyebrow">preview</div>
-          <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: '-0.02em' }}>{lang === 'ro' ? 'Bon de test' : 'Test ticket'}</div>
-          <ThermalTicket order={ORDERS[1]} lang={lang} kind="customer" />
+          <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: '-0.02em' }}>{t('printer_test_ticket_preview')}</div>
+          <ThermalTicket order={PREVIEW_ORDER} lang={lang} kind="customer" restaurantSettings={restaurantSettings} />
         </div>
       </div>
     </div>
   );
 }
 
-function Field({ label, value }) {
-  return (
-    <div>
-      <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600 }}>{label}</div>
-      <div style={{ fontWeight: 600, fontSize: 13, marginTop: 2 }}>{value}</div>
-    </div>
-  );
-}
 function Toggle({ label, on, onChange }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <button onClick={() => onChange(!on)} style={{ width: 38, height: 22, borderRadius: 999, background: on ? 'var(--sc-primary)' : 'hsl(120 10% 85%)', border: 0, padding: 2, cursor: 'pointer', transition: 'background 200ms' }}>
-        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', marginLeft: on ? 16 : 0, transition: 'margin 200ms', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+      <button onClick={() => onChange(!on)}
+        style={{ width: 38, height: 22, borderRadius: 999,
+          background: on ? 'var(--sc-primary)' : 'hsl(120 10% 85%)',
+          border: 0, padding: 2, cursor: 'pointer', transition: 'background 200ms' }}>
+        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff',
+          marginLeft: on ? 16 : 0, transition: 'margin 200ms',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
       </button>
       <div style={{ fontSize: 13, fontWeight: 500 }}>{label}</div>
     </div>
