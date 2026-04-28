@@ -14,7 +14,7 @@
 - [x] **Phase 2: Authentication** - Staff can log in with username + password, stay logged in across restarts, and be redirected to login when their session expires
 - [x] **Phase 3: Shell + Data Foundation** - App shell renders from real Zustand state, data hooks connect to live API, SSE connection established, offline banner works
 - [x] **Phase 4: Core Screens** - All 7 screens render live API data with full UX — orders, KDS timers/urgency/sound/bump, POS checkout flow, menu toggles, settings persistence
-- [ ] **Phase 5: Native Integration** - Staff can configure a thermal printer and print receipts end-to-end via Tauri native plugin
+- [x] **Phase 5: Native Integration** - Staff can configure a thermal printer and print receipts end-to-end via Tauri native plugin
 - [ ] **Phase 6: Build Pipeline** - Every release tag produces signed, notarized macOS and Windows installers; auto-update works
 
 ---
@@ -110,10 +110,10 @@ Plans:
   3. Clicking "Print Receipt" on the Order Detail screen sends an ESC/POS-formatted receipt to the thermal printer — the receipt is legible and correctly formatted
 **Plans**: 4 plans
 Plans:
-- [ ] 05-01-PLAN.md — Wave 1: Failing test stubs for PRNT-01, PRNT-02, PRNT-03, ACT-04 (13 stubs)
-- [ ] 05-02-PLAN.md — Wave 2: Rust commands — list_serial_ports, save_printer_config, test_print, print_receipt
-- [ ] 05-03-PLAN.md — Wave 2: i18n keys (20 new), screen-printer redesign, app.jsx handlePrint wiring
-- [ ] 05-04-PLAN.md — Wave 3: Human verification checklist + ROADMAP/STATE update
+- [x] 05-01-PLAN.md — Wave 1: Failing test stubs for PRNT-01, PRNT-02, PRNT-03, ACT-04 (13 stubs)
+- [x] 05-02-PLAN.md — Wave 2: Rust commands — list_serial_ports, save_printer_config, test_print, print_receipt
+- [x] 05-03-PLAN.md — Wave 2: i18n keys (20 new), screen-printer redesign, app.jsx handlePrint wiring
+- [x] 05-04-PLAN.md — Wave 3: Human verification — approved-no-hardware (2026-04-29)
 
 ### Phase 6: Build Pipeline
 **Goal**: Every GitHub release tag triggers a CI build that produces a notarized macOS .dmg and a signed Windows .msi installer; the installed app checks for and installs updates automatically on next launch.
@@ -136,7 +136,7 @@ Plans:
 | 2. Authentication | 5/5 | Complete | 2026-04-23 |
 | 3. Shell + Data Foundation | 6/6 | Complete | 2026-04-24 |
 | 4. Core Screens | 10/10 | Complete | 2026-04-27 |
-| 5. Native Integration | 0/4 | In progress | - |
+| 5. Native Integration | 4/4 | Complete | 2026-04-29 |
 | 6. Build Pipeline | 0/? | Not started | - |
 
 ---
@@ -193,4 +193,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-04-28 — Phase 5 planned (4 plans: Wave 0 stubs, Wave 1 Rust commands, Wave 2 JS/UI, Wave 3 verification)*
+*Last updated: 2026-04-29 — Phase 5 complete (4/4 plans, 166 tests passing, approved-no-hardware)*
