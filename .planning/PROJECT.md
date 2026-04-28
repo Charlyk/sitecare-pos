@@ -33,6 +33,7 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 - [x] Order lifecycle actions (accept, advance, cancel) wired to API — Validated in Phase 4: AcceptDialog, CancelDialog, statusToSDK map
 - [x] POS order creation wired to API — Validated in Phase 4: cart, discount, createOrder mutation, table notes workaround
 - [x] Greyed-out UI for features not yet production-ready — Validated in Phase 1-4
+- [x] USB thermal printer integration — Validated in Phase 5: list_serial_ports, save_printer_config, test_print, print_receipt; screen-printer redesigned; handlePrint wired; 166 tests passing
 - [ ] macOS + Windows installer / build pipeline — Phase 6
 
 ### Out of Scope
@@ -93,4 +94,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-27 — Phase 4 Core Screens complete: 10/10 plans, 20/20 verification, 125 tests passing*
+*Last updated: 2026-04-29 — Phase 5 Native Integration complete: 4/4 plans, 166 tests passing, approved-no-hardware*
