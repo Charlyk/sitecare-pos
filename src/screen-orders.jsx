@@ -58,7 +58,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
   const placedAt = order.placedAt ?? order.createdAt;
 
   return (
-    <div className="card shadow" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12, border: state === 'new' ? '1.5px solid hsl(0 53% 58% / 0.4)' : '1px solid hsl(120 10% 90%)' }}>
+    <div className="card shadow order-row" style={{ display: 'flex', flexDirection: 'column', gap: 12, border: state === 'new' ? '1.5px solid hsl(0 53% 58% / 0.4)' : '1px solid hsl(120 10% 90%)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>

@@ -103,7 +103,7 @@ function KitchenTicket({ order, lang, t, onAdvance, isOffline }) {
         </div>
       </div>
 
-      <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="kds-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {order.items.filter(it => it.source !== 'global_product').map((it, i) => (
           <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
             <div style={{ minWidth: 28, height: 28, borderRadius: 6, background: 'var(--sc-primary)', color: '#fff', fontWeight: 900, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 6px' }}>{it.qty}</div>
