@@ -266,7 +266,7 @@ describe('PosScreen', () => {
     })
 
     test('on success: cart cleared, success toast pushed with dailyNumber', async () => {
-      mockCreate.mockResolvedValue({ data: { dailyNumber: 44, orderId: 'ord-3', trackToken: 't', cancelToken: 'c', estimatedMinutes: null } })
+      mockCreate.mockResolvedValue({ data: { dailyOrderNumber: '#44', dailyNumber: 44, orderId: 'ord-3', trackToken: 't', cancelToken: 'c', estimatedMinutes: null } })
       const qc = makeQc()
       render(createElement(PosScreen, { lang: 'ro', isOffline: false }), { wrapper: w(qc) })
       const ciorbaButton = screen.getAllByRole('button').find(b => b.textContent.includes('Ciorbă') && !b.textContent.includes('Comandă'))
@@ -276,6 +276,25 @@ describe('PosScreen', () => {
         expect(mockPushToast).toHaveBeenCalledWith(
           expect.objectContaining({ kind: 'success', detail: '#44' })
         )
+      })
+    })
+
+    test('toast detail does not double the # prefix (UAT gap 2)', async () => {
+      mockCreate.mockResolvedValue({
+        data: { dailyOrderNumber: '#99', dailyNumber: 99, orderId: 'ord-x', trackToken: 't', cancelToken: 'c', estimatedMinutes: null }
+      })
+      const qc = makeQc()
+      render(createElement(PosScreen, { lang: 'ro', isOffline: false }), { wrapper: w(qc) })
+      const ciorbaButton = screen.getAllByRole('button').find(b => b.textContent.includes('Ciorbă') && !b.textContent.includes('Comandă'))
+      fireEvent.click(ciorbaButton)
+      await ringUpAndConfirm()
+      await waitFor(() => {
+        expect(mockPushToast).toHaveBeenCalledWith(
+          expect.objectContaining({ kind: 'success', detail: '#99' })
+        )
+        // must NOT have been called with ##99
+        const calls = mockPushToast.mock.calls.flat()
+        expect(calls.every(c => typeof c !== 'object' || c.detail !== '##99')).toBe(true)
       })
     })
 

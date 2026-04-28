@@ -169,7 +169,7 @@ function PosScreen({ lang, isOffline }) {
     mutationFn: (orderData) => client.kitchen.orders.create({ body: orderData }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
-      pushToast({ id: Date.now(), kind: 'success', title: t('order_sent'), detail: `#${result.data?.dailyNumber}` });
+      pushToast({ id: Date.now(), kind: 'success', title: t('order_sent'), detail: `${result.data?.dailyOrderNumber ?? result.data?.dailyNumber ?? ''}` });
       setCart([]);
       setDiscountValue('');
       setNote('');
