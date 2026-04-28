@@ -604,7 +604,7 @@ Both arrays are fully untyped. Normalization must be written defensively and val
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **KitchenMenuResponse category field names**
    - What we know: SDK types are `{ [key: string]: unknown }` — no field names documented.

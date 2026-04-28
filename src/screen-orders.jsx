@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
-import { formatRON, elapsedMinutes, orderTimeLabel } from './data.jsx';
+import { formatRON, elapsedMinutes, orderTimeLabel, formatDuration } from './data.jsx';
 
 function sourceMeta(source, t) {
   const map = {
@@ -40,8 +40,6 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
   const typ = typeMeta(type, t);
   const st = stateMeta(state, t);
   const elapsed = elapsedMinutes(order.placedAt ?? order.createdAt);
-  const remaining = (order.promisedIn ?? order.estimatedMinutes ?? 0) - elapsed;
-  const timeCritical = remaining <= 5 && state !== 'done' && state !== 'out';
 
   const nextAction = {
     new: { label: t('accept'), next: 'accepted' },
@@ -58,7 +56,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
   const placedAt = order.placedAt ?? order.createdAt;
 
   return (
-    <div className="card shadow order-row" style={{ display: 'flex', flexDirection: 'column', gap: 12, border: state === 'new' ? '1.5px solid hsl(0 53% 58% / 0.4)' : '1px solid hsl(120 10% 90%)' }}>
+    <div className="card shadow order-row" style={{ display: 'flex', flexDirection: 'column', gap: 12, border: state === 'new' ? '1.5px solid hsl(0 53% 58% / 0.5)' : state === 'preparing' ? '1.5px solid hsl(38 92% 50% / 0.5)' : state === 'ready' ? '1.5px solid hsl(120 40% 45% / 0.5)' : '1px solid hsl(120 10% 90%)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -73,9 +71,9 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600 }}>{orderTimeLabel(placedAt)}</div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 2, fontSize: 12, fontWeight: 700, color: timeCritical ? 'var(--sc-terracotta)' : 'var(--sc-muted-foreground)' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 2, fontSize: 12, fontWeight: 700, color: 'var(--sc-muted-foreground)' }}>
             <Icon name="clock" size={12} />
-            {elapsed} {t('min')}
+            {formatDuration(elapsed)}
           </div>
         </div>
       </div>
@@ -160,7 +158,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
   );
 }
 
-function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline }) {
+function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline, stats: apiStats }) {
   const t = useT(lang);
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -194,13 +192,13 @@ function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline }) {
     return o.state !== 'done';
   });
 
-  // Stats strip
-  const todayRevenue = orders.reduce((a, o) => a + o.total, 0);
+  // Stats strip — values from API (apiStats), falling back to local derivation while loading
+  const avgTime = apiStats?.avgCompletionMinutes != null ? formatDuration(apiStats.avgCompletionMinutes) : '—';
   const stats = [
-    { label: lang === 'ro' ? 'Venit azi' : 'Today revenue', value: formatRON(todayRevenue), icon: 'ron', tint: 'sage' },
-    { label: lang === 'ro' ? 'Comenzi active' : 'Active orders', value: orders.filter(o => o.state !== 'done').length, icon: 'zap', tint: 'terra' },
-    { label: lang === 'ro' ? 'Timp mediu' : 'Avg. time', value: '23 ' + t('min'), icon: 'clock', tint: 'slate' },
-    { label: lang === 'ro' ? 'Finalizate azi' : 'Completed today', value: orders.filter(o => o.state === 'done').length, icon: 'check', tint: 'sage' },
+    { label: lang === 'ro' ? 'Venit azi' : 'Today revenue', value: formatRON((apiStats?.totalEarned ?? 0) / 100), icon: 'ron', tint: 'sage' },
+    { label: lang === 'ro' ? 'Comenzi active' : 'Active orders', value: apiStats?.activeOrders ?? orders.filter(o => o.state !== 'done').length, icon: 'zap', tint: 'terra' },
+    { label: lang === 'ro' ? 'Timp mediu' : 'Avg. time', value: avgTime, icon: 'clock', tint: 'slate' },
+    { label: lang === 'ro' ? 'Finalizate azi' : 'Completed today', value: apiStats?.completedOrders ?? 0, icon: 'check', tint: 'sage' },
   ];
 
   return (

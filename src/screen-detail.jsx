@@ -1,10 +1,10 @@
 import { useState, Fragment } from 'react';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
-import { formatRON, elapsedMinutes, orderTimeLabel } from './data.jsx';
+import { formatRON, elapsedMinutes, orderTimeLabel, formatDuration } from './data.jsx';
 import { sourceMeta, typeMeta, stateMeta } from './screen-orders.jsx';
 
-function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, isOffline }) {
+function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = [], onBack, onAdvance, onPrint, onCancel, isOffline }) {
   const t = useT(lang);
   const [tab, setTab] = useState('overview');
 
@@ -14,6 +14,16 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, 
   const typ = typeMeta(order.type, t);
   const st = stateMeta(order.state, t);
   const elapsed = elapsedMinutes(order.placedAt);
+
+  // API may not populate deliveryAreaName; fall back to passed-in delivery areas list
+  const resolvedAreaName = order.address?.city
+    ?? order.deliveryAreaName
+    ?? deliveryAreas.find(a => a.id === String(order.deliveryAreaId ?? ''))?.name
+    ?? null;
+  const displayAddress = order.address
+    ?? (resolvedAreaName || order.deliveryAreaId
+      ? { line1: null, city: resolvedAreaName, note: null }
+      : null);
 
   const timeline = [
     { label: lang === 'ro' ? 'Plasată' : 'Placed', at: order.placedAt, done: true },
@@ -35,7 +45,7 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, 
           <div>
             <div style={{ fontWeight: 900, fontSize: 32, letterSpacing: '-0.02em', lineHeight: 1 }}>#{order.dailyOrderNumber}</div>
             <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', marginTop: 4 }}>
-              {orderTimeLabel(order.placedAt)} · {elapsed} {t('min')} {t('elapsed').toLowerCase()}
+              {orderTimeLabel(order.placedAt)} · {formatDuration(elapsed)} {t('elapsed').toLowerCase()}
             </div>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -74,13 +84,13 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, 
                 <Icon name="phone" size={13} /> {order.customer.phone}
               </div>
             )}
-            {order.address && (
+            {displayAddress && (
               <div style={{ marginTop: 10, display: 'flex', gap: 6, alignItems: 'flex-start', fontSize: 13 }}>
                 <Icon name="mapPin" size={13} style={{ marginTop: 2, color: 'var(--sc-muted-foreground)' }} />
                 <div>
-                  <div>{order.address.line1}</div>
-                  <div style={{ color: 'var(--sc-muted-foreground)' }}>{order.address.city}</div>
-                  {order.address.note && <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', marginTop: 2, fontStyle: 'italic' }}>{order.address.note}</div>}
+                  {displayAddress.line1 && <div>{displayAddress.line1}</div>}
+                  {displayAddress.city && <div style={{ color: 'var(--sc-muted-foreground)' }}>{displayAddress.city}</div>}
+                  {displayAddress.note && <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', marginTop: 2, fontStyle: 'italic' }}>{displayAddress.note}</div>}
                 </div>
               </div>
             )}
@@ -163,6 +173,7 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, 
             </div>
             {order.deliveryFee > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}><span>{t('delivery_fee')}</span><span style={{ fontWeight: 600 }}>{formatRON(order.deliveryFee)}</span></div>}
             {order.tip > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}><span>{t('tip')}</span><span style={{ fontWeight: 600 }}>{formatRON(order.tip)}</span></div>}
+            {order.discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4, color: 'hsl(0 53% 42%)' }}><span style={{ fontWeight: 600 }}>{t('discount')}</span><span style={{ fontWeight: 700 }}>−{formatRON(order.discount)}</span></div>}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 8, marginTop: 8, borderTop: '1px dashed hsl(120 10% 82%)' }}>
               <span style={{ fontWeight: 900, fontSize: 16 }}>{t('total')}</span>
               <span style={{ fontWeight: 900, fontSize: 26, letterSpacing: '-0.02em', color: 'var(--sc-primary)' }}>{formatRON(order.total)}</span>
@@ -191,7 +202,7 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, 
         </div>
 
         {/* The ticket */}
-        <ThermalTicket order={order} lang={lang} kind={tab} />
+        <ThermalTicket order={order} lang={lang} kind={tab} restaurantSettings={restaurantSettings} displayAddress={displayAddress} />
 
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => onPrint(order, 'kitchen')}>
@@ -203,7 +214,7 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, 
         </div>
 
         {/* Advance */}
-        {order.state !== 'done' && (
+        {order.state !== 'done' && order.state !== 'cancelled' && (
           <button
             className={`btn-terracotta${isOffline ? ' btn-disabled-offline' : ''}`}
             style={{ height: 44, justifyContent: 'center', fontSize: 14 }}
@@ -214,12 +225,12 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, 
             }}
           >
             <Icon name="chevRight" size={14} />
-            {order.state === 'new' ? t('accept') : order.state === 'preparing' ? t('mark_ready') : t('complete')}
+            {{ new: t('accept'), accepted: t('start'), preparing: t('mark_ready'), ready: order.type === 'delivery' ? t('state_out') : t('complete'), out: t('complete') }[order.state]}
           </button>
         )}
 
-        {/* Cancel — only visible for non-terminal states */}
-        {order.state !== 'done' && order.state !== 'cancelled' && (
+        {/* Cancel — only visible for new orders */}
+        {order.state === 'new' && (
           <button
             className="btn-secondary"
             style={{
@@ -239,11 +250,14 @@ function OrderDetailScreen({ order, lang, onBack, onAdvance, onPrint, onCancel, 
   );
 }
 
-function ThermalTicket({ order, lang, kind }) {
+function ThermalTicket({ order, lang, kind, restaurantSettings, displayAddress }) {
   const t = useT(lang);
   // Classic 80mm thermal look: monospace, dashes, all caps
   const dashed = '--------------------------------';
   const money = (n) => n.toFixed(2);
+  const rName = restaurantSettings?.restaurant_name ?? 'Restaurant';
+  const rAddress = restaurantSettings?.branch_address ?? null;
+  const rPhone = restaurantSettings?.branch_phone ?? null;
   return (
     <div style={{
       background: '#fafaf6', border: '1px solid hsl(120 10% 82%)',
@@ -256,10 +270,9 @@ function ThermalTicket({ order, lang, kind }) {
     }}>
       {/* receipt top */}
       <div style={{ position: 'absolute', top: -6, left: 0, right: 0, height: 10, background: `repeating-linear-gradient(45deg, transparent 0 6px, #ede9de 6px 12px)` }} />
-      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 14 }}>SITECARE RESTAURANT</div>
-      <div style={{ textAlign: 'center', fontSize: 10 }}>Str. Republicii 14, Brașov</div>
-      <div style={{ textAlign: 'center', fontSize: 10 }}>CUI: RO38291445</div>
-      <div style={{ textAlign: 'center', fontSize: 10 }}>Tel: 0268 555 1200</div>
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 14 }}>{rName.toUpperCase()}</div>
+      {rAddress && <div style={{ textAlign: 'center', fontSize: 10 }}>{rAddress}</div>}
+      {rPhone && <div style={{ textAlign: 'center', fontSize: 10 }}>Tel: {rPhone}</div>}
       <div style={{ textAlign: 'center', margin: '6px 0' }}>{dashed}</div>
 
       {kind === 'kitchen' && (
@@ -269,7 +282,7 @@ function ThermalTicket({ order, lang, kind }) {
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span>{lang === 'ro' ? 'Comanda' : 'Order'} {order.id}</span>
+        <span>{lang === 'ro' ? 'Comanda' : 'Order'} #{order.dailyOrderNumber}</span>
         <span>{orderTimeLabel(order.placedAt)}</span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -277,7 +290,7 @@ function ThermalTicket({ order, lang, kind }) {
         <span>{(order.source ?? 'counter').toUpperCase()}</span>
       </div>
       {order.customer.name && <div>Client: {order.customer.name}</div>}
-      {order.address && <div style={{ fontSize: 10 }}>{order.address.line1}</div>}
+      {displayAddress && <div style={{ fontSize: 10 }}>{displayAddress.line1 ?? displayAddress.city}</div>}
       <div>{dashed}</div>
 
       {order.items.map((it, i) => (
@@ -304,6 +317,7 @@ function ThermalTicket({ order, lang, kind }) {
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Subtotal</span><span>{money(order.subtotal)}</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>TVA 19%</span><span>{money(order.tax)}</span></div>
           {order.deliveryFee > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Livrare</span><span>{money(order.deliveryFee)}</span></div>}
+          {order.discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Discount</span><span>-{money(order.discount)}</span></div>}
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: 13, marginTop: 4 }}>
             <span>TOTAL RON</span><span>{money(order.total)}</span>
           </div>
@@ -316,11 +330,11 @@ function ThermalTicket({ order, lang, kind }) {
       <div style={{ textAlign: 'center', fontSize: 10 }}>sitecare.ro</div>
       {/* barcode */}
       <div style={{ margin: '10px 0 2px', display: 'flex', justifyContent: 'center', gap: 1 }}>
-        {[...order.id.replace('#', '') + '00'].map((_, i) => (
+        {[...String(order.dailyOrderNumber).padStart(20, '0')].map((_, i) => (
           <div key={i} style={{ width: Math.random() > 0.5 ? 2 : 1, height: 30, background: '#1a1a1a' }} />
         ))}
       </div>
-      <div style={{ textAlign: 'center', fontSize: 9 }}>{order.id.replace('#', '')}·{new Date(order.placedAt).getFullYear()}</div>
+      <div style={{ textAlign: 'center', fontSize: 9 }}>#{order.dailyOrderNumber}·{new Date(order.placedAt).getFullYear()}</div>
     </div>
   );
 }

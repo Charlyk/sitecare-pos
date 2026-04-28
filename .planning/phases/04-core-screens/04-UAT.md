@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 04-core-screens
-source: [04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md, 04-05-SUMMARY.md, 04-06-SUMMARY.md, 04-07-SUMMARY.md, 04-08-SUMMARY.md, 04-09-SUMMARY.md, 04-10-SUMMARY.md]
+source: [04-01-SUMMARY.md, 04-02-SUMMARY.md, 04-03-SUMMARY.md, 04-04-SUMMARY.md, 04-05-SUMMARY.md, 04-06-SUMMARY.md, 04-07-SUMMARY.md, 04-08-SUMMARY.md, 04-09-SUMMARY.md, 04-10-SUMMARY.md, 04-11-SUMMARY.md]
 started: 2026-04-28T16:53:00Z
-updated: 2026-04-28T17:10:00Z
+updated: 2026-04-28T17:51:00Z
 ---
 
 ## Current Test
@@ -113,43 +113,28 @@ blocked: 0
 ## Gaps
 
 - truth: "New order SSE notifications are received and displayed regardless of whether the app window is focused"
-  status: failed
+  status: resolved
   reason: "User reported: if the app window is not focused, the new order notification is not received, it appears only if I focus the window"
   severity: major
   test: 9
   root_cause: "fetch-event-source registers a visibilitychange listener by default that aborts the connection when the window is backgrounded; openWhenHidden is not passed in use-sse.js so the stream suspends on every focus loss"
-  artifacts:
-    - path: "src/use-sse.js"
-      issue: "fetchEventSource call missing openWhenHidden: true option"
-  missing:
-    - "Add openWhenHidden: true to the fetchEventSource options object in use-sse.js"
+  fix: "Added openWhenHidden: true to the fetchEventSource options object in src/use-sse.js (plan 04-11)"
   debug_session: ""
 
 - truth: "Switching density toggle between Balanced and Dense produces a visible change in list/card spacing across the app"
-  status: failed
+  status: resolved
   reason: "User reported: I did not notice any difference"
   severity: minor
   test: 19
   root_cause: "Only one CSS rule exists for density-compact (.card { padding-block: 0 }) and order/menu cards use inline style padding that overrides it; the single rule is both too aggressive (zero padding) and doesn't reach inline-styled elements"
-  artifacts:
-    - path: "src/styles.css"
-      issue: "Single .density-compact .card rule sets padding to 0 instead of a reduced value; doesn't reach inline-padded cards"
-    - path: "src/screen-orders.jsx"
-      issue: "Order rows use inline style padding, not CSS class-based padding"
-  missing:
-    - "Replace .density-compact .card { padding-block: 0 } with readable reduced values (e.g. padding: 8px 12px)"
-    - "Add .density-compact .order-row rule; move inline padding on order rows to CSS class so the cascade can override it"
+  fix: "Replaced broken rule with .density-compact .card/order-row/kds-card-body rules; added order-row class to OrderCard div, kds-card-body class to KitchenTicket body div (plan 04-11)"
   debug_session: ""
 
 - truth: "Ring Up success toast shows the daily order number with a single # prefix (e.g., #43)"
-  status: failed
+  status: resolved
   reason: "User reported: the toast shows duplicate # symbol (##0001)"
   severity: cosmetic
   test: 16
   root_cause: "Toast detail template in screen-pos.jsx hardcodes a # prefix but the API dailyOrderNumber field already includes # in its value; template produces ##0001"
-  artifacts:
-    - path: "src/screen-pos.jsx"
-      issue: "onSuccess toast uses `#${result.data?.dailyNumber}` — extra # prefix + possibly wrong field name"
-  missing:
-    - "Remove the hardcoded # from the toast template and use dailyOrderNumber (or dailyNumber without prefix) matching the actual SDK response field"
+  fix: "Changed toast detail to use `result.data?.dailyOrderNumber ?? result.data?.dailyNumber` — no extra # prefix (plan 04-11)"
   debug_session: ""

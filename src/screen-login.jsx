@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useT } from './i18n.jsx';
 import { Icon } from './icons.jsx';
 import './login.css';
+import { BrandLogo } from './brand-logo.jsx';
 
 function Spinner() {
   return (
@@ -40,7 +41,7 @@ export function LoginScreen({ lang, onLangChange, onSubmit, onForgotPassword, bu
         <div className="arc2" />
 
         <div className="brand-top">
-          <div className="brand-logo">S</div>
+          <BrandLogo size="md" />
           <div>
             <div className="brand-name"><span>Site</span><b>Care</b></div>
             <div className="brand-sub">POS</div>

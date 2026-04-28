@@ -22,7 +22,11 @@ export function useOrderActions() {
           ...(reason != null ? { reason } : {}),
         },
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['orders'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+    },
   });
 
   // updateEstimatedTime: updates the promised prep time for an accepted order
@@ -32,7 +36,11 @@ export function useOrderActions() {
         path: { id },
         body: { estimatedMinutes },
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['orders'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+    },
   });
 
   return { updateStatus, updateEstimatedTime };

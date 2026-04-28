@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { OfflineBanner } from './offline-banner.jsx';
+import { BrandLogo } from './brand-logo.jsx';
 
 function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, density, children, orderCount, sidebarCollapsed, setSidebarCollapsed, isOffline }) {
   const t = useT(lang);
@@ -48,7 +49,7 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
         {/* Sidebar */}
         <aside className="sidebar" style={{ padding: sidebarCollapsed ? '18px 10px 14px' : '18px 14px 14px', overflow: 'hidden' }}>
           <div className="brand" style={{ padding: sidebarCollapsed ? '4px 2px 16px' : '4px 8px 16px', justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
-            <div className="brand-logo" style={{ background: 'var(--sc-primary)' }}>S</div>
+            <BrandLogo size="sm" />
             {!sidebarCollapsed && (
               <div>
                 <div className="brand-name"><span>Site</span><b>Care</b></div>

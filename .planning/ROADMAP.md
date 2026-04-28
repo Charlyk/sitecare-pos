@@ -85,7 +85,7 @@ Plans:
   3. A cashier can browse the live menu, build a cart with quantity adjustments and a discount, select dine-in/pickup/delivery, and submit the order to the kitchen — the order appears on the KDS
   4. A manager can toggle any menu item out-of-stock and back in-stock from the Menu screen — the change persists in the API and reflects immediately
   5. Changing language, density, or accent in Settings persists after closing and reopening the app
-**Plans**: 10 plans
+**Plans**: 11 plans
 Plans:
 - [x] 04-01-PLAN.md — Wave 0: Create all failing test stubs for 20 Phase 4 requirement IDs
 - [x] 04-02-PLAN.md — Wave 1: Shared infrastructure — soundMuted store, SSE onLiveOrder callback, AcceptDialog API wiring, statusToSDK map
@@ -97,6 +97,7 @@ Plans:
 - [x] 04-08-PLAN.md — Wave 2: Settings Display tab with lang/density/accent controls (SET-01, SET-02, SET-03)
 - [x] 04-09-PLAN.md — Wave 3: Human verification checklist — all 5 Phase 4 success criteria
 - [x] 04-10-PLAN.md — Wave 4: Gap closure — 4 verification blockers + 7 code-review warnings
+- [x] 04-11-PLAN.md — Wave 11: UAT gap closure — SSE openWhenHidden, toast double-# fix, density cascade (SSE-01, POS-05, UI-DENSITY-01)
 **UI hint**: yes
 
 ### Phase 5: Native Integration

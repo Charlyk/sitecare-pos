@@ -174,6 +174,12 @@ export const USERS = [
 // ─── Helpers ─────────────────────────────────────────────
 export const formatRON = (n) => new Intl.NumberFormat('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' lei';
 export const elapsedMinutes = (iso) => Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+export const formatDuration = (minutes) => {
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+};
 export const orderTimeLabel = (iso) => {
   const d = new Date(iso);
   return d.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
@@ -181,22 +187,59 @@ export const orderTimeLabel = (iso) => {
 
 // Normalize an Order from the SDK (cents, flat fields) to the prototype shape (RON, nested).
 // Apply at the data layer (useOrders queryFn, useSSE onmessage) so screens are shape-agnostic.
+const SDK_STATE_MAP = {
+  OUT_FOR_DELIVERY: 'out',
+  COMPLETED: 'done',
+};
+
 export function normalizeOrder(o) {
   const cRON = (v) => (v ?? 0) / 100; // SDK returns monetary values in cents
+  const rawState = o.state ?? o.status ?? '';
+  const state = SDK_STATE_MAP[rawState] ?? rawState.toLowerCase() ?? 'new';
+
+  // Compute discount first so total can be derived from components
+  const discountType = o.discountType ?? null;
+  const rawDiscountAmt = o.discountAmount ?? 0;
+  const discount = rawDiscountAmt === 0 ? 0
+    : discountType === 'percent'
+      ? +((o.subtotal ?? 0) * rawDiscountAmt / 10000).toFixed(2)
+      : cRON(rawDiscountAmt);
+
+  const subtotal    = cRON(o.subtotal);
+  const deliveryFee = cRON(o.deliveryFee);
+  const tax         = o.tax != null ? cRON(o.tax) : 0;
+  const tip         = o.tip != null ? cRON(o.tip) : 0;
+  // Recompute total from components so the breakdown always adds up in the UI
+  const total = +(subtotal + deliveryFee + tip - discount).toFixed(2);
+
   return {
     ...o,
     dailyOrderNumber: o.dailyOrderNumber ?? o.id,
-    state: o.state ?? o.status?.toLowerCase() ?? 'new',
+    state,
     type: o.type ?? o.orderType ?? 'dinein',
     source: o.source ?? 'counter',
     payment: o.payment ?? o.paymentType ?? 'cash',
     placedAt: o.placedAt ?? o.createdAt ?? o.orderDate,
     customer: o.customer ?? { name: o.customerName ?? '', phone: o.customerPhone ?? null },
-    subtotal: cRON(o.subtotal),
-    total: cRON(o.total),
-    deliveryFee: cRON(o.deliveryFee),
-    tax: o.tax != null ? cRON(o.tax) : 0,
-    tip: o.tip != null ? cRON(o.tip) : 0,
+    address: o.address ?? (() => {
+      const street = [o.deliveryStreet, o.deliveryNumber].filter(Boolean).join(' ');
+      const areaName = o.deliveryAreaName ?? null;
+      if (!street && !areaName) return null;
+      const extras = [
+        o.deliveryBloc       ? `Bl. ${o.deliveryBloc}`       : null,
+        o.deliveryApartament ? `Ap. ${o.deliveryApartament}` : null,
+        o.deliveryEtaj       ? `Et. ${o.deliveryEtaj}`       : null,
+        o.deliveryInterfon   ? `Int. ${o.deliveryInterfon}`  : null,
+      ].filter(Boolean).join(', ');
+      return { line1: street || null, city: areaName, note: extras || null };
+    })(),
+    subtotal,
+    total,
+    deliveryFee,
+    tax,
+    tip,
+    discount,
+    discountType,
     items: (o.items ?? []).map((it) => ({
       ...it,
       name: it.name ?? it.productName ?? '',
