@@ -1,10 +1,11 @@
 ---
 phase: 5
 slug: native-integration
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: done
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-28
+audited: 2026-04-29
 ---
 
 # Phase 5 — Validation Strategy
@@ -38,15 +39,15 @@ created: 2026-04-28
 
 | Task ID | Plan | Wave | Requirement | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------------|-----------|-------------------|-------------|--------|
-| 05-Wave0-01 | Wave 0 stubs | 0 | PRNT-01 | invoke mock, no real hardware | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "PRNT-01"` | ❌ W0 | ⬜ pending |
-| 05-Wave0-02 | Wave 0 stubs | 0 | PRNT-01 | empty port list → disabled option | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "empty ports"` | ❌ W0 | ⬜ pending |
-| 05-Wave0-03 | Wave 0 stubs | 0 | PRNT-01 | save success → chip-sage | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "save success"` | ❌ W0 | ⬜ pending |
-| 05-Wave0-04 | Wave 0 stubs | 0 | PRNT-01 | save failure → chip-red, no persist | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "save failure"` | ❌ W0 | ⬜ pending |
-| 05-Wave0-05 | Wave 0 stubs | 0 | PRNT-02 | test print invokes command | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "PRNT-02"` | ❌ W0 | ⬜ pending |
-| 05-Wave0-06 | Wave 0 stubs | 0 | PRNT-02 | test print disabled when no config | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "test print disabled"` | ❌ W0 | ⬜ pending |
-| 05-Wave0-07 | Wave 0 stubs | 0 | PRNT-03 | onPrint invokes print_receipt | unit | `npx vitest run src/__tests__/print-receipt.test.jsx -t "PRNT-03"` | ❌ W0 | ⬜ pending |
-| 05-Wave0-08 | Wave 0 stubs | 0 | PRNT-03 | no config → "not configured" toast | unit | `npx vitest run src/__tests__/print-receipt.test.jsx -t "not configured"` | ❌ W0 | ⬜ pending |
-| 05-Wave0-09 | Wave 0 stubs | 0 | ACT-04 | Order Detail Print buttons call onPrint | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "ACT-04"` | ❌ W0 | ⬜ pending |
+| 05-Wave0-01 | Wave 0 stubs | 0 | PRNT-01 | invoke mock, no real hardware | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "PRNT-01"` | ✅ screen-printer.test.jsx | ✅ green |
+| 05-Wave0-02 | Wave 0 stubs | 0 | PRNT-01 | empty port list → disabled option | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "empty ports"` | ✅ screen-printer.test.jsx | ✅ green |
+| 05-Wave0-03 | Wave 0 stubs | 0 | PRNT-01 | save success → chip-sage | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "save success"` | ✅ screen-printer.test.jsx | ✅ green |
+| 05-Wave0-04 | Wave 0 stubs | 0 | PRNT-01 | save failure → chip-red, no persist | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "save failure"` | ✅ screen-printer.test.jsx | ✅ green |
+| 05-Wave0-05 | Wave 0 stubs | 0 | PRNT-02 | test print invokes command | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "PRNT-02"` | ✅ screen-printer.test.jsx | ✅ green |
+| 05-Wave0-06 | Wave 0 stubs | 0 | PRNT-02 | test print disabled when no config | unit | `npx vitest run src/__tests__/screen-printer.test.jsx -t "test print disabled"` | ✅ screen-printer.test.jsx | ✅ green |
+| 05-Wave0-07 | Wave 0 stubs | 0 | PRNT-03 | onPrint invokes print_receipt | unit | `npx vitest run src/__tests__/print-receipt.test.jsx -t "PRNT-03"` | ✅ print-receipt.test.jsx | ✅ green |
+| 05-Wave0-08 | Wave 0 stubs | 0 | PRNT-03 | no config → "not configured" toast | unit | `npx vitest run src/__tests__/print-receipt.test.jsx -t "not configured"` | ✅ print-receipt.test.jsx | ✅ green |
+| 05-Wave0-09 | Wave 0 stubs | 0 | ACT-04 | Order Detail Print buttons call onPrint | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "ACT-04"` | ✅ screen-detail.test.jsx | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -54,9 +55,9 @@ created: 2026-04-28
 
 ## Wave 0 Requirements
 
-- [ ] `src/__tests__/screen-printer.test.jsx` — failing stubs for PRNT-01, PRNT-02 (new file)
-- [ ] `src/__tests__/print-receipt.test.jsx` — failing stubs for PRNT-03, ACT-04 (new file)
-- [ ] `src/__tests__/screen-detail.test.jsx` — ACT-04 print button wiring (new or extend existing from Phase 4 gap closure)
+- [x] `src/__tests__/screen-printer.test.jsx` — 7 tests covering PRNT-01 (5) and PRNT-02 (2) ✅
+- [x] `src/__tests__/print-receipt.test.jsx` — 4 tests covering PRNT-03 ✅
+- [x] `src/__tests__/screen-detail.test.jsx` — 2 tests covering ACT-04 print button wiring ✅
 
 All test files mock `invoke` via `vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))` — established pattern from Phase 3/4 tests.
 
@@ -75,11 +76,24 @@ All test files mock `invoke` via `vi.mock('@tauri-apps/api/core', () => ({ invok
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have automated verify
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s (full suite: ~2s, 166 tests)
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** 2026-04-29
+
+---
+
+## Validation Audit 2026-04-29
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 9 |
+| Resolved | 9 |
+| Escalated | 0 |
+| Full suite tests | 166 |
+| Full suite files | 23 |
+| Suite runtime | ~2s |
