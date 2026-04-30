@@ -126,10 +126,20 @@ Plans:
   4. Installing the app and then releasing a newer version causes the running app to detect and install the update automatically on next launch
 **Plans**: 4 plans
 Plans:
-- [ ] 06-01-PLAN.md — Wave 0: Failing test stubs for BILD-01, BILD-02, BILD-04 structural checks (12 stubs)
-- [ ] 06-02-PLAN.md — Wave 1: Install tauri-plugin-updater + tauri-plugin-process; wire lib.rs; create use-updater.js; wire app.jsx (BILD-04)
-- [ ] 06-03-PLAN.md — Wave 1: Configure tauri.conf.json — bundle targets, createUpdaterArtifacts, updater endpoint + pubkey; generate Ed25519 keypair (BILD-04, BILD-03 deferred)
-- [ ] 06-04-PLAN.md — Wave 2: Create .github/workflows/release.yml — macOS arm64 + Windows x64 matrix, notarization, CI pipeline (BILD-01, BILD-02, BILD-03)
+
+**Wave 0**
+- [ ] 06-01-PLAN.md — Failing test stubs for BILD-01, BILD-02, BILD-04 structural checks (12 stubs)
+
+**Wave 1** *(blocked on Wave 0 completion)*
+- [ ] 06-02-PLAN.md — Install tauri-plugin-updater + tauri-plugin-process; wire lib.rs; create use-updater.js; wire app.jsx (BILD-04)
+- [ ] 06-03-PLAN.md — Configure tauri.conf.json — bundle targets, createUpdaterArtifacts, updater endpoint + pubkey; generate Ed25519 keypair (BILD-04, BILD-03 deferred)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 06-04-PLAN.md — Create .github/workflows/release.yml — macOS arm64 + Windows x64 matrix, notarization, CI pipeline (BILD-01, BILD-02, BILD-03)
+
+**Cross-cutting constraints:**
+- `NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}` must be set on the npm install step in release.yml (applies to Wave 2)
+- `tauri.conf.json` changes from Wave 1 (Plan 03) must be in place before the CI workflow runs
 
 ---
 
