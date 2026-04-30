@@ -25,6 +25,7 @@ import { useStats } from './use-stats.js';
 import { useRestaurantSettings } from './use-restaurant-settings.js';
 import { useDeliveryAreas } from './use-delivery-areas.js';
 import { CancelDialog } from './cancel-dialog.jsx';
+import { useUpdater } from './use-updater.js';
 
 export const statusToSDK = {
   new: 'NEW',
@@ -207,6 +208,11 @@ function App() {
       />
     );
   }
+
+  // BILD-04: silent update check on launch (D-05, D-06)
+  // Placed inside authenticated branch per RESEARCH.md Pitfall 7 —
+  // relaunch() during auth init would disrupt the cold-start auth flow.
+  useUpdater();
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
