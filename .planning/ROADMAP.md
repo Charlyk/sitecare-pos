@@ -122,9 +122,14 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Pushing a release tag to GitHub triggers a CI run that produces a macOS .dmg and a Windows .msi as downloadable artifacts — no manual build step required
   2. The macOS .dmg installer opens on a fresh macOS 13+ machine without a Gatekeeper warning — Apple notarization is in place
-  3. The Windows .msi installer runs on a fresh Windows machine without a SmartScreen warning — code signing is in place
+  3. The Windows .msi installer runs on a fresh Windows machine without a SmartScreen warning — code signing is in place (BILD-03 deferred per D-03: unsigned .msi produced; Azure Trusted Signing is future path)
   4. Installing the app and then releasing a newer version causes the running app to detect and install the update automatically on next launch
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 06-01-PLAN.md — Wave 0: Failing test stubs for BILD-01, BILD-02, BILD-04 structural checks (12 stubs)
+- [ ] 06-02-PLAN.md — Wave 1: Install tauri-plugin-updater + tauri-plugin-process; wire lib.rs; create use-updater.js; wire app.jsx (BILD-04)
+- [ ] 06-03-PLAN.md — Wave 1: Configure tauri.conf.json — bundle targets, createUpdaterArtifacts, updater endpoint + pubkey; generate Ed25519 keypair (BILD-04, BILD-03 deferred)
+- [ ] 06-04-PLAN.md — Wave 2: Create .github/workflows/release.yml — macOS arm64 + Windows x64 matrix, notarization, CI pipeline (BILD-01, BILD-02, BILD-03)
 
 ---
 
@@ -137,7 +142,7 @@ Plans:
 | 3. Shell + Data Foundation | 6/6 | Complete | 2026-04-24 |
 | 4. Core Screens | 10/10 | Complete | 2026-04-27 |
 | 5. Native Integration | 4/4 | Complete | 2026-04-29 |
-| 6. Build Pipeline | 0/? | Not started | - |
+| 6. Build Pipeline | 0/4 | Not started | - |
 
 ---
 
@@ -193,4 +198,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-04-29 — Phase 5 complete (4/4 plans, 166 tests passing, approved-no-hardware)*
+*Last updated: 2026-04-30 — Phase 6 planned (4 plans, waves 0-2)*
