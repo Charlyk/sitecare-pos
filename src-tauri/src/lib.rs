@@ -1,15 +1,15 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use keyring::Entry;
-use serialport;
 use escpos::{
     driver::SerialPortDriver,
     printer::Printer,
     printer_options::PrinterOptions,
-    utils::{Protocol, JustifyMode},
+    utils::{JustifyMode, Protocol},
 };
+use keyring::Entry;
 use serde::Deserialize;
+use serialport;
 use std::time::Duration;
 
 #[tauri::command]
@@ -22,8 +22,7 @@ fn store_token(token: String) -> Result<(), String> {
 
 #[tauri::command]
 fn get_token() -> Result<Option<String>, String> {
-    let entry = Entry::new("sitecare-pos", "auth_token")
-        .map_err(|e| e.to_string())?;
+    let entry = Entry::new("sitecare-pos", "auth_token").map_err(|e| e.to_string())?;
     match entry.get_password() {
         Ok(token) => Ok(Some(token)),
         Err(keyring::Error::NoEntry) => Ok(None),
@@ -33,8 +32,7 @@ fn get_token() -> Result<Option<String>, String> {
 
 #[tauri::command]
 fn delete_token() -> Result<(), String> {
-    let entry = Entry::new("sitecare-pos", "auth_token")
-        .map_err(|e| e.to_string())?;
+    let entry = Entry::new("sitecare-pos", "auth_token").map_err(|e| e.to_string())?;
     match entry.delete_credential() {
         Ok(()) => Ok(()),
         Err(keyring::Error::NoEntry) => Ok(()), // idempotent — no error if already absent
@@ -76,32 +74,36 @@ struct PrintOrderData {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 fn strip_diacritics(s: &str) -> String {
-    s.chars().map(|c| match c {
-        'ă' | 'Ă' => 'a',
-        'â' | 'Â' => 'a',
-        'î' | 'Î' => 'i',
-        'ș' | 'Ș' | 'ş' | 'Ş' => 's',
-        'ț' | 'Ț' | 'ţ' | 'Ţ' => 't',
-        other => other,
-    }).collect()
+    s.chars()
+        .map(|c| match c {
+            'ă' | 'Ă' => 'a',
+            'â' | 'Â' => 'a',
+            'î' | 'Î' => 'i',
+            'ș' | 'Ș' | 'ş' | 'Ş' => 's',
+            'ț' | 'Ț' | 'ţ' | 'Ţ' => 't',
+            other => other,
+        })
+        .collect()
 }
 
 fn chars_per_line(paper_width: &str) -> u8 {
     match paper_width {
         "58mm" => 32,
-        _ => 48,   // 80mm or unknown defaults to 48
+        _ => 48, // 80mm or unknown defaults to 48
     }
 }
 
 /// Validates a port name against the OS-enumerated list of available ports.
 /// Prevents port path injection (T-05-02 — ASVS V5 input validation).
 fn validate_port(port: &str) -> Result<(), String> {
-    let available = serialport::available_ports()
-        .map_err(|e| e.to_string())?;
+    let available = serialport::available_ports().map_err(|e| e.to_string())?;
     if available.iter().any(|p| p.port_name == port) {
         Ok(())
     } else {
-        Err(format!("Port '{}' is not in the list of available ports", port))
+        Err(format!(
+            "Port '{}' is not in the list of available ports",
+            port
+        ))
     }
 }
 
@@ -193,9 +195,7 @@ async fn print_receipt(
         let opts = PrinterOptions::new(None, None, chars as u8);
         let ruler: String = "-".repeat(chars);
         let mut printer = Printer::new(driver, Protocol::default(), Some(opts));
-        let mut p = printer
-            .init()
-            .map_err(|e| e.to_string())?;
+        let mut p = printer.init().map_err(|e| e.to_string())?;
 
         // --- HEADER ---
         let rname = strip_diacritics(&order.restaurant_name);
@@ -209,7 +209,9 @@ async fn print_receipt(
             .bold(false)
             .map_err(|e| e.to_string())?;
         if let Some(addr) = &order.restaurant_address {
-            p = p.writeln(&strip_diacritics(addr)).map_err(|e| e.to_string())?;
+            p = p
+                .writeln(&strip_diacritics(addr))
+                .map_err(|e| e.to_string())?;
         }
         p = p
             .justify(JustifyMode::LEFT)
@@ -254,13 +256,20 @@ async fn print_receipt(
         });
         let source_label = order.source.as_deref().unwrap_or("counter").to_uppercase();
         let src_padding = chars.saturating_sub(type_label.len() + source_label.len());
-        let type_line = format!("{}{}{}", type_label.to_uppercase(), " ".repeat(src_padding), source_label);
+        let type_line = format!(
+            "{}{}{}",
+            type_label.to_uppercase(),
+            " ".repeat(src_padding),
+            source_label
+        );
         p = p.writeln(&type_line).map_err(|e| e.to_string())?;
 
         if let Some(ref cname) = order.customer_name {
             let safe = strip_diacritics(cname);
             let truncated: String = safe.chars().take(40).collect();
-            p = p.writeln(&format!("Client: {}", truncated)).map_err(|e| e.to_string())?;
+            p = p
+                .writeln(&format!("Client: {}", truncated))
+                .map_err(|e| e.to_string())?;
         }
         if order.order_type == "delivery" {
             if let Some(ref addr) = order.delivery_address {
@@ -302,7 +311,9 @@ async fn print_receipt(
             // Modifiers as sub-lines
             for m in &item.mods {
                 let safe_mod = strip_diacritics(m);
-                p = p.writeln(&format!("  -> {}", safe_mod)).map_err(|e| e.to_string())?;
+                p = p
+                    .writeln(&format!("  -> {}", safe_mod))
+                    .map_err(|e| e.to_string())?;
             }
         }
 
@@ -326,19 +337,35 @@ async fn print_receipt(
         if kind == "customer" {
             p = p.writeln(&ruler).map_err(|e| e.to_string())?;
 
-            let sub_line = format!("Subtotal{}{:.2}", " ".repeat(chars.saturating_sub(8 + 5)), order.subtotal);
+            let sub_line = format!(
+                "Subtotal{}{:.2}",
+                " ".repeat(chars.saturating_sub(8 + 5)),
+                order.subtotal
+            );
             p = p.writeln(&sub_line).map_err(|e| e.to_string())?;
 
             if order.tax > 0.0 {
-                let tax_line = format!("TVA 19%{}{:.2}", " ".repeat(chars.saturating_sub(7 + 5)), order.tax);
+                let tax_line = format!(
+                    "TVA 19%{}{:.2}",
+                    " ".repeat(chars.saturating_sub(7 + 5)),
+                    order.tax
+                );
                 p = p.writeln(&tax_line).map_err(|e| e.to_string())?;
             }
             if order.delivery_fee > 0.0 {
-                let fee_line = format!("Livrare{}{:.2}", " ".repeat(chars.saturating_sub(7 + 5)), order.delivery_fee);
+                let fee_line = format!(
+                    "Livrare{}{:.2}",
+                    " ".repeat(chars.saturating_sub(7 + 5)),
+                    order.delivery_fee
+                );
                 p = p.writeln(&fee_line).map_err(|e| e.to_string())?;
             }
             if order.discount > 0.0 {
-                let disc_line = format!("Discount{}-{:.2}", " ".repeat(chars.saturating_sub(8 + 6)), order.discount);
+                let disc_line = format!(
+                    "Discount{}-{:.2}",
+                    " ".repeat(chars.saturating_sub(8 + 6)),
+                    order.discount
+                );
                 p = p.writeln(&disc_line).map_err(|e| e.to_string())?;
             }
 
@@ -372,7 +399,7 @@ async fn print_receipt(
             .map_err(|e| e.to_string())?
             .feed()
             .map_err(|e| e.to_string())?
-            .print_cut()    // sends all buffered bytes + GS V auto-cut; NEVER call print() before print_cut()
+            .print_cut() // sends all buffered bytes + GS V auto-cut; NEVER call print() before print_cut()
             .map_err(|e| e.to_string())?;
 
         Ok::<(), String>(())
@@ -386,16 +413,24 @@ async fn print_receipt(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             #[cfg(desktop)]
-            app.handle().plugin(tauri_plugin_window_state::Builder::default().build())?;
+            app.handle()
+                .plugin(tauri_plugin_window_state::Builder::default().build())?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            store_token, get_token, delete_token,
-            list_serial_ports, save_printer_config, test_print, print_receipt
+            store_token,
+            get_token,
+            delete_token,
+            list_serial_ports,
+            save_printer_config,
+            test_print,
+            print_receipt
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application")
