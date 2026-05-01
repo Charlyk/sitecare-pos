@@ -1,0 +1,122 @@
+# SiteCare POS — Release Workflow
+# Triggered by: git tag push matching 'app-v*' (e.g. app-v0.1.0)
+# Produces: notarized macOS arm64 .dmg + unsigned Windows x64 .msi
+#
+# Required GitHub Secrets (repo → Settings → Secrets and variables → Actions):
+#
+# Updater signing (both platforms):
+#   TAURI_SIGNING_PRIVATE_KEY          — content of ~/.tauri/sitecare-pos.key
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD — password set during signer generate (or empty)
+#
+# macOS notarization (macOS runner only):
+#   APPLE_CERTIFICATE          — base64-encoded Developer ID Application .p12 certificate
+#   APPLE_CERTIFICATE_PASSWORD — password used when exporting the .p12
+#   APPLE_ID                   — Apple ID email (e.g. user@example.com)
+#   APPLE_PASSWORD             — app-specific password from appleid.apple.com
+#   APPLE_TEAM_ID              — 10-char Team ID from developer.apple.com Membership
+#   KEYCHAIN_PASSWORD          — any random string: openssl rand -hex 32
+#
+# Windows: no code signing secrets needed (BILD-03 deferred per D-03)
+#   Windows .msi is unsigned; SmartScreen "More info → Run anyway" on first install.
+#   Future: Azure Trusted Signing (~$10/month, no hardware token) when needed.
+
+name: 'Release'
+
+on:
+  push:
+    tags:
+      - 'app-v*'
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      # macOS only: import Developer ID certificate into a temporary keychain.
+      # The keychain is ephemeral — it lives only for this CI run.
+      - name: import Apple certificate
+        if: matrix.platform == 'macos-latest'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo $APPLE_CERTIFICATE | base64 --decode > certificate.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          security import certificate.p12 -k build.keychain \
+            -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security find-identity -v -p codesigning build.keychain
+
+      # macOS only: extract the certificate identity string for APPLE_SIGNING_IDENTITY.
+      # This is passed explicitly to tauri-action to avoid auto-detection ambiguity.
+      - name: get certificate identity
+        if: matrix.platform == 'macos-latest'
+        run: |
+          CERT_INFO=$(security find-identity -v -p codesigning build.keychain \
+            | grep "Developer ID Application")
+          CERT_ID=$(echo "$CERT_INFO" | awk -F'"' '{print $2}')
+          echo "CERT_ID=$CERT_ID" >> $GITHUB_ENV
+
+      # NODE_AUTH_TOKEN must be set HERE (on npm ci), not on the tauri-action step.
+      # The .npmrc uses ${NODE_AUTH_TOKEN} interpolation for @charlyk/admin-client.
+      # If set only on tauri-action, npm ci runs without the token and 404s.
+      - name: install frontend dependencies
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm ci
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Updater artifact signing (both platforms)
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # macOS notarization credentials
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ env.CERT_ID }}
+        with:
+          tagName: app-v__VERSION__
+          releaseName: 'SiteCare POS v__VERSION__'
+          releaseBody: 'See the assets to download this version and install.'
+          releaseDraft: true
+          prerelease: false
+          uploadUpdaterJson: true
+          updaterJsonPreferNsis: false
+          args: ${{ matrix.args }}
