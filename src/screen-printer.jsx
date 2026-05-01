@@ -130,17 +130,20 @@ function PrinterScreen({ lang, restaurantSettings, isOffline }) {
           <div>
             <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600, marginBottom: 4 }}>{t('printer_port_label')}</div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <select
-                value={selectedPort}
-                onChange={(e) => setSelectedPort(e.target.value)}
-                disabled={isOffline}
-                style={{ flex: 1, border: '1px solid hsl(120 10% 88%)', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontFamily: 'inherit', background: '#fff' }}
-              >
-                {ports.length === 0
-                  ? <option value="" disabled>{t('printer_no_ports')}</option>
-                  : ports.map((p) => <option key={p} value={p}>{p}</option>)
-                }
-              </select>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <select
+                  value={selectedPort}
+                  onChange={(e) => setSelectedPort(e.target.value)}
+                  disabled={isOffline}
+                  style={{ width: '100%', padding: '8px 32px 8px 10px', border: '1px solid hsl(120 10% 88%)', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, background: '#fff', color: selectedPort ? '#111' : 'hsl(120 5% 55%)', boxSizing: 'border-box', appearance: 'none', WebkitAppearance: 'none', outline: 'none', cursor: isOffline ? 'default' : 'pointer' }}
+                >
+                  {ports.length === 0
+                    ? <option value="" disabled>{t('printer_no_ports')}</option>
+                    : ports.map((p) => <option key={p} value={p}>{p}</option>)
+                  }
+                </select>
+                <Icon name="chevDown" size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'hsl(120 5% 55%)' }} />
+              </div>
               <button className="btn-secondary" onClick={handleRefreshPorts} style={{ padding: '8px 12px', flexShrink: 0 }}>
                 <Icon name="refresh" size={13} /> {t('printer_refresh_ports')}
               </button>
