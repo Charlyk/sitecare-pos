@@ -2,7 +2,7 @@
 phase: 06-build-pipeline
 plan: 04
 subsystem: ci-release-workflow
-status: checkpoint
+status: complete
 tags: [github-actions, tauri-action, notarization, release-workflow, BILD-01, BILD-02, BILD-03, build-pipeline]
 
 # Dependency graph
