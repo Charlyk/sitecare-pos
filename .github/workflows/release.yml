@@ -85,10 +85,14 @@ jobs:
       - name: get certificate identity
         if: matrix.platform == 'macos-latest'
         run: |
-          CERT_INFO=$(security find-identity -v -p codesigning build.keychain \
-            | grep "Developer ID Application")
-          CERT_ID=$(echo "$CERT_INFO" | awk -F'"' '{print $2}')
+          echo "All codesigning identities in build.keychain:"
+          security find-identity -v -p codesigning build.keychain || true
+          CERT_ID=$(security find-identity -v -p codesigning build.keychain \
+            | grep "Developer ID Application" \
+            | awk -F'"' '{print $2}' \
+            | head -1)
           echo "CERT_ID=$CERT_ID" >> $GITHUB_ENV
+          echo "Resolved signing identity: $CERT_ID"
 
       # NODE_AUTH_TOKEN must be set HERE (on npm ci), not on the tauri-action step.
       # The .npmrc uses ${NODE_AUTH_TOKEN} interpolation for @charlyk/admin-client.
