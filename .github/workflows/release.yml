@@ -91,6 +91,12 @@ jobs:
             | grep "Developer ID Application" \
             | awk -F'"' '{print $2}' \
             | head -1)
+          if [ -z "$CERT_ID" ]; then
+            echo "WARNING: No 'Developer ID Application' cert found in keychain."
+            echo "To enable notarized distribution, upload a Developer ID Application .p12 as APPLE_CERTIFICATE."
+            echo "Falling back to ad-hoc signing — build will succeed but the .dmg will not pass Gatekeeper."
+            CERT_ID="-"
+          fi
           echo "CERT_ID=$CERT_ID" >> $GITHUB_ENV
           echo "Resolved signing identity: $CERT_ID"
 
@@ -121,6 +127,6 @@ jobs:
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
-          uploadUpdaterJson: true
+          includeUpdaterJson: true
           updaterJsonPreferNsis: false
           args: ${{ matrix.args }}
