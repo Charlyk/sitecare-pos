@@ -81,7 +81,8 @@ jobs:
           security find-identity -v -p codesigning build.keychain
 
       # macOS only: extract the certificate identity string for APPLE_SIGNING_IDENTITY.
-      # This is passed explicitly to tauri-action to avoid auto-detection ambiguity.
+      # Sets SKIP_NOTARIZATION=true when no Developer ID Application cert is present so
+      # that Tauri does not require signing and the build still produces a .dmg artifact.
       - name: get certificate identity
         if: matrix.platform == 'macos-latest'
         run: |
@@ -93,12 +94,15 @@ jobs:
             | head -1)
           if [ -z "$CERT_ID" ]; then
             echo "WARNING: No 'Developer ID Application' cert found in keychain."
-            echo "To enable notarized distribution, upload a Developer ID Application .p12 as APPLE_CERTIFICATE."
-            echo "Falling back to ad-hoc signing — build will succeed but the .dmg will not pass Gatekeeper."
-            CERT_ID="-"
+            echo "Codesigning and notarization will be skipped for this build."
+            echo "To produce a notarized DMG, upload a Developer ID Application .p12 as APPLE_CERTIFICATE."
+            echo "CERT_ID=" >> $GITHUB_ENV
+            echo "SKIP_NOTARIZATION=true" >> $GITHUB_ENV
+          else
+            echo "CERT_ID=$CERT_ID" >> $GITHUB_ENV
+            echo "SKIP_NOTARIZATION=false" >> $GITHUB_ENV
           fi
-          echo "CERT_ID=$CERT_ID" >> $GITHUB_ENV
-          echo "Resolved signing identity: $CERT_ID"
+          echo "Resolved signing identity: ${CERT_ID:-<none>}"
 
       # NODE_AUTH_TOKEN must be set HERE (on npm ci), not on the tauri-action step.
       # The .npmrc uses ${NODE_AUTH_TOKEN} interpolation for @charlyk/admin-client.
@@ -114,13 +118,15 @@ jobs:
           # Updater artifact signing (both platforms)
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # macOS notarization credentials
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ env.CERT_ID }}
+          # macOS notarization credentials — blanked out when no Developer ID cert is present
+          # (SKIP_NOTARIZATION=true). Tauri treats APPLE_ID as the signal to require signing;
+          # clearing it allows the build to complete without a valid signing identity.
+          APPLE_ID: ${{ env.SKIP_NOTARIZATION != 'true' && secrets.APPLE_ID || '' }}
+          APPLE_PASSWORD: ${{ env.SKIP_NOTARIZATION != 'true' && secrets.APPLE_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ env.SKIP_NOTARIZATION != 'true' && secrets.APPLE_TEAM_ID || '' }}
+          APPLE_CERTIFICATE: ${{ env.SKIP_NOTARIZATION != 'true' && secrets.APPLE_CERTIFICATE || '' }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ env.SKIP_NOTARIZATION != 'true' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
+          APPLE_SIGNING_IDENTITY: ${{ env.SKIP_NOTARIZATION != 'true' && env.CERT_ID || '' }}
         with:
           tagName: app-v__VERSION__
           releaseName: 'SiteCare POS v__VERSION__'
