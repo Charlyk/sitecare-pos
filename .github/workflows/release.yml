@@ -114,7 +114,7 @@ jobs:
 
       - uses: tauri-apps/tauri-action@v0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           # Updater artifact signing (both platforms)
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -128,6 +128,8 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ env.SKIP_NOTARIZATION != 'true' && secrets.APPLE_CERTIFICATE_PASSWORD || '' }}
           APPLE_SIGNING_IDENTITY: ${{ env.SKIP_NOTARIZATION != 'true' && env.CERT_ID || '' }}
         with:
+          owner: Charlyk
+          repo: sitecare-pos-releases
           tagName: app-v__VERSION__
           releaseName: 'SiteCare POS v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'

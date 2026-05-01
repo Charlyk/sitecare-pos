@@ -47,7 +47,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM2QThGQ0U4MkFGODVENzgKUldSNFhmZ3E2UHlvTm1kV3p3WjRzWnk0OTNCajR2dG9INmhmY2gyNGJPNm4vbDZFcXJJL2RsTHQK",
       "endpoints": [
-        "https://github.com/Charlyk/sitecare-pos/releases/latest/download/latest.json"
+        "https://github.com/Charlyk/sitecare-pos-releases/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"
