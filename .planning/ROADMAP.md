@@ -15,7 +15,7 @@
 - [x] **Phase 3: Shell + Data Foundation** - App shell renders from real Zustand state, data hooks connect to live API, SSE connection established, offline banner works
 - [x] **Phase 4: Core Screens** - All 7 screens render live API data with full UX — orders, KDS timers/urgency/sound/bump, POS checkout flow, menu toggles, settings persistence
 - [x] **Phase 5: Native Integration** - Staff can configure a thermal printer and print receipts end-to-end via Tauri native plugin
-- [ ] **Phase 6: Build Pipeline** - Every release tag produces signed, notarized macOS and Windows installers; auto-update works
+- [x] **Phase 6: Build Pipeline** - Every release tag produces signed, notarized macOS and Windows installers; auto-update works
 
 ---
 
@@ -128,14 +128,14 @@ Plans:
 Plans:
 
 **Wave 0**
-- [ ] 06-01-PLAN.md — Failing test stubs for BILD-01, BILD-02, BILD-04 structural checks (12 stubs)
+- [x] 06-01-PLAN.md — Failing test stubs for BILD-01, BILD-02, BILD-04 structural checks (12 stubs)
 
-**Wave 1** *(blocked on Wave 0 completion)*
-- [ ] 06-02-PLAN.md — Install tauri-plugin-updater + tauri-plugin-process; wire lib.rs; create use-updater.js; wire app.jsx (BILD-04)
-- [ ] 06-03-PLAN.md — Configure tauri.conf.json — bundle targets, createUpdaterArtifacts, updater endpoint + pubkey; generate Ed25519 keypair (BILD-04, BILD-03 deferred)
+**Wave 1**
+- [x] 06-02-PLAN.md — Install tauri-plugin-updater + tauri-plugin-process; wire lib.rs; create use-updater.js; wire app.jsx (BILD-04)
+- [x] 06-03-PLAN.md — Configure tauri.conf.json — bundle targets, createUpdaterArtifacts, updater endpoint + pubkey; generate Ed25519 keypair (BILD-04, BILD-03 deferred)
 
-**Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 06-04-PLAN.md — Create .github/workflows/release.yml — macOS arm64 + Windows x64 matrix, notarization, CI pipeline (BILD-01, BILD-02, BILD-03)
+**Wave 2**
+- [x] 06-04-PLAN.md — Create .github/workflows/release.yml — macOS arm64 + Windows x64 matrix, notarization, CI pipeline (BILD-01, BILD-02, BILD-03)
 
 **Cross-cutting constraints:**
 - `NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}` must be set on the npm install step in release.yml (applies to Wave 2)
@@ -152,7 +152,7 @@ Plans:
 | 3. Shell + Data Foundation | 6/6 | Complete | 2026-04-24 |
 | 4. Core Screens | 10/10 | Complete | 2026-04-27 |
 | 5. Native Integration | 4/4 | Complete | 2026-04-29 |
-| 6. Build Pipeline | 0/4 | Not started | - |
+| 6. Build Pipeline | 4/4 | Complete | 2026-05-02 |
 
 ---
 
@@ -208,4 +208,4 @@ Plans:
 
 ---
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-04-30 — Phase 6 planned (4 plans, waves 0-2)*
+*Last updated: 2026-05-02 — Phase 6 complete (4/4 plans, human-approved, all 41 requirements done)*

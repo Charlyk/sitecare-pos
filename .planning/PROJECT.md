@@ -34,7 +34,7 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 - [x] POS order creation wired to API — Validated in Phase 4: cart, discount, createOrder mutation, table notes workaround
 - [x] Greyed-out UI for features not yet production-ready — Validated in Phase 1-4
 - [x] USB thermal printer integration — Validated in Phase 5: list_serial_ports, save_printer_config, test_print, print_receipt; screen-printer redesigned; handlePrint wired; 166 tests passing
-- [ ] macOS + Windows installer / build pipeline — Phase 6
+- [x] macOS + Windows installer / build pipeline — Validated in Phase 6: GitHub Actions release.yml, tauri-plugin-updater, Ed25519 signing, notarization workflow, silent auto-update
 
 ### Out of Scope
 
@@ -94,4 +94,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-29 — Phase 5 Native Integration complete: 4/4 plans, 166 tests passing, approved-no-hardware*
+*Last updated: 2026-05-02 — Phase 6 Build Pipeline complete: 4/4 plans, 41/41 requirements delivered, milestone v1.0 done*
