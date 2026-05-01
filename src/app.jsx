@@ -98,6 +98,11 @@ function App() {
   });
   const isOffline = !isConnected;
 
+  // BILD-04: silent update check on launch (D-05, D-06).
+  // Must be called unconditionally before any early return to respect React hook ordering rules.
+  // The effect itself guards against non-Tauri environments (window.__TAURI_INTERNALS__ check).
+  useUpdater();
+
   const handleAdvance = (order, toStatus) => {
     if (toStatus === 'accepted') {
       setAcceptDialog({ order });
@@ -208,11 +213,6 @@ function App() {
       />
     );
   }
-
-  // BILD-04: silent update check on launch (D-05, D-06)
-  // Placed inside authenticated branch per RESEARCH.md Pitfall 7 —
-  // relaunch() during auth init would disrupt the cold-start auth flow.
-  useUpdater();
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
