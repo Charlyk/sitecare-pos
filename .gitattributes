@@ -1,0 +1,12 @@
+# Exclude application source from automatically generated archives.
+# GitHub uses git archive to produce the "Source code (zip/tar.gz)" downloads
+# that appear on every tag and release in a public repository.
+# Pre-built binaries are distributed from sitecare-pos-releases — not this repo.
+src/            export-ignore
+src-tauri/      export-ignore
+public/         export-ignore
+assets/         export-ignore
+_prototype/     export-ignore
+dist/           export-ignore
+node_modules/   export-ignore
+.github/        export-ignore

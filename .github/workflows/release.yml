@@ -164,3 +164,24 @@ jobs:
           includeUpdaterJson: true
           updaterJsonPreferNsis: false
           args: ${{ matrix.args }}
+
+      # Ensure sitecare-pos-releases has a .gitattributes that excludes all content
+      # from git archive so GitHub's auto-generated "Source code" downloads are empty.
+      # Runs once (macOS only) since it's a one-time repo-level write.
+      - name: Block source archives in releases repo
+        if: matrix.platform == 'macos-26'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          CONTENT=$(printf '# GitHub generates Source code archives via git archive for every release.\n# Exclude all content so those downloads are empty — binaries ship as release assets.\n* export-ignore\n' | base64 | tr -d '\n')
+          SHA=$(gh api /repos/Charlyk/sitecare-pos-releases/contents/.gitattributes --jq '.sha' 2>/dev/null || true)
+          if [ -n "$SHA" ]; then
+            gh api --method PUT /repos/Charlyk/sitecare-pos-releases/contents/.gitattributes \
+              -f message="chore: exclude source from git archives" \
+              -f "content=$CONTENT" \
+              -f "sha=$SHA" --silent || true
+          else
+            gh api --method PUT /repos/Charlyk/sitecare-pos-releases/contents/.gitattributes \
+              -f message="chore: exclude source from git archives" \
+              -f "content=$CONTENT" --silent || true
+          fi
