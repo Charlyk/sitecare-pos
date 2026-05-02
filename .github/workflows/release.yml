@@ -61,6 +61,30 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
 
+      # Patch version files so __VERSION__ resolves to the tag that triggered this run.
+      # Without this step tauri.conf.json always contains 0.1.0 and every release
+      # overwrites the same app-v0.1.0 tag.
+      - name: Set version from tag
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG_NAME#app-v}"
+          echo "Patching version to: $VERSION"
+          node -e "
+            const fs = require('fs');
+            const v = '$VERSION';
+            const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
+            conf.version = v;
+            fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2) + '\n');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = v;
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+            const cargo = fs.readFileSync('src-tauri/Cargo.toml', 'utf8');
+            fs.writeFileSync('src-tauri/Cargo.toml', cargo.replace(/^version = \"[^\"]*\"/m, 'version = \"' + v + '\"'));
+            console.log('Done — version is now: ' + v);
+          "
+
       # macOS only: import Developer ID certificate into a temporary keychain.
       # The keychain is ephemeral — it lives only for this CI run.
       - name: import Apple certificate
