@@ -197,6 +197,10 @@ export const I18N = {
     // ORD-03 Orders search
     search_no_results: 'Niciun rezultat',
     search_no_results_sub: 'Nicio comandă nu corespunde căutării.',
+    // Updater sidebar banner
+    update_ready: 'Versiune nouă instalată',
+    update_ready_sub: 'Repornește pentru a aplica actualizarea.',
+    update_restart: 'Repornește',
   },
   en: {
     nav_orders: 'Live orders',
@@ -382,6 +386,10 @@ export const I18N = {
     // ORD-03 Orders search
     search_no_results: 'No results',
     search_no_results_sub: 'No orders match your search.',
+    // Updater sidebar banner
+    update_ready: 'New version ready',
+    update_ready_sub: 'Restart the app to apply the update.',
+    update_restart: 'Restart now',
   },
 };
 

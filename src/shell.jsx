@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
+import { relaunch } from '@tauri-apps/plugin-process';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { OfflineBanner } from './offline-banner.jsx';
 import { BrandLogo } from './brand-logo.jsx';
+import { useAppStore } from './store.js';
 
 function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, density, children, orderCount, sidebarCollapsed, setSidebarCollapsed, isOffline }) {
   const t = useT(lang);
+  const updateReady = useAppStore((s) => s.updateReady);
+  const handleRelaunch = () => { if (window.__TAURI_INTERNALS__) relaunch(); };
 
   const navGroups = [
     {
@@ -79,6 +83,24 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
               ))}
             </div>
           ))}
+
+          {updateReady && !sidebarCollapsed && (
+            <div style={{ background: 'hsl(120 14% 49% / 0.08)', border: '1px solid hsl(120 14% 49% / 0.18)', borderRadius: 10, padding: '10px 12px', marginTop: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                <Icon name="refresh" size={14} style={{ color: 'var(--sc-primary)' }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--sc-foreground)', letterSpacing: '-0.01em' }}>{t('update_ready')}</span>
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', margin: '0 0 8px', lineHeight: 1.4 }}>{t('update_ready_sub')}</p>
+              <button onClick={handleRelaunch} style={{ width: '100%', border: 0, background: 'var(--sc-primary)', color: '#fff', borderRadius: 7, padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, fontWeight: 700 }}>
+                {t('update_restart')}
+              </button>
+            </div>
+          )}
+          {updateReady && sidebarCollapsed && (
+            <div title={t('update_ready')} onClick={handleRelaunch} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 0', cursor: 'pointer', borderRadius: 10, background: 'hsl(120 14% 49% / 0.08)', border: '1px solid hsl(120 14% 49% / 0.18)', color: 'var(--sc-primary)', marginTop: 4 }}>
+              <Icon name="refresh" size={16} />
+            </div>
+          )}
 
           <div className="sidebar-footer">
             {/* Collapse toggle */}

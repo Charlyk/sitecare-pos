@@ -54,6 +54,7 @@ export const useAppStore = create(
       toasts: [],              // Managed by pushToast/dismissToast
       acceptDialog: null,      // Set by setAcceptDialog(); consumed by AcceptDialog in app.jsx
       soundMuted: false,       // KDS mute toggle (D-07) — session-only, NOT in partialize
+      updateReady: false,      // Set by useUpdater after silent download; triggers sidebar banner
 
       // --- Auth state (session-only, NOT persisted — set by AuthProvider on cold start) ---
       isAuthenticated: false,
@@ -73,6 +74,7 @@ export const useAppStore = create(
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
       setAcceptDialog: (dialog) => set({ acceptDialog: dialog }),
       setSoundMuted: (v) => set({ soundMuted: v }),
+      setUpdateReady: (v) => set({ updateReady: v }),
       setIsAuthenticated: (v) => set({ isAuthenticated: v }),
       setAuthUser: (user) => set({ authUser: user }),
     }),
