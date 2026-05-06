@@ -201,6 +201,8 @@ export const I18N = {
     update_ready: 'Versiune nouă instalată',
     update_ready_sub: 'Repornește pentru a aplica actualizarea.',
     update_restart: 'Repornește',
+    // User menu
+    logout: 'Deconectare',
   },
   en: {
     nav_orders: 'Live orders',
@@ -390,6 +392,8 @@ export const I18N = {
     update_ready: 'New version ready',
     update_ready_sub: 'Restart the app to apply the update.',
     update_restart: 'Restart now',
+    // User menu
+    logout: 'Log out',
   },
 };
 

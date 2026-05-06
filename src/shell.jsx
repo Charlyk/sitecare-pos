@@ -1,15 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { OfflineBanner } from './offline-banner.jsx';
 import { BrandLogo } from './brand-logo.jsx';
 import { useAppStore } from './store.js';
+import { useAuth } from './auth.jsx';
 
 function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, density, children, orderCount, sidebarCollapsed, setSidebarCollapsed, isOffline }) {
   const t = useT(lang);
   const updateReady = useAppStore((s) => s.updateReady);
+  const authUser = useAppStore((s) => s.authUser);
+  const { signOut } = useAuth();
   const handleRelaunch = () => { if (window.__TAURI_INTERNALS__) relaunch(); };
+
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    function handleClick(e) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [userMenuOpen]);
+
+  const displayName = authUser?.name ?? authUser?.email ?? 'Eduard Albu';
+  const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   const navGroups = [
     {
@@ -122,14 +142,37 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
                 </button>
               </div>
             )}
-            <div className="user-chip" title={sidebarCollapsed ? 'Eduard Albu' : ''} style={{ justifyContent: sidebarCollapsed ? 'center' : 'flex-start' }}>
-              <div className="avatar">EA</div>
-              {!sidebarCollapsed && (
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>Eduard Albu</div>
-                  <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)' }}>{lang === 'ro' ? 'Administrator' : 'Admin'}</div>
+            <div style={{ position: 'relative' }} ref={userMenuRef}>
+              {userMenuOpen && (
+                <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, right: 0, background: '#fff', border: '1px solid hsl(120 10% 88%)', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 50, overflow: 'hidden' }}>
+                  <button
+                    onClick={() => { setUserMenuOpen(false); signOut(); }}
+                    style={{ width: '100%', border: 0, background: 'transparent', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, color: 'hsl(0 60% 45%)', borderRadius: 0 }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'hsl(0 60% 45% / 0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <Icon name="logout" size={14} />
+                    {t('logout')}
+                  </button>
                 </div>
               )}
+              <div
+                className="user-chip"
+                title={sidebarCollapsed ? displayName : ''}
+                style={{ justifyContent: sidebarCollapsed ? 'center' : 'flex-start', cursor: 'pointer' }}
+                onClick={() => setUserMenuOpen(o => !o)}
+              >
+                <div className="avatar">{initials}</div>
+                {!sidebarCollapsed && (
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{displayName}</div>
+                    <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)' }}>{lang === 'ro' ? 'Administrator' : 'Admin'}</div>
+                  </div>
+                )}
+                {!sidebarCollapsed && (
+                  <Icon name={userMenuOpen ? 'chevUp' : 'chevDown'} size={12} style={{ color: 'var(--sc-muted-foreground)', flexShrink: 0 }} />
+                )}
+              </div>
             </div>
           </div>
         </aside>
