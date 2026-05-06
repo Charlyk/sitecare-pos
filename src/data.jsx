@@ -209,8 +209,11 @@ export function normalizeOrder(o) {
   const deliveryFee = cRON(o.deliveryFee);
   const tax         = o.tax != null ? cRON(o.tax) : 0;
   const tip         = o.tip != null ? cRON(o.tip) : 0;
-  // Recompute total from components so the breakdown always adds up in the UI
-  const total = +(subtotal + deliveryFee + tip - discount).toFixed(2);
+  // Use server total when available — it includes global products and is authoritative.
+  // Fall back to recomputing from components if the server doesn't provide it.
+  const total = o.total != null
+    ? cRON(o.total)
+    : +(subtotal + deliveryFee + tip - discount).toFixed(2);
 
   return {
     ...o,
@@ -240,12 +243,15 @@ export function normalizeOrder(o) {
     tip,
     discount,
     discountType,
-    items: (o.items ?? []).map((it) => ({
-      ...it,
-      name: it.name ?? it.productName ?? '',
-      qty: it.qty ?? it.quantity ?? 1,
-      price: cRON(it.price ?? it.basePrice ?? 0),
-      mods: it.mods ?? (it.selectedOptions ?? []).map((s) => s.optionName).filter(Boolean),
-    })),
+    items: (o.items ?? []).map((it) => {
+      const optionsDelta = (it.selectedOptions ?? []).reduce((s, opt) => s + (opt.priceDelta ?? 0), 0);
+      return {
+        ...it,
+        name: it.name ?? it.productName ?? '',
+        qty: it.qty ?? it.quantity ?? 1,
+        price: cRON((it.basePrice ?? it.price ?? 0) + optionsDelta),
+        mods: it.mods ?? (it.selectedOptions ?? []).map((s) => s.optionName).filter(Boolean),
+      };
+    }),
   };
 }
