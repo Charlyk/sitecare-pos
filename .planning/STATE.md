@@ -142,6 +142,7 @@ Phase 4 of 6 complete — 125 tests passing, 20/20 verification score
 | 2026-04-24 | show-item-options-order-card | Show selected product options (mods) as subtitle below each item name in OrderCard items preview |
 | 2026-04-24 | pos-delivery-address-area | Structured address fields (street/number/bloc/apt/floor/intercom) + delivery zone picker with dynamic fee in POS manual order form |
 | 2026-05-06 | add-logout-user-sidebar | Add logout dropdown to sidebar user chip — clicking shows popover with Log out button | [260506-q1](.planning/quick/260506-q1-add-logout-user-sidebar/) |
+| 2026-05-07 | hide-settings-tabs | Hide all settings tabs except Afisaj (display) — others not yet implemented | [260507-q1](.planning/quick/260507-q1-hide-settings-tabs/) |
 
 ### Todos
 
@@ -155,7 +156,7 @@ Phase 4 of 6 complete — 125 tests passing, 20/20 verification score
 
 ## Session Continuity
 
-**Last session:** 2026-05-06
+**Last session:** 2026-05-07
 **Stopped at:** —
 **Next action:** All 6 phases complete. Milestone v1.0 done — 41/41 requirements delivered.
 
