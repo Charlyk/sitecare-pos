@@ -14,7 +14,7 @@ const ACCENT_SWATCHES = [
 function SettingsScreen({ lang }) {
   const t = useT(lang);
   const users = USERS;
-  const [tab, setTab] = useState('users');
+  const [tab, setTab] = useState('display');
 
   const storeLang    = useAppStore((s) => s.lang);
   const setLang      = useAppStore((s) => s.setLang);
@@ -24,10 +24,6 @@ function SettingsScreen({ lang }) {
   const setAccent    = useAppStore((s) => s.setAccent);
 
   const tabs = [
-    { id: 'users', label: t('users'), icon: 'users' },
-    { id: 'tax', label: lang === 'ro' ? 'Taxe & TVA' : 'Tax & VAT', icon: 'percent' },
-    { id: 'store', label: lang === 'ro' ? 'Restaurant' : 'Restaurant', icon: 'storefront' },
-    { id: 'integrations', label: lang === 'ro' ? 'Integrări' : 'Integrations', icon: 'wifi' },
     { id: 'display', label: t('display_tab'), icon: 'grid' },
   ];
 
