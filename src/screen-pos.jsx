@@ -30,6 +30,7 @@ function PosScreen({ lang, isOffline }) {
       en: p.nameEn ?? p.name ?? '',
       price: typeof p.price === 'number' ? p.price / 100 : 0,
       inStock: p.inStock !== false,
+      imageUrl: p.imageUrl ?? null,
       optionGroups: (p.optionGroups ?? [])
         .filter(og => og.isActive !== false)
         .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
@@ -257,8 +258,11 @@ function PosScreen({ lang, isOffline }) {
                   opacity: it.inStock ? 1 : 0.45,
                 }}>
                 {inCartAny && <div style={{ position: 'absolute', top: 8, right: 8, width: 22, height: 22, background: 'var(--sc-primary)', color: '#fff', borderRadius: 999, fontWeight: 900, fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{totalInCart}</div>}
-                <div style={{ height: 72, borderRadius: 10, background: `linear-gradient(135deg, ${['#f3ecd9', '#fbf6ea', '#ede9de', '#f7efe0'][idx % 4]} 0%, #fff 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--sc-primary)' }}>
-                  <Icon name={cats.find(c => c.id === effectiveCat)?.icon ?? 'utensils'} size={28} stroke={1.25} />
+                <div style={{ height: 72, borderRadius: 10, background: `linear-gradient(135deg, ${['#f3ecd9', '#fbf6ea', '#ede9de', '#f7efe0'][idx % 4]} 0%, #fff 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--sc-primary)', overflow: 'hidden' }}>
+                  {it.imageUrl
+                    ? <img src={it.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 10 }} />
+                    : <Icon name={cats.find(c => c.id === effectiveCat)?.icon ?? 'utensils'} size={28} stroke={1.25} />
+                  }
                 </div>
                 <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-0.01em' }}>{it[lang === 'ro' ? 'ro' : 'en']}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
