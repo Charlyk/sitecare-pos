@@ -277,7 +277,6 @@ function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline, sta
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           <button className="btn-secondary"><Icon name="refresh" size={14} />{lang === 'ro' ? 'Reîmprospătează' : 'Refresh'}</button>
-          <button className="btn-secondary"><Icon name="filter" size={14} />{lang === 'ro' ? 'Mai multe filtre' : 'More filters'}</button>
         </div>
       </div>
 

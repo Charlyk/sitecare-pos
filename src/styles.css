@@ -102,7 +102,6 @@
     backdrop-filter: blur(8px);
   }
   .topbar-title { font-weight: 900; font-size: 22px; letter-spacing: -0.02em; }
-  .topbar-spacer { flex: 1; }
 
   .search {
     display: flex; align-items: center; gap: 8px;

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { formatRON } from './data.jsx';
@@ -76,7 +77,7 @@ function MenuScreen({ lang, isOffline }) {
               : 'Toggle items available or out of stock. To edit prices, descriptions, or photos, use the web admin dashboard.'}
           </div>
         </div>
-        <a href="#" onClick={e => e.preventDefault()} className="btn-secondary" style={{ marginLeft: 'auto', textDecoration: 'none' }}>
+        <a href="#" onClick={e => { e.preventDefault(); openUrl('https://restaurant.sitecare.ro'); }} className="btn-secondary" style={{ marginLeft: 'auto', textDecoration: 'none' }}>
           <Icon name="wifi" size={14} /> {lang === 'ro' ? 'Deschide panoul web' : 'Open web dashboard'} <Icon name="chevRight" size={12} />
         </a>
       </div>

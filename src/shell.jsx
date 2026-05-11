@@ -180,7 +180,7 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
         {/* Main */}
         <div className="main">
           <div className="topbar">
-            <div>
+            <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ fontFamily: 'Caveat, cursive', color: 'var(--sc-terracotta)', fontWeight: 700, fontSize: 16 }}>
                   {lang === 'ro' ? 'bună dimineața,' : 'good morning,'}
@@ -188,8 +188,6 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
               </div>
               <div className="topbar-title" data-screen-label={screenTitles[screen]}>{screenTitles[screen]}</div>
             </div>
-
-            <div className="topbar-spacer" />
 
             <div className="role-pill" role="tablist" aria-label="role">
               <button className={role === 'cashier' ? 'active' : ''} onClick={() => setRole('cashier')}>
@@ -200,22 +198,18 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
               </button>
             </div>
 
-            <div className="search">
-              <Icon name="search" size={15} style={{ color: 'var(--sc-muted-foreground)' }} />
-              <input placeholder={t('search_placeholder')} />
-              <span className="kbd">⌘K</span>
-            </div>
-
-            <button className="icon-btn" title={t('toast_new_order')}>
-              <Icon name="bell" size={16} />
-              <span className="bubble">{orderCount.new}</span>
-            </button>
-
-            {role !== 'kitchen' && (
-              <button className="btn-primary" onClick={() => setScreen('pos')}>
-                <Icon name="plus" size={15} /> {t('new_order')}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16 }}>
+              <button className="icon-btn" title={t('toast_new_order')}>
+                <Icon name="bell" size={16} />
+                <span className="bubble">{orderCount.new}</span>
               </button>
-            )}
+
+              {role !== 'kitchen' && (
+                <button className="btn-primary" onClick={() => setScreen('pos')}>
+                  <Icon name="plus" size={15} /> {t('new_order')}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className={`content ${density === 'dense' ? 'density-compact' : ''}`}>
