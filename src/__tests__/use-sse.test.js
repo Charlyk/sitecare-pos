@@ -112,6 +112,146 @@ describe('U9b — useSSE upserts order_new event into TanStack Query cache (KDS-
   })
 })
 
+// ── U9b2: order_status_changed event patches caches ───────────────────────
+
+describe('U9b2 — useSSE handles order_status_changed event', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  test('order_status_changed updates state in ["orders"] list cache', async () => {
+    let capturedOnMessage
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnMessage = opts.onmessage
+      return Promise.resolve()
+    })
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(['orders'], { orders: [{ id: 'ord-001', status: 'NEW', state: 'new' }] })
+
+    function testWrapper({ children }) {
+      return createElement(QueryClientProvider, { client: queryClient }, children)
+    }
+
+    renderHook(() => useSSE('test-token'), { wrapper: testWrapper })
+
+    await act(async () => {
+      if (capturedOnMessage) {
+        capturedOnMessage({ event: 'order_status_changed', data: JSON.stringify({ orderId: 'ord-001', fromStatus: 'NEW', toStatus: 'ACCEPTED', updatedAt: new Date().toISOString() }) })
+      }
+    })
+
+    const cached = queryClient.getQueryData(['orders'])
+    expect(cached.orders[0].status).toBe('ACCEPTED')
+    expect(cached.orders[0].state).toBe('accepted')
+  })
+
+  test('order_status_changed maps OUT_FOR_DELIVERY to state "out"', async () => {
+    let capturedOnMessage
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnMessage = opts.onmessage
+      return Promise.resolve()
+    })
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(['orders'], { orders: [{ id: 'ord-002', status: 'READY', state: 'ready' }] })
+
+    function testWrapper({ children }) {
+      return createElement(QueryClientProvider, { client: queryClient }, children)
+    }
+
+    renderHook(() => useSSE('test-token'), { wrapper: testWrapper })
+
+    await act(async () => {
+      if (capturedOnMessage) {
+        capturedOnMessage({ event: 'order_status_changed', data: JSON.stringify({ orderId: 'ord-002', fromStatus: 'READY', toStatus: 'OUT_FOR_DELIVERY', updatedAt: new Date().toISOString() }) })
+      }
+    })
+
+    const cached = queryClient.getQueryData(['orders'])
+    expect(cached.orders[0].state).toBe('out')
+  })
+
+  test('order_status_changed maps COMPLETED to state "done"', async () => {
+    let capturedOnMessage
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnMessage = opts.onmessage
+      return Promise.resolve()
+    })
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(['orders'], { orders: [{ id: 'ord-003', status: 'READY', state: 'ready' }] })
+
+    function testWrapper({ children }) {
+      return createElement(QueryClientProvider, { client: queryClient }, children)
+    }
+
+    renderHook(() => useSSE('test-token'), { wrapper: testWrapper })
+
+    await act(async () => {
+      if (capturedOnMessage) {
+        capturedOnMessage({ event: 'order_status_changed', data: JSON.stringify({ orderId: 'ord-003', fromStatus: 'READY', toStatus: 'COMPLETED', updatedAt: new Date().toISOString() }) })
+      }
+    })
+
+    const cached = queryClient.getQueryData(['orders'])
+    expect(cached.orders[0].state).toBe('done')
+  })
+
+  test('order_status_changed patches the per-order detail cache', async () => {
+    let capturedOnMessage
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnMessage = opts.onmessage
+      return Promise.resolve()
+    })
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(['orders'], { orders: [] })
+    queryClient.setQueryData(['order', 'ord-004'], { id: 'ord-004', status: 'NEW', state: 'new' })
+
+    function testWrapper({ children }) {
+      return createElement(QueryClientProvider, { client: queryClient }, children)
+    }
+
+    renderHook(() => useSSE('test-token'), { wrapper: testWrapper })
+
+    await act(async () => {
+      if (capturedOnMessage) {
+        capturedOnMessage({ event: 'order_status_changed', data: JSON.stringify({ orderId: 'ord-004', fromStatus: 'NEW', toStatus: 'PREPARING', updatedAt: new Date().toISOString() }) })
+      }
+    })
+
+    const detail = queryClient.getQueryData(['order', 'ord-004'])
+    expect(detail.status).toBe('PREPARING')
+    expect(detail.state).toBe('preparing')
+  })
+
+  test('order_status_changed with unknown orderId does not throw', async () => {
+    let capturedOnMessage
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnMessage = opts.onmessage
+      return Promise.resolve()
+    })
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(['orders'], { orders: [{ id: 'ord-999', status: 'NEW', state: 'new' }] })
+
+    function testWrapper({ children }) {
+      return createElement(QueryClientProvider, { client: queryClient }, children)
+    }
+
+    renderHook(() => useSSE('test-token'), { wrapper: testWrapper })
+
+    await act(async () => {
+      if (capturedOnMessage) {
+        capturedOnMessage({ event: 'order_status_changed', data: JSON.stringify({ orderId: 'ord-unknown', fromStatus: 'NEW', toStatus: 'ACCEPTED', updatedAt: new Date().toISOString() }) })
+      }
+    })
+
+    // Cache unchanged for unmatched orderId
+    const cached = queryClient.getQueryData(['orders'])
+    expect(cached.orders[0].state).toBe('new')
+  })
+})
+
 // ── U9c: ping events are ignored (KDS-01, D-04) ───────────────────────────
 
 describe('U9c — useSSE ignores ping events (KDS-01, D-04)', () => {

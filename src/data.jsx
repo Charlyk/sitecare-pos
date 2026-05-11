@@ -187,7 +187,7 @@ export const orderTimeLabel = (iso) => {
 
 // Normalize an Order from the SDK (cents, flat fields) to the prototype shape (RON, nested).
 // Apply at the data layer (useOrders queryFn, useSSE onmessage) so screens are shape-agnostic.
-const SDK_STATE_MAP = {
+export const SDK_STATE_MAP = {
   OUT_FOR_DELIVERY: 'out',
   COMPLETED: 'done',
 };

@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useQueryClient } from '@tanstack/react-query';
-import { normalizeOrder } from './data.jsx';
+import { normalizeOrder, SDK_STATE_MAP } from './data.jsx';
 
 // Dev: Vite proxy intercepts /v1/* → https://api.restaurant.sitecare.ro
 // Prod: direct URL — tauri.conf.json connect-src already whitelists this domain (Phase 1)
@@ -70,6 +70,36 @@ export function useSSE(token, onLiveOrder) {
             }
           } catch {
             // Malformed JSON from server — ignore silently (V5 input validation)
+          }
+        }
+
+        // order_status_changed: another client advanced an order — patch both list and detail caches
+        if (msg.event === 'order_status_changed') {
+          try {
+            const { orderId, fromStatus, toStatus } = JSON.parse(msg.data);
+            const state = SDK_STATE_MAP[toStatus] ?? toStatus.toLowerCase();
+
+            queryClient.setQueryData(['orders'], (old) => {
+              if (!old?.orders) return old;
+              return {
+                ...old,
+                orders: old.orders.map((o) =>
+                  o.id === orderId ? { ...o, status: toStatus, state } : o
+                ),
+              };
+            });
+
+            // Patch detail cache in-place so the detail screen doesn't flash a loading spinner
+            queryClient.setQueryData(['order', orderId], (old) => {
+              if (!old) return old;
+              return { ...old, status: toStatus, state };
+            });
+
+            // Invalidate status-filtered list caches; they'll refetch if observed
+            queryClient.invalidateQueries({ queryKey: ['orders', fromStatus] });
+            queryClient.invalidateQueries({ queryKey: ['orders', toStatus] });
+          } catch {
+            // Malformed JSON — ignore silently
           }
         }
       },
