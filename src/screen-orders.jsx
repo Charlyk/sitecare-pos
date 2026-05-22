@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { formatRON, elapsedMinutes, orderTimeLabel, formatDuration } from './data.jsx';
@@ -160,6 +161,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
 
 function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline, stats: apiStats }) {
   const t = useT(lang);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -276,7 +278,7 @@ function OrdersScreen({ orders, lang, onOpen, onAdvance, onPrint, isOffline, sta
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <button className="btn-secondary"><Icon name="refresh" size={14} />{lang === 'ro' ? 'Reîmprospătează' : 'Refresh'}</button>
+          <button className="btn-secondary" onClick={() => { queryClient.invalidateQueries({ queryKey: ['orders'] }); queryClient.invalidateQueries({ queryKey: ['stats'] }); }}><Icon name="refresh" size={14} />{lang === 'ro' ? 'Reîmprospătează' : 'Refresh'}</button>
         </div>
       </div>
 

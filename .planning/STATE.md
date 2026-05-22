@@ -144,6 +144,7 @@ Phase 4 of 6 complete — 125 tests passing, 20/20 verification score
 | 2026-05-06 | add-logout-user-sidebar | Add logout dropdown to sidebar user chip — clicking shows popover with Log out button | [260506-q1](.planning/quick/260506-q1-add-logout-user-sidebar/) |
 | 2026-05-07 | hide-settings-tabs | Hide all settings tabs except Afisaj (display) — others not yet implemented | [260507-q1](.planning/quick/260507-q1-hide-settings-tabs/) |
 | 2026-05-11 | pos-product-images | Map imageUrl from API response and render product images in POS screen cards; add https: to CSP img-src |
+| 2026-05-22 | refresh-orders-stats | Wire Reîmprospătează button to invalidate ['orders'] and ['stats'] caches | [260522-q1](.planning/quick/260522-q1-refresh-orders-stats/) |
 
 ### Todos
 
@@ -157,7 +158,7 @@ Phase 4 of 6 complete — 125 tests passing, 20/20 verification score
 
 ## Session Continuity
 
-**Last session:** 2026-05-07
+**Last session:** 2026-05-22
 **Stopped at:** —
 **Next action:** All 6 phases complete. Milestone v1.0 done — 41/41 requirements delivered.
 
