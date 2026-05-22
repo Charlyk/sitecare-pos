@@ -64,6 +64,7 @@ export function useSSE(token, onLiveOrder) {
                 : [order, ...list];                                  // prepend new
               return { orders: next };
             });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
             // D-06: only call onLiveOrder for live events, not initial snapshot
             if (snapshotDone.current && onLiveOrderRef.current) {
               onLiveOrderRef.current(order);
@@ -95,9 +96,10 @@ export function useSSE(token, onLiveOrder) {
               return { ...old, status: toStatus, state };
             });
 
-            // Invalidate status-filtered list caches; they'll refetch if observed
+            // Invalidate status-filtered list caches and dashboard totals; they'll refetch if observed
             queryClient.invalidateQueries({ queryKey: ['orders', fromStatus] });
             queryClient.invalidateQueries({ queryKey: ['orders', toStatus] });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
           } catch {
             // Malformed JSON — ignore silently
           }
