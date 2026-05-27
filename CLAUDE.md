@@ -28,8 +28,8 @@ This project uses the GSD planning system. Always follow phase plans.
 - `/gsd-progress` — show current status
 - `/gsd-verify-work` — verify phase goals are met
 
-**Current phase:** Phase 1 — Foundation (not started)
-**Next action:** `/gsd-plan-phase 1`
+**Current milestone:** v1.0 MVP — SHIPPED 2026-05-22 ✅ (all 41 requirements delivered)
+**Next action:** `/gsd-new-milestone` to plan v1.1
 
 ## Critical Rules
 
