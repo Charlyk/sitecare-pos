@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: ""
+current_phase: "7"
 current_plan: ""
 status: planning
 stopped_at: ""
 last_updated: "2026-05-27T00:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -26,9 +26,9 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Planning next milestone (v1.1)
+**Current focus:** v1.1 Orders History Screen — Phase 7 ready to plan
 **Project file:** `.planning/PROJECT.md`
-**Roadmap:** `.planning/ROADMAP.md` (v1.0 archived)
+**Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
 
 ---
@@ -36,12 +36,12 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27
-**Current Phase:** — (defining requirements)
-**Overall Status:** Defining requirements. Ready for `/gsd:plan-phase 7`.
+**Current Phase:** Phase 7 — Data Layer + Navigation (not started)
+**Overall Status:** Roadmap created. Ready for `/gsd:plan-phase 7`.
 
 ```
-Progress: [........................................] 0% (0/? phases)
-Milestone v1.1 started — 2026-05-27
+Progress: [........................................] 0% (0/3 phases)
+Milestone v1.1 — Phase 7 next
 ```
 
 ---
@@ -56,6 +56,9 @@ Milestone v1.1 started — 2026-05-27
 | 4 | Core Screens | Complete — all 10 plans done, 20/20 verification, 125 tests passing (2026-04-27) |
 | 5 | Native Integration | Complete — 4 plans done, 166 tests passing, approved-no-hardware (2026-04-29) |
 | 6 | Build Pipeline | Complete — all 4 plans done, human-approved 2026-05-02 |
+| 7 | Data Layer + Navigation | Not started — HIST-01, HIST-02, HIST-03 |
+| 8 | History List UI | Not started — HIST-04, HIST-05, HIST-06, HIST-07, HIST-08 |
+| 9 | Detail + Actions | Not started — HIST-09, HIST-10, HIST-11 |
 
 ---
 
@@ -63,9 +66,10 @@ Milestone v1.1 started — 2026-05-27
 
 | Metric | Value |
 |--------|-------|
-| Phases completed | 3 / 6 |
-| Requirements done | 29 / 41 |
-| Plans complete | 23 / 31 (Phase 1: 5, Phase 2: 5, Phase 3: 6, Phase 4: 8/9) |
+| Phases completed (v1.0) | 6 / 6 |
+| Phases completed (v1.1) | 0 / 3 |
+| Requirements done (v1.0) | 41 / 41 |
+| Requirements done (v1.1) | 0 / 11 |
 | Sessions | 13 |
 
 ---
@@ -119,12 +123,22 @@ Milestone v1.1 started — 2026-05-27
 - **ACCENT_SWATCHES module-level const** — avoids per-render array allocation; swatch active state communicated via box-shadow ring + scale(1.1) transform.
 - **display_tab i18n key added to both sections** — other display keys (display_lang_label, display_density_label, display_accent_label) were already present from prior plans; only display_tab was missing.
 
+### v1.1 Key Decisions
+
+- **No server-side pagination or filtering** — research confirmed `admin.orders.list()` returns the full set for the date range; all status/type/search filtering is client-side on the fetched array. Default to "today" or current week to keep load fast.
+- **No server-side export endpoint** — CSV must be generated client-side (field escaping: wrap all fields in double-quotes, escape internal `"` as `""`). PDF deferred to v1.2.
+- **Detail panel requires second getOrder(id) call** — AdminOrder summary has no items/address/notes; screen-detail.jsx reused via use-order-detail.js hook on row click.
+- **Filter state resets on navigation** — acceptable for v1.1; document as known behavior, not a bug.
+- **History screen added to Zustand `screen` enum** — 'history' added alongside 'orders', 'kds', 'pos', 'menu', 'settings'; Zustand partialize rules carry forward unchanged.
+
 ### Open Questions (from research)
 
 - ~~Does `@charlyk/admin-client` manage SSE auth internally (cookies) or expose a raw URL requiring Bearer?~~ — RESOLVED (Phase 2 context): SDK uses its own async-generator SSE client (not native `EventSource`), so Bearer headers can be sent through it. Safe for Phase 3 SSE wiring.
 - ~~`decorations: false` has a known macOS bug~~ — RESOLVED: using `decorations: true` (native chrome).
 - Tax calculation bug in `screen-pos.jsx` (total excludes tax) — confirm in Phase 4 whether API returns a server-calculated total (preferred) or the client must apply Romanian VAT rates (5%/9%/19%).
 - Which thermal printer model(s) are targeted? Needed before Phase 5 plugin validation.
+- **v1.1:** Does the admin token have access to `/v1/orders/{id}` (kitchen endpoint)? If 401 on getOrder, detail view must fall back to AdminOrder summary fields only.
+- **v1.1:** What timezone does the API treat `from`/`to` date params as? Verify Romanian orders appear on the correct calendar day.
 
 ### Critical Watch-Outs (carry forward)
 
@@ -134,6 +148,9 @@ Milestone v1.1 started — 2026-05-27
 - **React hook ordering in app.jsx** — useSSE and useOrders MUST be called before any conditional return (coldStartBusy, isAuthenticated guards). Violating this causes "rendered fewer hooks" runtime error.
 - **macOS notarization is a hard distribution block** — Apple Developer account ($99/yr) required before Phase 6. Configure all CI secrets before the first release build.
 - **TanStack Query v5 API** — useQuery takes single options object; useMutation uses .isPending not .isLoading. All Phase 3 hooks use v5 syntax.
+- **v1.1: Large result sets** — warn or limit if >500 orders returned for a wide date range; document threshold.
+- **v1.1: CSV escaping** — wrap all fields in double-quotes; escape internal `"` as `""`.
+- **v1.1: Printer config check before Reprint** — reuse existing printer-configured guard; button greyed-out when not configured.
 
 ### Quick Tasks Completed
 
@@ -161,9 +178,9 @@ Milestone v1.1 started — 2026-05-27
 ## Session Continuity
 
 **Last session:** 2026-05-27
-**Stopped at:** —
-**Next action:** `/gsd:plan-phase 7` — plan Phase 7 (first phase of v1.1 Orders History Screen)
+**Stopped at:** Roadmap created for v1.1 (Phases 7–9)
+**Next action:** `/gsd:plan-phase 7` — plan Phase 7 (Data Layer + Navigation)
 
 ---
 *State initialized: 2026-04-22*
-*Last updated: 2026-05-27 — v1.0 milestone archived; all 41 requirements delivered*
+*Last updated: 2026-05-27 — v1.1 roadmap created; 3 phases (7–9), 11 requirements*
