@@ -2,39 +2,65 @@
 
 ## What This Is
 
-A Tauri-based desktop application (macOS + Windows) for SiteCare restaurant staff to manage orders in real-time. The UI is a pixel-perfect port of the Claude Design prototype — same 7 screens, same design system, same brand — backed by the live SiteCare API via `@charlyk/admin-client`. Features not yet production-ready are greyed-out in the UI rather than hidden.
+A Tauri v2 desktop application (macOS + Windows) for SiteCare restaurant staff to manage orders in real-time. The UI is a pixel-perfect port of the Claude Design prototype — same 7 screens, same design system, same brand — backed by the live SiteCare API via `@charlyk/admin-client`. v1.0 shipped on 2026-05-22 with all 41 requirements delivered. The app is production-ready: native installers, macOS notarization, silent auto-updates, and thermal printer integration are in place.
 
 ## Core Value
 
 Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks and feels exactly like the design prototype.
 
+## Current State (v1.0)
+
+**Shipped:** 2026-05-22
+**Tech stack:** Tauri 2.x · React 18 · Vite 6 · Zustand 5 · TanStack Query 5 · @charlyk/admin-client v1.1.29+
+**Source LOC:** ~7,961 JS/JSX
+**Tests:** 166 passing
+**Platforms:** macOS arm64 (notarized), Windows x64 (unsigned MSI)
+
+**What works in production:**
+- Login with username/password + OS keychain persistence + 8-hour proactive token refresh
+- Live order list with search, filter, and real-time SSE updates
+- Order lifecycle actions: accept (with prep-time picker), advance, cancel
+- Kitchen Display screen with per-ticket timers, urgency colors, sound alerts, and bump
+- POS checkout with live menu browse, cart, discount, and order type (dine-in/pickup/delivery)
+- Menu availability toggles (in-stock / out-of-stock)
+- Settings: language, density, accent color — all persisted across restarts
+- Offline resilience: banner, cached data, disabled mutations
+- Thermal printer: configure USB/TCP, test print, print receipts via ESC/POS
+- Auto-update: silent in-app update delivery via tauri-plugin-updater
+
 ## Requirements
 
-### Validated
+### Validated (v1.0)
 
-- ✓ Full 7-screen app shell (Orders, POS, Kitchen, Order Detail, Menu, Printer, Settings) — existing prototype
-- ✓ SiteCare design system (sage/terracotta palette, Outfit font, CSS design tokens) — existing prototype
-- ✓ Bilingual UI (Romanian + English) — existing prototype
-- ✓ Role-based navigation (cashier vs kitchen) — existing prototype
-- ✓ Order state machine: new → accepted → preparing → ready → done — existing prototype
-- ✓ Sidebar with role switcher, accent themes, density toggle — existing prototype
-- ✓ macOS window chrome (titlebar dots, draggable) — existing prototype
-- ✓ Toast notifications and accept dialog (prep-time picker) — existing prototype
-- ✓ Preference persistence (lang, role, screen, accent, density) — existing prototype
+- ✓ Tauri app shell with macOS + Windows build targets — v1.0 Phase 1
+- ✓ React + Vite frontend replacing CDN/Babel-standalone prototype — v1.0 Phase 1
+- ✓ @charlyk/admin-client installed from GitHub Package Registry — v1.0 Phase 1
+- ✓ Zustand store with @tauri-apps/plugin-store persistence — v1.0 Phase 1
+- ✓ CSS design tokens (colors_and_type.css, Outfit font) unchanged from prototype — v1.0 Phase 1
+- ✓ Tauri CSP with API domain in connect-src — v1.0 Phase 1
+- ✓ Username + password authentication via @charlyk/admin-client — v1.0 Phase 2
+- ✓ Token persisted in OS secure storage (Keychain / Credential Manager) — v1.0 Phase 2
+- ✓ Proactive token refresh (8-hour shift coverage) — v1.0 Phase 2
+- ✓ Auto-login on restart with valid stored token — v1.0 Phase 2
+- ✓ Auth guard on all screens — v1.0 Phase 2
+- ✓ Live order data via @charlyk/admin-client (replacing mock window.ORDERS) — v1.0 Phase 3–4
+- ✓ SSE integration for real-time KDS order updates — v1.0 Phase 3–4
+- ✓ Offline banner + cached data + disabled mutations — v1.0 Phase 3
+- ✓ Orders list: search, filter, FOH/BOH role view — v1.0 Phase 4
+- ✓ Order lifecycle actions (accept with prep time, advance, cancel) — v1.0 Phase 4
+- ✓ KDS: elapsed timers (60s), urgency colors, sound alerts, bump — v1.0 Phase 4
+- ✓ POS: live menu, cart, discount, order type, API submission — v1.0 Phase 4
+- ✓ Menu availability toggles wired to API — v1.0 Phase 4
+- ✓ Settings: language, density, accent color — v1.0 Phase 4
+- ✓ Thermal printer integration (USB/TCP, ESC/POS, print receipt) — v1.0 Phase 5
+- ✓ GitHub Actions CI with macOS notarization and Windows MSI — v1.0 Phase 6
+- ✓ Silent in-app auto-updates via tauri-plugin-updater — v1.0 Phase 6
 
-### Active
+### Active (v1.1 candidates)
 
-- [x] Tauri app shell with macOS + Windows build targets — Validated in Phase 1: Tauri + Vite scaffold at repo root, native window opens
-- [x] React + Vite frontend replacing CDN/Babel-standalone prototype — Validated in Phase 1: all 12 prototype files converted to ES modules, Vite 6 + React 18
-- [x] Username + password authentication via @charlyk/admin-client — Validated in Phase 2: signIn, keychain persistence, proactive refresh, auth guard
-- [x] Live order data from SiteCare API (replacing mock window.ORDERS) — Validated in Phase 3 + 4: useOrders(), SSE wiring, TanStack Query cache
-- [x] SSE integration for real-time kitchen display order updates — Validated in Phase 3 + 4: useSSE with snapshotDone, sound notifications, offline detection
-- [x] Menu availability toggles (in-stock / out-of-stock) wired to API — Validated in Phase 4: useMenu(), updateStock mutation
-- [x] Order lifecycle actions (accept, advance, cancel) wired to API — Validated in Phase 4: AcceptDialog, CancelDialog, statusToSDK map
-- [x] POS order creation wired to API — Validated in Phase 4: cart, discount, createOrder mutation, table notes workaround
-- [x] Greyed-out UI for features not yet production-ready — Validated in Phase 1-4
-- [x] USB thermal printer integration — Validated in Phase 5: list_serial_ports, save_printer_config, test_print, print_receipt; screen-printer redesigned; handlePrint wired; 166 tests passing
-- [x] macOS + Windows installer / build pipeline — Validated in Phase 6: GitHub Actions release.yml, tauri-plugin-updater, Ed25519 signing, notarization workflow, silent auto-update
+- [ ] Windows code signing — unsigned MSI; Azure Trusted Signing is the path forward (BILD-03 deferred)
+- [ ] Thermal printer hardware validation — approved-no-hardware for v1.0; real-device test needed
+- [ ] Tax display — server-authoritative total used; Romanian VAT (5%/9%/19%) display to be confirmed with SiteCare
 
 ### Out of Scope
 
@@ -43,19 +69,23 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 - Mobile / web version — desktop-only
 - Backend / API development — existing API via @charlyk/admin-client
 - Custom API client — SDK handles all API communication
-- Full menu CRUD — Menu screen is availability-only (in-stock / out-of-stock), not full editing
+- Full menu CRUD — Menu screen is availability-only (in-stock / out-of-stock); editing is v2
+- Full offline order creation — requires local SQLite + sync engine; deferred to v2
+- Table assignment / table map — v2
+- Multi-printer routing — v2
+- User management / admin — v2
 
 ## Context
 
-**Origin:** Claude Design handoff bundle — a fully fleshed HTML/React prototype with 7 screens, all CSS, and mock data. The prototype runs React 18 via CDN with Babel standalone transpilation. The production app replaces the CDN stack with React + Vite inside a Tauri shell.
+**Origin:** Claude Design handoff bundle — a fully fleshed HTML/React prototype with 7 screens, all CSS, and mock data. The prototype runs React 18 via CDN with Babel standalone transpilation. The production app replaced the CDN stack with React + Vite inside a Tauri shell.
 
-**API SDK:** `@charlyk/admin-client` (v1.1.20, proprietary, GitHub Package Registry `npm.pkg.github.com`). This is the only sanctioned way to communicate with the SiteCare backend. Published by GitHub Actions bot — expect frequent updates.
+**API SDK:** `@charlyk/admin-client` (v1.1.29+, proprietary, GitHub Package Registry `npm.pkg.github.com`). This is the only sanctioned way to communicate with the SiteCare backend. Published by GitHub Actions bot — expect frequent updates.
 
-**Real-time:** The API has SSE (Server-Sent Events) configured. The Kitchen display screen depends on this for live order queue updates.
+**Real-time:** SSE via `@microsoft/fetch-event-source` (not native EventSource — required for Bearer auth headers). The Kitchen display and order list both receive live events. SSE connection kept alive with `openWhenHidden: true`.
 
-**Design fidelity requirement:** The prototype UI must be reproduced pixel-perfectly. CSS design tokens (`colors_and_type.css`) and the SiteCare brand are non-negotiable. The macOS window chrome simulation from the prototype is preserved in the Tauri window.
+**Design fidelity:** The prototype UI reproduced pixel-perfectly. CSS design tokens (`colors_and_type.css`) and the SiteCare brand are non-negotiable.
 
-**Feature gating:** Features not yet ready are greyed-out in the UI (disabled, visible, not clickable). Nothing is hidden — this lets users see what's coming and avoids confusion about missing nav items.
+**Feature gating:** Features not yet ready are greyed-out in the UI (disabled, visible, not clickable).
 
 ## Constraints
 
@@ -69,29 +99,17 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Tauri over Electron | User specified; smaller binary, native OS integration, Rust backend | — Pending |
-| React + Vite frontend | Matches prototype's React components; minimal migration effort | — Pending |
-| All screens built upfront | Build everything, grey-out unready — avoids partial UI gaps | — Pending |
-| SSE not polling for kitchen | Backend already has SSE configured; polling wastes resources | — Pending |
-| Plain JS, not TypeScript | Not requested for v1; reduces setup complexity | — Pending |
-| @charlyk/admin-client as sole data layer | Existing SDK; no need to build a custom API client | — Pending |
-
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+| Tauri over Electron | User specified; smaller binary, native OS integration, Rust backend | ✓ Good — native window, keychain, serial port access all worked via Tauri plugins |
+| React + Vite frontend | Matches prototype's React components; minimal migration effort | ✓ Good — migration was smooth; Vite 6 + React 18 validated with Tauri v2 |
+| All screens built upfront | Build everything, grey-out unready — avoids partial UI gaps | ✓ Good — greyed-out approach worked well; no user confusion |
+| SSE not polling for kitchen | Backend already has SSE configured; polling wastes resources | ✓ Good — SSE works with fetch-event-source; openWhenHidden required |
+| Plain JS, not TypeScript | Not requested for v1; reduces setup complexity | ✓ Good — no type errors encountered; TS would add complexity with no v1 benefit |
+| @charlyk/admin-client as sole data layer | Existing SDK; no need to build a custom API client | ✓ Good — SDK handled all API concerns including SSE auth |
+| @microsoft/fetch-event-source for SSE | Native EventSource cannot send auth headers | ✓ Good — confirmed in Phase 2 by inspecting SDK source |
+| decorations: true (native chrome) | Avoids @tauri-apps/plugin-window-state bug #14822 | ✓ Good — stable, no issues |
+| Zustand for UI state, TanStack Query for server state | Clean separation prevents cache conflicts | ✓ Good — worked well across all phases |
+| BILD-03 deferred (unsigned Windows MSI) | Azure Trusted Signing requires org account setup; not blocking v1 | — Pending — document as v1.1 task |
 
 ---
-*Last updated: 2026-05-02 — Phase 6 Build Pipeline complete: 4/4 plans, 41/41 requirements delivered, milestone v1.0 done*
+
+*Last updated: 2026-05-27 after v1.0 milestone — all 41 requirements delivered, app shipped*

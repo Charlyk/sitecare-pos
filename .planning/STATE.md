@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: milestone
-current_phase: 6 — Build Pipeline
+milestone_name: MVP
+current_phase: ""
 current_plan: ""
-status: complete
+status: milestone_complete
 stopped_at: ""
-last_updated: "2026-05-02T00:00:00.000Z"
+last_updated: "2026-05-27T00:00:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 6
@@ -23,19 +23,21 @@ progress:
 
 ## Project Reference
 
-**Core Value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
+See: `.planning/PROJECT.md` (updated 2026-05-27)
+
+**Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
+**Current focus:** Planning next milestone (v1.1)
 **Project file:** `.planning/PROJECT.md`
-**Requirements:** `.planning/REQUIREMENTS.md`
-**Roadmap:** `.planning/ROADMAP.md`
+**Roadmap:** `.planning/ROADMAP.md` (v1.0 archived)
+**Milestones:** `.planning/MILESTONES.md`
 
 ---
 
 ## Current Position
 
-**Current Phase:** 6 — Build Pipeline
-**Current Plan:** —
-**Phase Status:** Phase 5 complete — 4/4 plans done, 166 tests passing, approved-no-hardware (2026-04-29)
-**Overall Status:** Phase 5 complete; Phase 6 not started
+**Milestone:** v1.0 MVP — SHIPPED 2026-05-22 ✅
+**Current Phase:** — (between milestones)
+**Overall Status:** All 6 phases complete, 41/41 requirements delivered. Ready for `/gsd:new-milestone`.
 
 ```
 Progress: [##################################.....] 67% (4/6 phases)
@@ -158,10 +160,10 @@ Phase 4 of 6 complete — 125 tests passing, 20/20 verification score
 
 ## Session Continuity
 
-**Last session:** 2026-05-22
+**Last session:** 2026-05-27
 **Stopped at:** —
-**Next action:** All 6 phases complete. Milestone v1.0 done — 41/41 requirements delivered.
+**Next action:** `/gsd:new-milestone` — start v1.1 planning (Windows code signing, hardware printer validation, v2 features)
 
 ---
 *State initialized: 2026-04-22*
-*Last updated: 2026-04-24 — Phase 4 Plan 01 complete (test scaffolding, 20 requirement stubs)*
+*Last updated: 2026-05-27 — v1.0 milestone archived; all 41 requirements delivered*
