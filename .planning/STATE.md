@@ -1,18 +1,18 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: MVP
+milestone: v1.1
+milestone_name: Orders History Screen
 current_phase: ""
 current_plan: ""
-status: milestone_complete
+status: planning
 stopped_at: ""
 last_updated: "2026-05-27T00:00:00.000Z"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 44
-  completed_plans: 44
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # State: SiteCare POS Desktop App
@@ -35,13 +35,13 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 ## Current Position
 
-**Milestone:** v1.0 MVP — SHIPPED 2026-05-22 ✅
-**Current Phase:** — (between milestones)
-**Overall Status:** All 6 phases complete, 41/41 requirements delivered. Ready for `/gsd:new-milestone`.
+**Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27
+**Current Phase:** — (defining requirements)
+**Overall Status:** Defining requirements. Ready for `/gsd:plan-phase 7`.
 
 ```
-Progress: [##################################.....] 67% (4/6 phases)
-Phase 4 of 6 complete — 125 tests passing, 20/20 verification score
+Progress: [........................................] 0% (0/? phases)
+Milestone v1.1 started — 2026-05-27
 ```
 
 ---
@@ -162,7 +162,7 @@ Phase 4 of 6 complete — 125 tests passing, 20/20 verification score
 
 **Last session:** 2026-05-27
 **Stopped at:** —
-**Next action:** `/gsd:new-milestone` — start v1.1 planning (Windows code signing, hardware printer validation, v2 features)
+**Next action:** `/gsd:plan-phase 7` — plan Phase 7 (first phase of v1.1 Orders History Screen)
 
 ---
 *State initialized: 2026-04-22*

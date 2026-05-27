@@ -28,6 +28,22 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 - Thermal printer: configure USB/TCP, test print, print receipts via ESC/POS
 - Auto-update: silent in-app update delivery via tauri-plugin-updater
 
+## Current Milestone: v1.1 Orders History Screen
+
+**Goal:** Give restaurant staff a dedicated screen to browse, search, and export the full archive of past orders with receipt reprinting.
+
+**Target features:**
+- New "History" sidebar item (same level as Orders, KDS, POS)
+- Paginated list of all historical orders (completed + cancelled)
+- Date range filter to navigate far back
+- Search by order number, phone number, or customer name
+- Filter by status (completed / cancelled) and order type (dine-in / pickup / delivery)
+- Read-only order detail view (same panel as live orders)
+- Reprint receipt action on any historical order
+- CSV / PDF export of the filtered list
+
+---
+
 ## Requirements
 
 ### Validated (v1.0)
@@ -56,8 +72,15 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 - ✓ GitHub Actions CI with macOS notarization and Windows MSI — v1.0 Phase 6
 - ✓ Silent in-app auto-updates via tauri-plugin-updater — v1.0 Phase 6
 
-### Active (v1.1 candidates)
+### Active (v1.1)
 
+- [ ] Orders History screen — new sidebar item with paginated list of all past orders — v1.1
+- [ ] Date range filter on History screen — navigate back to any period — v1.1
+- [ ] Search by order number, phone number, customer name on History screen — v1.1
+- [ ] Filter by status (completed / cancelled) and order type (dine-in / pickup / delivery) — v1.1
+- [ ] Read-only order detail view on historical orders — same panel as live orders — v1.1
+- [ ] Reprint receipt on historical orders — thermal printer integration — v1.1
+- [ ] CSV / PDF export of filtered history list — v1.1
 - [ ] Windows code signing — unsigned MSI; Azure Trusted Signing is the path forward (BILD-03 deferred)
 - [ ] Thermal printer hardware validation — approved-no-hardware for v1.0; real-device test needed
 - [ ] Tax display — server-authoritative total used; Romanian VAT (5%/9%/19%) display to be confirmed with SiteCare
@@ -110,6 +133,23 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 | Zustand for UI state, TanStack Query for server state | Clean separation prevents cache conflicts | ✓ Good — worked well across all phases |
 | BILD-03 deferred (unsigned Windows MSI) | Azure Trusted Signing requires org account setup; not blocking v1 | — Pending — document as v1.1 task |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
 
-*Last updated: 2026-05-27 after v1.0 milestone — all 41 requirements delivered, app shipped*
+*Last updated: 2026-05-27 — v1.1 milestone started; Orders History Screen*
