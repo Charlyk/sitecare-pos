@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 07
-current_plan: 3
+current_plan: 4
 status: ready_to_execute
-stopped_at: Completed 07-02-PLAN.md (i18n + store + sidebar nav foundation)
-last_updated: "2026-07-16T22:26:43.255Z"
+stopped_at: Completed 07-03-PLAN.md (useHistoryOrders hook)
+last_updated: "2026-07-16T22:31:33.062Z"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -37,14 +37,14 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16
 **Current Phase:** 07
-**Current Plan:** 3
+**Current Plan:** 4
 **Total Plans in Phase:** 6
 **Overall Status:** Phase 7 executing. Plan 07-01 (history-utils + normalizeOrder dailyNumber fix)
 complete — 3 tasks committed, 27+6 new unit tests green. Ready for the remaining Wave 1 plan
 (07-02) and subsequent waves.
 
 ```
-Progress: [███░░░░░░░] 33% (1/6 plans, phase 7)
+Progress: [█████░░░░░] 50% (1/6 plans, phase 7)
 Milestone v1.1 — Phase 7 in progress
 ```
 
@@ -84,6 +84,7 @@ Milestone v1.1 — Phase 7 in progress
 |------|----------|-------|-------|
 | Phase 07 P01 | ~2 minutes | 3 tasks | 4 files |
 | Phase 07 P02 | 3min | 3 tasks | 5 files |
+| Phase 07 P03 | 5min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -195,8 +196,8 @@ Milestone v1.1 — Phase 7 in progress
 
 **Resume file:** None
 
-**Last session:** 2026-07-16T22:26:43.249Z
-**Stopped at:** Completed 07-02-PLAN.md (i18n + store + sidebar nav foundation)
+**Last session:** 2026-07-16T22:31:33.056Z
+**Stopped at:** Completed 07-03-PLAN.md (useHistoryOrders hook)
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
@@ -227,3 +228,5 @@ Milestone v1.1 — Phase 7 in progress
 - [Phase 07]: history-utils.js stays pure: no react/data.jsx/@charlyk imports, no re-division by 100, no UTC-slicing day keys (Nyquist Wave-0 target)
 - [Phase 07]: add-alongside (not promote): openHistoryOrder()/'history-detail' ship as a parallel pair to openOrder()/'detail'; live order path stays byte-identical (D-07/D-08)
 - [Phase 07]: History nav item is cashier-only — added to the non-kitchen arm of the navGroups ternary only
+- [Phase 07]: useHistoryOrders() uses useState lazy initializer for getLast30DaysRange() to keep query key stable across re-renders and avoid infinite refetch loop
+- [Phase 07]: useHistoryOrders() returns the order array directly as data (not { ...rest, orders }) since AdminOrderListResponse has no sibling fields worth preserving

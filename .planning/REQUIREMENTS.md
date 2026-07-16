@@ -27,7 +27,7 @@
 ### HIST — History Screen
 
 - [x] **HIST-01**: User can navigate to a History screen via a dedicated sidebar item (same level as Orders, KDS, POS)
-- [ ] **HIST-02**: History screen loads orders via `listAdminOrders({ from, to })`; all status, type, and search filtering is applied client-side on the returned array
+- [x] **HIST-02**: History screen loads orders via `listAdminOrders({ from, to })`; all status, type, and search filtering is applied client-side on the returned array
 - [x] **HIST-03**: History screen defaults to the last 30 days on first open
 - [ ] **HIST-04**: User can switch the period via presets — Today / 7 days / 30 days / custom range — and the list reloads for the new range
 - [x] **HIST-05**: User can see orders grouped by calendar day, newest first, each day header showing that day's order count and revenue subtotal
@@ -91,7 +91,7 @@ Revisit if the API adds these fields.
 | REQ-ID | Phase | Plan | Status |
 |--------|-------|------|--------|
 | HIST-01 | Phase 7 | TBD | Complete |
-| HIST-02 | Phase 7 | TBD | Pending |
+| HIST-02 | Phase 7 | TBD | Complete |
 | HIST-03 | Phase 7 | TBD | Complete |
 | HIST-04 | Phase 8 | TBD | Pending |
 | HIST-05 | Phase 7 | TBD | Complete |
