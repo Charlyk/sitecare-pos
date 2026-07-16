@@ -6,9 +6,9 @@ current_phase: "7"
 current_plan: ""
 status: planning
 stopped_at: ""
-last_updated: "2026-05-27T00:00:00.000Z"
+last_updated: "2026-07-16T00:00:00.000Z"
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -23,10 +23,10 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-05-27)
+See: `.planning/PROJECT.md` (updated 2026-07-16)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** v1.1 Orders History Screen — Phase 7 ready to plan
+**Current focus:** v1.1 Orders History Screen (replanned 2026-07-16) — Phase 7 ready to plan
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -35,12 +35,13 @@ See: `.planning/PROJECT.md` (updated 2026-05-27)
 
 ## Current Position
 
-**Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27
-**Current Phase:** Phase 7 — Data Layer + Navigation (not started)
-**Overall Status:** Roadmap created. Ready for `/gsd:plan-phase 7`.
+**Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16
+**Current Phase:** Phase 7 — History Screen Foundation (not started)
+**Overall Status:** Roadmap replanned against the new design handoff + SDK v1.1.59. Nothing from the
+original Phase 7–9 breakdown was executed. Ready for `/gsd:plan-phase 7`.
 
 ```
-Progress: [........................................] 0% (0/3 phases)
+Progress: [........................................] 0% (0/4 phases)
 Milestone v1.1 — Phase 7 next
 ```
 
@@ -56,9 +57,10 @@ Milestone v1.1 — Phase 7 next
 | 4 | Core Screens | Complete — all 10 plans done, 20/20 verification, 125 tests passing (2026-04-27) |
 | 5 | Native Integration | Complete — 4 plans done, 166 tests passing, approved-no-hardware (2026-04-29) |
 | 6 | Build Pipeline | Complete — all 4 plans done, human-approved 2026-05-02 |
-| 7 | Data Layer + Navigation | Not started — HIST-01, HIST-02, HIST-03 |
-| 8 | History List UI | Not started — HIST-04, HIST-05, HIST-06, HIST-07, HIST-08 |
-| 9 | Detail + Actions | Not started — HIST-09, HIST-10, HIST-11 |
+| 7 | History Screen Foundation | Not started — HIST-01, HIST-02, HIST-03, HIST-05, HIST-13 |
+| 8 | Period Control + Summary Strip | Not started — HIST-04, HIST-06 |
+| 9 | Filters + Search | Not started — HIST-07, HIST-08, HIST-09 |
+| 10 | Receipt Detail + Output | Not started — HIST-10, HIST-11, HIST-12 |
 
 ---
 
@@ -67,9 +69,9 @@ Milestone v1.1 — Phase 7 next
 | Metric | Value |
 |--------|-------|
 | Phases completed (v1.0) | 6 / 6 |
-| Phases completed (v1.1) | 0 / 3 |
+| Phases completed (v1.1) | 0 / 4 |
 | Requirements done (v1.0) | 41 / 41 |
-| Requirements done (v1.1) | 0 / 11 |
+| Requirements done (v1.1) | 0 / 13 |
 | Sessions | 13 |
 
 ---
@@ -125,9 +127,14 @@ Milestone v1.1 — Phase 7 next
 
 ### v1.1 Key Decisions
 
-- **No server-side pagination or filtering** — research confirmed `admin.orders.list()` returns the full set for the date range; all status/type/search filtering is client-side on the fetched array. Default to "today" or current week to keep load fast.
+- **No server-side pagination or filtering** — confirmed against SDK v1.1.59 types: `listAdminOrders({from,to})` returns the full set for the date range. All status/type/search filtering is client-side on the fetched array.
+- **No pagination at all** — the new design is a day-grouped scroll, not a paged list. The old HIST-05 pagination requirement is dropped. Infinite scroll is also out.
+- **Inline expandable receipt row replaces the side detail panel** — `screen-detail.jsx` is NOT reused; the receipt renders inline within the expanded row.
+- **Summary strip is a second, independent data source** — `getAdminDashboard({from,to})` (new in v1.1.59) backs it alongside `listAdminOrders`. Both are driven by the same period selection but fail independently.
+- **Refunded is a first-class status** — derived from `paymentCaptureStatus: 'refunded'` (new in v1.1.59); sits alongside Completed and Canceled in the status filter.
+- **Period presets replace raw date pickers** — Today / 7 / 30 / custom; default is last 30 days.
 - **No server-side export endpoint** — CSV must be generated client-side (field escaping: wrap all fields in double-quotes, escape internal `"` as `""`). PDF deferred to v1.2.
-- **Detail panel requires second getOrder(id) call** — AdminOrder summary has no items/address/notes; screen-detail.jsx reused via use-order-detail.js hook on row click.
+- **Expanded row requires a third, on-demand getOrder(id) call** — AdminOrder summary has no items/address/notes; `getOrder(id)` is fetched lazily on row expand and is the only source for handled-by, cancel reason, close time, and prep duration (via `events[]`).
 - **Filter state resets on navigation** — acceptable for v1.1; document as known behavior, not a bug.
 - **History screen added to Zustand `screen` enum** — 'history' added alongside 'orders', 'kds', 'pos', 'menu', 'settings'; Zustand partialize rules carry forward unchanged.
 
@@ -177,10 +184,10 @@ Milestone v1.1 — Phase 7 next
 
 ## Session Continuity
 
-**Last session:** 2026-05-27
-**Stopped at:** Roadmap created for v1.1 (Phases 7–9)
-**Next action:** `/gsd:plan-phase 7` — plan Phase 7 (Data Layer + Navigation)
+**Last session:** 2026-07-16
+**Stopped at:** v1.1 roadmap replanned (Phases 7–10) against the new design handoff + SDK v1.1.59
+**Next action:** `/gsd:plan-phase 7` — plan Phase 7 (History Screen Foundation)
 
 ---
 *State initialized: 2026-04-22*
-*Last updated: 2026-05-27 — v1.1 roadmap created; 3 phases (7–9), 11 requirements*
+*Last updated: 2026-07-16 — v1.1 roadmap replanned; 4 phases (7–10), 13 requirements*

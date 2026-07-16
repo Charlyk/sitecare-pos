@@ -172,9 +172,86 @@ const USERS = [
   { id: 'u4', name: 'Raluca Stan', role: 'Cashier', email: 'raluca@local', initials: 'RS' },
 ];
 
+// ─── Order history (closed orders) ───────────────────────
+// Past orders the cashier/owner can review. Independent of the live ORDERS
+// queue. `closedAt` drives day-grouping; `status` is completed|canceled|refunded.
+const hd = (daysAgo, hh, mm) => {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  d.setHours(hh, mm, 0, 0);
+  return d.toISOString();
+};
+
+const HISTORY_ORDERS = [
+  // ── Today ──
+  { id: '#1047', num: 1047, source: 'web', type: 'delivery', status: 'completed', closedAt: hd(0, 20, 14), prepMins: 42, cashier: 'Maria Iancu',
+    customer: { name: 'Ioana Radu', phone: '+40 722 145 902' }, address: { line1: 'Str. Lungă 24, ap. 3', city: 'Brașov' },
+    items: [ { name: 'Quattro Formaggi', qty: 1, price: 42, mods: [] }, { name: 'Carbonara', qty: 1, price: 34, mods: ['fără bacon'] }, { name: 'Coca-Cola', qty: 2, price: 10, mods: [] } ],
+    payment: 'online', paid: true, subtotal: 96, deliveryFee: 10, tip: 0, tax: 15.28, total: 121.28 },
+  { id: '#1046', num: 1046, source: 'phone', type: 'pickup', status: 'completed', closedAt: hd(0, 19, 52), prepMins: 20, cashier: 'Maria Iancu',
+    customer: { name: 'Mihai Popescu', phone: '+40 756 222 118' },
+    items: [ { name: 'Diavola', qty: 2, price: 39, mods: ['extra ardei iute'] }, { name: 'Vin roșu', qty: 1, price: 18, mods: [] } ],
+    payment: 'cash', paid: true, subtotal: 96, deliveryFee: 0, tip: 0, tax: 15.28, total: 96 },
+  { id: '#1045', num: 1045, source: 'counter', type: 'dinein', table: 7, status: 'completed', closedAt: hd(0, 19, 30), prepMins: 24, cashier: 'Eduard Albu',
+    customer: { name: 'Masa 7' },
+    items: [ { name: 'Burger Clasic', qty: 1, price: 34, mods: ['mediu'] }, { name: 'Burger BBQ', qty: 1, price: 38, mods: ['fără ceapă'] }, { name: 'Cezar', qty: 1, price: 28, mods: [] }, { name: 'Limonadă', qty: 2, price: 14, mods: [] }, { name: 'Coca-Cola', qty: 1, price: 10, mods: [] } ],
+    payment: 'card', paid: true, subtotal: 138, deliveryFee: 0, tip: 0, tax: 21.96, total: 138 },
+  { id: '#1044', num: 1044, source: 'web', type: 'delivery', status: 'completed', closedAt: hd(0, 18, 47), prepMins: 38, cashier: 'Maria Iancu',
+    customer: { name: 'Andreea Toma', phone: '+40 733 801 445' }, address: { line1: 'Calea București 112, bl. 4', city: 'Brașov' },
+    items: [ { name: 'Margherita', qty: 1, price: 32, mods: [] }, { name: 'Prosciutto & Funghi', qty: 1, price: 38, mods: [] }, { name: 'Tiramisu', qty: 2, price: 18, mods: [] } ],
+    payment: 'online', paid: true, subtotal: 106, deliveryFee: 10, tip: 5, tax: 16.87, total: 137.87 },
+  { id: '#1043', num: 1043, source: 'web', type: 'pickup', status: 'canceled', cancelReason: 'client', closedAt: hd(0, 18, 20), cashier: 'Raluca Stan',
+    customer: { name: 'Radu Ene', phone: '+40 744 300 111' },
+    items: [ { name: 'Pesto', qty: 1, price: 30, mods: [] }, { name: 'Grecească', qty: 1, price: 26, mods: [] } ],
+    payment: 'cash', paid: false, subtotal: 56, deliveryFee: 0, tip: 0, tax: 8.91, total: 56 },
+  { id: '#1042', num: 1042, source: 'counter', type: 'dinein', table: 3, status: 'completed', closedAt: hd(0, 17, 58), prepMins: 18, cashier: 'Eduard Albu',
+    customer: { name: 'Masa 3' },
+    items: [ { name: 'Quattro Formaggi', qty: 1, price: 42, mods: [] }, { name: 'Espresso', qty: 2, price: 9, mods: [] } ],
+    payment: 'card', paid: true, subtotal: 60, deliveryFee: 0, tip: 0, tax: 9.54, total: 60 },
+  // ── Yesterday ──
+  { id: '#1039', num: 1039, source: 'phone', type: 'pickup', status: 'completed', closedAt: hd(1, 21, 40), prepMins: 22, cashier: 'Maria Iancu',
+    customer: { name: 'Bogdan Marin', phone: '+40 720 551 234' },
+    items: [ { name: 'Bolognese', qty: 1, price: 32, mods: [] }, { name: 'Cezar', qty: 1, price: 28, mods: [] }, { name: 'Limonadă cu mentă', qty: 1, price: 14, mods: [] } ],
+    payment: 'card', paid: true, subtotal: 74, deliveryFee: 0, tip: 0, tax: 11.78, total: 84.5 },
+  { id: '#1035', num: 1035, source: 'web', type: 'delivery', status: 'refunded', refundAmount: 40, refundReason: 'articol lipsă', closedAt: hd(1, 20, 58), prepMins: 44, cashier: 'Raluca Stan',
+    customer: { name: 'Elena Vlad', phone: '+40 731 909 200' }, address: { line1: 'Str. Zizinului 88', city: 'Brașov' },
+    items: [ { name: 'Diavola', qty: 2, price: 39, mods: [] }, { name: 'Quattro Formaggi', qty: 1, price: 42, mods: [] }, { name: 'Tiramisu', qty: 2, price: 18, mods: [] } ],
+    payment: 'online', paid: true, subtotal: 174, deliveryFee: 10, tip: 0, tax: 27.68, total: 210 },
+  { id: '#1032', num: 1032, source: 'counter', type: 'dinein', table: 5, status: 'completed', closedAt: hd(1, 20, 5), prepMins: 20, cashier: 'Eduard Albu',
+    customer: { name: 'Masa 5' },
+    items: [ { name: 'Burger BBQ', qty: 1, price: 38, mods: [] }, { name: 'Grecească', qty: 1, price: 26, mods: [] }, { name: 'Coca-Cola', qty: 1, price: 10, mods: [] } ],
+    payment: 'cash', paid: true, subtotal: 74, deliveryFee: 0, tip: 0, tax: 11.78, total: 74 },
+  { id: '#1030', num: 1030, source: 'web', type: 'delivery', status: 'completed', closedAt: hd(1, 19, 20), prepMins: 40, cashier: 'Maria Iancu',
+    customer: { name: 'Cristina Popa', phone: '+40 745 118 664' }, address: { line1: 'Bd. Griviței 30', city: 'Brașov' },
+    items: [ { name: 'Prosciutto & Funghi', qty: 2, price: 38, mods: [] }, { name: 'Apă minerală', qty: 2, price: 8, mods: [] } ],
+    payment: 'online', paid: true, subtotal: 92, deliveryFee: 10, tip: 0, tax: 14.63, total: 96.5 },
+  { id: '#1028', num: 1028, source: 'phone', type: 'pickup', status: 'canceled', cancelReason: 'restaurant', closedAt: hd(1, 18, 40), cashier: 'Raluca Stan',
+    customer: { name: 'Dan Suciu', phone: '+40 726 400 815' },
+    items: [ { name: 'Burger Vegan', qty: 1, price: 32, mods: [] }, { name: 'Espresso', qty: 1, price: 9, mods: [] } ],
+    payment: 'cash', paid: false, subtotal: 41, deliveryFee: 0, tip: 0, tax: 6.52, total: 48 },
+  // ── 2 days ago ──
+  { id: '#1019', num: 1019, source: 'web', type: 'delivery', status: 'completed', closedAt: hd(2, 21, 10), prepMins: 45, cashier: 'Maria Iancu',
+    customer: { name: 'George Enache', phone: '+40 799 210 004' }, address: { line1: 'Str. Castelului 9', city: 'Brașov' },
+    items: [ { name: 'Diavola', qty: 2, price: 39, mods: [] }, { name: 'Papanași', qty: 2, price: 22, mods: [] }, { name: 'Limonadă cu mentă', qty: 2, price: 14, mods: [] } ],
+    payment: 'online', paid: true, subtotal: 130, deliveryFee: 10, tip: 12, tax: 20.68, total: 152 },
+  { id: '#1015', num: 1015, source: 'counter', type: 'dinein', table: 2, status: 'completed', closedAt: hd(2, 20, 22), prepMins: 22, cashier: 'Eduard Albu',
+    customer: { name: 'Masa 2' },
+    items: [ { name: 'Quattro Formaggi', qty: 1, price: 42, mods: [] }, { name: 'Carbonara', qty: 1, price: 34, mods: [] }, { name: 'Vin roșu (pahar)', qty: 2, price: 18, mods: [] } ],
+    payment: 'card', paid: true, subtotal: 112, deliveryFee: 0, tip: 0, tax: 17.82, total: 118 },
+  { id: '#1012', num: 1012, source: 'phone', type: 'pickup', status: 'completed', closedAt: hd(2, 19, 35), prepMins: 18, cashier: 'Raluca Stan',
+    customer: { name: 'Alina Barbu', phone: '+40 723 667 021' },
+    items: [ { name: 'Pesto', qty: 1, price: 30, mods: [] }, { name: 'Cezar', qty: 1, price: 28, mods: [] }, { name: 'Coca-Cola', qty: 1, price: 10, mods: [] } ],
+    payment: 'cash', paid: true, subtotal: 68, deliveryFee: 0, tip: 0, tax: 10.81, total: 67 },
+];
+
+// Period-level rollups (30-day window the sample sits inside).
+const HISTORY_SUMMARY = { orders: 486, revenue: 34180, avg: 70, refundCount: 7, refundTotal: 640, cancelCount: 21 };
+
 window.MENU_CATEGORIES = MENU_CATEGORIES;
 window.MENU_ITEMS = MENU_ITEMS;
 window.ORDERS = ORDERS;
+window.HISTORY_ORDERS = HISTORY_ORDERS;
+window.HISTORY_SUMMARY = HISTORY_SUMMARY;
 window.PRINTERS = PRINTERS;
 window.USERS = USERS;
 

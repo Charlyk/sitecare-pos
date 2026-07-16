@@ -1,0 +1,174 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "ui_kits/website/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Outfit|Inter|Caveat))/i]",
+        "message": "Font not provided by the design system. Available: Outfit, Inter, Caveat."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {},
+    "tokens": [
+      "--sc-accent",
+      "--sc-accent-foreground",
+      "--sc-background",
+      "--sc-black",
+      "--sc-border",
+      "--sc-card",
+      "--sc-card-foreground",
+      "--sc-container",
+      "--sc-destructive",
+      "--sc-duration",
+      "--sc-easing",
+      "--sc-font-handwriting",
+      "--sc-font-sans",
+      "--sc-foreground",
+      "--sc-input",
+      "--sc-muted",
+      "--sc-muted-foreground",
+      "--sc-navbar-height",
+      "--sc-primary",
+      "--sc-primary-foreground",
+      "--sc-primary-hover",
+      "--sc-primary-soft",
+      "--sc-radius-2xl",
+      "--sc-radius-3xl",
+      "--sc-radius-hero",
+      "--sc-radius-lg",
+      "--sc-radius-md",
+      "--sc-radius-pill",
+      "--sc-radius-sm",
+      "--sc-radius-xl",
+      "--sc-ring",
+      "--sc-secondary",
+      "--sc-secondary-foreground",
+      "--sc-shadow-2xl",
+      "--sc-shadow-lg",
+      "--sc-shadow-md",
+      "--sc-shadow-sm",
+      "--sc-shadow-xl",
+      "--sc-slate-100",
+      "--sc-slate-200",
+      "--sc-slate-50",
+      "--sc-slate-700",
+      "--sc-terracotta",
+      "--sc-terracotta-hover",
+      "--sc-tracking-tight",
+      "--sc-type-body",
+      "--sc-type-display",
+      "--sc-type-eyebrow",
+      "--sc-type-h1",
+      "--sc-type-h2",
+      "--sc-type-h3",
+      "--sc-type-lead",
+      "--sc-type-small",
+      "--sc-type-xs",
+      "--sc-white"
+    ],
+    "tokenKinds": {
+      "--sc-background": "color",
+      "--sc-foreground": "color",
+      "--sc-card": "color",
+      "--sc-card-foreground": "color",
+      "--sc-primary": "color",
+      "--sc-primary-hover": "color",
+      "--sc-primary-foreground": "color",
+      "--sc-primary-soft": "color",
+      "--sc-secondary": "color",
+      "--sc-secondary-foreground": "color",
+      "--sc-muted": "color",
+      "--sc-muted-foreground": "color",
+      "--sc-accent": "color",
+      "--sc-accent-foreground": "color",
+      "--sc-terracotta": "color",
+      "--sc-terracotta-hover": "color",
+      "--sc-destructive": "color",
+      "--sc-border": "color",
+      "--sc-input": "color",
+      "--sc-ring": "color",
+      "--sc-slate-50": "color",
+      "--sc-slate-100": "color",
+      "--sc-slate-200": "color",
+      "--sc-slate-700": "color",
+      "--sc-white": "color",
+      "--sc-black": "color",
+      "--sc-font-sans": "font",
+      "--sc-font-handwriting": "font",
+      "--sc-type-display": "font",
+      "--sc-type-h1": "font",
+      "--sc-type-h2": "font",
+      "--sc-type-h3": "font",
+      "--sc-type-lead": "font",
+      "--sc-type-body": "font",
+      "--sc-type-small": "font",
+      "--sc-type-xs": "font",
+      "--sc-type-eyebrow": "font",
+      "--sc-tracking-tight": "font",
+      "--sc-radius-sm": "radius",
+      "--sc-radius-md": "radius",
+      "--sc-radius-lg": "radius",
+      "--sc-radius-xl": "radius",
+      "--sc-radius-2xl": "radius",
+      "--sc-radius-3xl": "radius",
+      "--sc-radius-hero": "radius",
+      "--sc-radius-pill": "radius",
+      "--sc-shadow-sm": "shadow",
+      "--sc-shadow-md": "shadow",
+      "--sc-shadow-lg": "shadow",
+      "--sc-shadow-xl": "shadow",
+      "--sc-shadow-2xl": "shadow",
+      "--sc-navbar-height": "spacing",
+      "--sc-container": "spacing",
+      "--sc-duration": "other",
+      "--sc-easing": "other"
+    },
+    "fontFamilies": [
+      "Caveat",
+      "Inter",
+      "Outfit"
+    ]
+  }
+}

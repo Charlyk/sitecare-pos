@@ -22,6 +22,7 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
     {
       label: lang === 'ro' ? 'Administrare' : 'Manage',
       items: [
+        ...(role !== 'kitchen' ? [{ id: 'history', icon: 'history', label: t('nav_history') }] : []),
         { id: 'menu', icon: 'utensils', label: t('nav_menu') },
         { id: 'printer', icon: 'printer', label: t('nav_printer') },
         { id: 'settings', icon: 'settings', label: t('nav_settings') },
@@ -36,6 +37,7 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
     menu: t('nav_menu'),
     printer: t('nav_printer'),
     settings: t('nav_settings'),
+    history: t('nav_history'),
     detail: lang === 'ro' ? 'Detalii comandă' : 'Order details',
   };
 

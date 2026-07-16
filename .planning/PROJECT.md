@@ -32,15 +32,27 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 
 **Goal:** Give restaurant staff a dedicated screen to browse, search, and export the full archive of past orders with receipt reprinting.
 
+**Replanned 2026-07-16** against the new design handoff (`sitecare-orders/`) and SDK v1.1.59. The original
+2026-05-27 scope assumed a paginated list with a side detail panel and no summary strip; the new design is a
+day-grouped scroll with an inline expandable receipt and a period summary strip.
+
 **Target features:**
 - New "History" sidebar item (same level as Orders, KDS, POS)
-- Paginated list of all historical orders (completed + cancelled)
-- Date range filter to navigate far back
-- Search by order number, phone number, or customer name
-- Filter by status (completed / cancelled) and order type (dine-in / pickup / delivery)
-- Read-only order detail view (same panel as live orders)
-- Reprint receipt action on any historical order
-- CSV / PDF export of the filtered list
+- Period summary strip — orders, revenue, average — from the new `getAdminDashboard` endpoint
+- Period presets (Today / 7 / 30 / custom) driving a `listAdminOrders({from,to})` fetch
+- Orders grouped by calendar day with per-day count and revenue subtotal — no pagination
+- Filter by status (Completed / Refunded / Canceled) and order type (Delivery / Pickup / Dine-in)
+- Debounced search by order number or customer name
+- Inline expandable read-only receipt row, hydrated on demand via `getOrder(id)`
+- Reprint receipt from the expanded row
+- CSV export of the filtered list
+
+**Scope boundary:** Desktop History screen only. The new design bundle also contains an owner dashboard,
+mobile screens, and a forgot-password flow — all deferred, not part of v1.1.
+
+**Known divergence from the design:** tax/tip lines, refund amount and reason, order source channel, the
+collapsed-row items count, address subtitle, and table number are all cut — no API field backs them. Tracked
+in REQUIREMENTS.md under "Design Elements Cut".
 
 ---
 
@@ -74,13 +86,14 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 
 ### Active (v1.1)
 
-- [ ] Orders History screen — new sidebar item with paginated list of all past orders — v1.1
-- [ ] Date range filter on History screen — navigate back to any period — v1.1
-- [ ] Search by order number, phone number, customer name on History screen — v1.1
-- [ ] Filter by status (completed / cancelled) and order type (dine-in / pickup / delivery) — v1.1
-- [ ] Read-only order detail view on historical orders — same panel as live orders — v1.1
-- [ ] Reprint receipt on historical orders — thermal printer integration — v1.1
-- [ ] CSV / PDF export of filtered history list — v1.1
+- [ ] Orders History screen — new sidebar item, day-grouped scroll of past orders — v1.1 (HIST-01, HIST-05)
+- [ ] Period presets + custom range on History screen — v1.1 (HIST-03, HIST-04)
+- [ ] Period summary strip via `getAdminDashboard` — v1.1 (HIST-06)
+- [ ] Search by order number or customer name on History screen — v1.1 (HIST-09)
+- [ ] Filter by status (completed / refunded / canceled) and order type — v1.1 (HIST-07, HIST-08)
+- [ ] Inline expandable read-only receipt row via `getOrder(id)` — v1.1 (HIST-10)
+- [ ] Reprint receipt on historical orders — thermal printer integration — v1.1 (HIST-11)
+- [ ] CSV export of filtered history list — v1.1 (HIST-12)
 - [ ] Windows code signing — unsigned MSI; Azure Trusted Signing is the path forward (BILD-03 deferred)
 - [ ] Thermal printer hardware validation — approved-no-hardware for v1.0; real-device test needed
 - [ ] Tax display — server-authoritative total used; Romanian VAT (5%/9%/19%) display to be confirmed with SiteCare
@@ -102,7 +115,7 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 
 **Origin:** Claude Design handoff bundle — a fully fleshed HTML/React prototype with 7 screens, all CSS, and mock data. The prototype runs React 18 via CDN with Babel standalone transpilation. The production app replaced the CDN stack with React + Vite inside a Tauri shell.
 
-**API SDK:** `@charlyk/admin-client` (v1.1.29+, proprietary, GitHub Package Registry `npm.pkg.github.com`). This is the only sanctioned way to communicate with the SiteCare backend. Published by GitHub Actions bot — expect frequent updates.
+**API SDK:** `@charlyk/admin-client` (v1.1.59+, proprietary, GitHub Package Registry `npm.pkg.github.com`). This is the only sanctioned way to communicate with the SiteCare backend. Published by GitHub Actions bot — expect frequent updates. Bumped from v1.1.29 on 2026-07-16; that range added `getAdminDashboard`, `paymentCaptureStatus`, and fiscal-receipt endpoints, but did **not** add server-side order filtering or pagination.
 
 **Real-time:** SSE via `@microsoft/fetch-event-source` (not native EventSource — required for Bearer auth headers). The Kitchen display and order list both receive live events. SSE connection kept alive with `openWhenHidden: true`.
 
@@ -152,4 +165,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-05-27 — v1.1 milestone started; Orders History Screen*
+*Last updated: 2026-07-16 — v1.1 replanned against new design handoff + SDK v1.1.59; 13 requirements*

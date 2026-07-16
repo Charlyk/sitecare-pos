@@ -2,53 +2,87 @@
 
 **Milestone:** v1.1
 **Created:** 2026-05-27
+**Replanned:** 2026-07-16 — new design handoff (`sitecare-orders/`) + SDK bump to v1.1.59
 
 ---
 
 ## v1.1 Requirements
 
-> **SDK dependency:** All history requirements depend on @charlyk/admin-client (existing v1 API).
-> Research confirmed the current API provides:
-> - `admin.orders.list({ from, to })` — returns full AdminOrder[] for the date range (no server-side pagination or filtering)
-> - `orders.get(id)` — returns full Order with items, address, notes (required for detail view)
-> - No export endpoint — CSV is generated client-side from the fetched array
+> **Design source:** `sitecare-orders/project/src/screen-history.jsx` + `screenshots/desktop-history.png`,
+> `history-expanded.png`, `order-history.png`. This design supersedes the 2026-05-27 requirements,
+> which assumed a paginated list with a side detail panel and no summary strip.
+>
+> **SDK dependency:** @charlyk/admin-client v1.1.59. Verified against the installed type definitions:
+> - `listAdminOrders({ from, to })` → `{ orders: AdminOrder[] }` — date range only; **no server-side
+>   pagination, filtering, or search**. All filtering is client-side on the returned array.
+> - `getOrder(id)` → full `Order` with `items[]` (name, qty, `selectedOptions` as mods, `itemSubtotal`),
+>   `subtotal`, `deliveryFee`, `total`, `notes`, delivery address fields, and `events[]`.
+> - `events[]` (`OrderEvent`) carries `actor`, `reason`, `toStatus`, `createdAt` — the only source for
+>   handled-by, cancel reason, real close time, and prep duration.
+> - `getAdminDashboard({ from, to })` → `totalEarned`, `totalOrders`, `dailyStats`, `topProducts` — NEW in
+>   this SDK range; backs the summary strip.
+> - `paymentCaptureStatus: 'refunded'` — NEW; makes Refunded a first-class status filter.
+> - No export endpoint — CSV is generated client-side from the fetched and filtered array.
 
 ### HIST — History Screen
 
 - [ ] **HIST-01**: User can navigate to a History screen via a dedicated sidebar item (same level as Orders, KDS, POS)
-- [ ] **HIST-02**: History screen calls the admin orders list endpoint with a date range; all status, type, and search filtering is applied client-side on the returned array
-- [ ] **HIST-03**: History screen defaults to the current week (Monday–today) on first open
-- [ ] **HIST-04**: User can change the date range (from / to) to load orders for any past period
-- [ ] **HIST-05**: User can see a paginated list of orders for the selected filters, sorted newest first
-- [ ] **HIST-06**: User can filter history by order status (All / Completed / Cancelled) — applied client-side
-- [ ] **HIST-07**: User can filter history by order type (All / Dine-in / Pickup / Delivery) — applied client-side
-- [ ] **HIST-08**: User can search by customer name or phone number — debounced text input filtered client-side
-- [ ] **HIST-09**: User can click any order in the list to see a read-only detail panel with full items, delivery address, and notes
-- [ ] **HIST-10**: User can reprint a receipt for any historical order from the detail panel (greyed-out if printer not configured)
-- [ ] **HIST-11**: User can export the current filtered results as a CSV file via a native Save dialog — CSV is generated client-side from the fetched and filtered array
+- [ ] **HIST-02**: History screen loads orders via `listAdminOrders({ from, to })`; all status, type, and search filtering is applied client-side on the returned array
+- [ ] **HIST-03**: History screen defaults to the last 30 days on first open
+- [ ] **HIST-04**: User can switch the period via presets — Today / 7 days / 30 days / custom range — and the list reloads for the new range
+- [ ] **HIST-05**: User can see orders grouped by calendar day, newest first, each day header showing that day's order count and revenue subtotal
+- [ ] **HIST-06**: User can see a summary strip for the selected period — orders, revenue, and average order value from `getAdminDashboard`; the refunds tile shows count only
+- [ ] **HIST-07**: User can filter by status — All / Completed / Refunded / Canceled — each showing a live count
+- [ ] **HIST-08**: User can filter by order type — All / Delivery / Pickup / Dine-in (`orderType: 'local'` maps to Dine-in)
+- [ ] **HIST-09**: User can search by order number or customer name — debounced text input, filtered client-side
+- [ ] **HIST-10**: User can click any row to expand an inline read-only receipt showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, handled-by, and prep time — fetched on demand via `getOrder(id)`
+- [ ] **HIST-11**: User can reprint a receipt from the expanded row (greyed-out when no printer is configured)
+- [ ] **HIST-12**: User can export the current filtered results as a CSV file via a native Save dialog — generated client-side
+- [ ] **HIST-13**: User sees a clear empty state when no orders match the active filters
+
+---
+
+## Design Elements Cut (no API data source)
+
+Recorded so the divergence from `screen-history.jsx` is deliberate and reviewable, not drift.
+Revisit if the API adds these fields.
+
+| Design element | Why cut |
+|---|---|
+| Tax line in receipt | No `tax` field on `Order` or `AdminOrder` anywhere in the SDK |
+| Tip line in receipt | No `tip` field in the SDK |
+| Refund amount + refund reason | Only `paymentCaptureStatus: 'refunded'` exists — a flag, no amount or reason |
+| Source sub-label (order channel) | No channel field. `OrderItem.source` is `menu_item`/`global_product` — unrelated to the design's `sourceMeta` |
+| Items-count column (collapsed row) | `AdminOrder` has no `items[]`; showing it would force a `getOrder` per row (N+1) |
+| Address subtitle (collapsed row) | `AdminOrder` has no address fields |
+| Table number | No table field in the SDK |
+| Refund total in summary tile | `getAdminDashboard` returns no refund aggregate; count is derived client-side |
 
 ---
 
 ## Future Requirements (deferred)
 
-- PDF export — defer to v1.2; CSV covers the accounting use case for v1.1
+- Owner dashboard screen with charts (`design_handoff_owner_dashboard/`) — designed, not scoped to v1.1
+- Mobile app screens (`mobile-screens.jsx`, `mobile-app.html`) — desktop-only milestone
+- Forgot-password flow (`forgot-password.html`) — designed, not scoped to v1.1
+- PDF export — defer to v1.2; CSV covers the accounting use case
 - Windows code signing (BILD-03) — Azure Trusted Signing; deferred from v1.0
 - Thermal printer hardware validation — approved-no-hardware in v1.0; real-device test needed
-- Tax display (Romanian VAT 5%/9%/19%) — confirm with SiteCare before adding
+- Tax / tip display — blocked on API fields; confirm with SiteCare
+- Refund amount + reason display — blocked on API fields
 - History filter state persisted across navigation — reset on leave is acceptable for v1.1
-- Bulk actions on historical orders — read-only in v1.1; no mutations on completed orders
 
 ---
 
 ## Out of Scope
 
-- Server-side filtering / search — current SDK API returns full result set; all filtering is client-side
-- Server-side CSV generation — no export endpoint in v1 API; CSV generated client-side
-- PDF export for v1.1 — adds significant dependency; defer
+- Server-side filtering / search / pagination — SDK returns the full result set for a date range
+- Server-side CSV generation — no export endpoint in the API
 - Status mutations on historical orders — orders in COMPLETED/CANCELLED are final
-- "Today's summary" stats panel on History screen — not requested
-- Infinite scroll — explicit page controls; pagination is client-side on the fetched array
-- Server-side pagination library — not applicable; full array returned by API
+- Pagination controls — the design is a day-grouped scroll; there is no pagination in it
+- Infinite scroll — not in the design
+- Side detail panel — superseded by the inline expandable receipt row
+- Any non-History screen from the new design bundle (dashboard, mobile, forgot-password)
 
 ---
 
@@ -56,19 +90,21 @@
 
 | REQ-ID | Phase | Plan | Status |
 |--------|-------|------|--------|
-| HIST-01 | Phase 7 | — | Pending |
-| HIST-02 | Phase 7 | — | Pending |
-| HIST-03 | Phase 7 | — | Pending |
-| HIST-04 | Phase 8 | — | Pending |
-| HIST-05 | Phase 8 | — | Pending |
-| HIST-06 | Phase 8 | — | Pending |
-| HIST-07 | Phase 8 | — | Pending |
-| HIST-08 | Phase 8 | — | Pending |
-| HIST-09 | Phase 9 | — | Pending |
-| HIST-10 | Phase 9 | — | Pending |
-| HIST-11 | Phase 9 | — | Pending |
+| HIST-01 | Phase 7 | TBD | Pending |
+| HIST-02 | Phase 7 | TBD | Pending |
+| HIST-03 | Phase 7 | TBD | Pending |
+| HIST-04 | Phase 8 | TBD | Pending |
+| HIST-05 | Phase 7 | TBD | Pending |
+| HIST-06 | Phase 8 | TBD | Pending |
+| HIST-07 | Phase 9 | TBD | Pending |
+| HIST-08 | Phase 9 | TBD | Pending |
+| HIST-09 | Phase 9 | TBD | Pending |
+| HIST-10 | Phase 10 | TBD | Pending |
+| HIST-11 | Phase 10 | TBD | Pending |
+| HIST-12 | Phase 10 | TBD | Pending |
+| HIST-13 | Phase 7 | TBD | Pending |
 
 ---
 
 *Created: 2026-05-27 — v1.1 milestone; 11 requirements*
-*Updated: 2026-05-27 — traceability filled in; Phases 7–9 assigned*
+*Replanned: 2026-07-16 — new design handoff + SDK v1.1.59; 13 requirements mapped to Phases 7–10*

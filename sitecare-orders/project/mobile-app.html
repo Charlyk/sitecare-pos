@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SiteCare Mobile — Design</title>
+<link rel="stylesheet" href="assets/colors_and_type.css">
+<style>
+  html, body { margin: 0; padding: 0; font-family: 'Outfit', system-ui, sans-serif; color: var(--m-fg); }
+  * { box-sizing: border-box; }
+
+  /* ───── Mobile screen theme tokens (controlled by data-m-theme on body) ────────── */
+  :root,
+  body[data-m-theme="light"] {
+    /* Standard surfaces — used by Login, Orders, Detail, New order, Menu, Settings */
+    --m-bg:        #fbf6ea;
+    --m-card:      #ffffff;
+    --m-fg:        hsl(120 8% 15%);
+    --m-muted:     hsl(120 5% 46%);
+    --m-border:    hsl(120 10% 88%);
+    --m-tabbar:    rgba(255, 255, 255, 0.92);
+
+    /* "Ink" surfaces — used by Kitchen + Courier screens, which lean on
+       translucent scrim cards instead of solid white. In light mode they
+       sit on the cream bg with subtle dark scrims so text stays legible. */
+    --m-ink-bg:           #fbf6ea;
+    --m-ink-card:         #ffffff;
+    --m-ink-card-low:     rgba(0, 0, 0, 0.025);
+    --m-ink-border:       hsl(120 10% 86%);
+    --m-ink-border-strong:hsl(120 10% 80%);
+    --m-ink-divider:      rgba(0, 0, 0, 0.1);
+    --m-ink-text:         hsl(120 8% 15%);
+    --m-ink-text-mid:     hsl(120 5% 38%);
+    --m-ink-text-dim:     hsl(120 5% 50%);
+    --m-ink-text-low:     hsl(120 5% 60%);
+    --m-ink-tabbar:       rgba(255, 255, 255, 0.94);
+    --m-eyebrow:          hsl(0 53% 58%);
+    --m-home-indicator:   rgba(0, 0, 0, 0.25);
+
+    --canvas-bg:   #f4ecd7;
+  }
+
+  body[data-m-theme="dark"] {
+    /* Palette lifted from the Courier app design so cards/labels read the
+       same way across every screen in dark mode. */
+    --m-bg:        #0f1814;                       /* deep teal-near-black */
+    --m-card:      rgba(255, 255, 255, 0.06);     /* translucent surface */
+    --m-fg:        #ffffff;                       /* primary text */
+    --m-muted:     rgba(255, 255, 255, 0.6);      /* secondary text — readable */
+    --m-border:    rgba(255, 255, 255, 0.1);      /* hairline */
+    --m-tabbar:    rgba(15, 24, 20, 0.88);
+
+    /* Ink — same as standard in dark mode (Kitchen/Courier were
+       designed dark-first, so the values match the original spec). */
+    --m-ink-bg:           #0f1814;
+    --m-ink-card:         rgba(255, 255, 255, 0.06);
+    --m-ink-card-low:     rgba(255, 255, 255, 0.04);
+    --m-ink-border:       rgba(255, 255, 255, 0.08);
+    --m-ink-border-strong:rgba(255, 255, 255, 0.12);
+    --m-ink-divider:      rgba(255, 255, 255, 0.15);
+    --m-ink-text:         #ffffff;
+    --m-ink-text-mid:     rgba(255, 255, 255, 0.6);
+    --m-ink-text-dim:     rgba(255, 255, 255, 0.5);
+    --m-ink-text-low:     rgba(255, 255, 255, 0.45);
+    --m-ink-tabbar:       rgba(10, 14, 12, 0.92);
+    --m-eyebrow:          #f3c28b;
+    --m-home-indicator:   rgba(255, 255, 255, 0.6);
+
+    --canvas-bg:   #0a1310;
+  }
+
+  body { background: var(--canvas-bg); transition: background 200ms ease; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body data-m-theme="light">
+<div id="root"></div>
+
+<script type="text/babel" src="frames/design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="src/mobile-screens.jsx"></script>
+
+<script type="text/babel">
+/* global React, ReactDOM, window */
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "dark"
+}/*EDITMODE-END*/;
+
+function App() {
+  const DC = window.DesignCanvas;
+  const DCSection = window.DCSection;
+  const DCArtboard = window.DCArtboard;
+  const { TweaksPanel, TweakSection, TweakRadio, useTweaks } = window;
+
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // Apply theme to body so all CSS vars cascade to every artboard
+  React.useEffect(() => {
+    document.body.setAttribute('data-m-theme', t.theme);
+  }, [t.theme]);
+
+  return (
+    <>
+      <DC title="SiteCare Mobile" subtitle="iOS companion app · no printer management · settings: notifications + language only">
+        <DCSection id="owner" title="Owner">
+          <DCArtboard id="ab-dashboard" label="Dashboard / Acasă — restaurant stats" width={390} height={844}>
+            <window.MobileDashboard />
+          </DCArtboard>
+          <DCArtboard id="ab-history" label="Istoric comenzi — closed orders by day" width={390} height={844}>
+            <window.MobileOrderHistory />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="auth" title="Auth">
+          <DCArtboard id="ab-login" label="Login" width={390} height={844}>
+            <window.MobileLogin />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="overview" title="Accept flow">
+          <DCArtboard id="ab-incoming" label="Push · Incoming (no auto-expire)" width={390} height={844}>
+            <window.MobileIncoming />
+          </DCArtboard>
+          <DCArtboard id="ab-preptime" label="Prep time picker (on accept)" width={390} height={844}>
+            <window.MobilePrepTime />
+          </DCArtboard>
+          <DCArtboard id="ab-orders" label="Orders list" width={390} height={844}>
+            <window.MobileOrders />
+          </DCArtboard>
+          <DCArtboard id="ab-detail" label="Order detail" width={390} height={844}>
+            <window.MobileOrderDetail />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="kitchen-pos" title="Kitchen & POS">
+          <DCArtboard id="ab-kitchen" label="Kitchen view (always dark)" width={390} height={844}>
+            <window.MobileKitchen />
+          </DCArtboard>
+          <DCArtboard id="ab-new" label="New order / POS" width={390} height={844}>
+            <window.MobileNewOrder />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="courier" title="Courier app">
+          <DCArtboard id="ab-courier" label="Ready — pickup queue" width={390} height={844}>
+            <window.MobileCourier />
+          </DCArtboard>
+          <DCArtboard id="ab-courier-active" label="Curse — active run" width={390} height={844}>
+            <window.MobileCourierActive />
+          </DCArtboard>
+          <DCArtboard id="ab-courier-history" label="Istoric — past runs" width={390} height={844}>
+            <window.MobileCourierHistory />
+          </DCArtboard>
+          <DCArtboard id="ab-courier-me" label="Eu — profile & settings" width={390} height={844}>
+            <window.MobileCourierMe />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="menu-settings" title="Menu & Settings">
+          <DCArtboard id="ab-menu" label="Menu manager" width={390} height={844}>
+            <window.MobileMenu />
+          </DCArtboard>
+          <DCArtboard id="ab-settings" label="Settings — notifications + language" width={390} height={844}>
+            <window.MobileSettings />
+          </DCArtboard>
+        </DCSection>
+      </DC>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Appearance">
+          <TweakRadio
+            label="Theme"
+            value={t.theme}
+            onChange={(v) => setTweak('theme', v)}
+            options={[
+              { value: 'light', label: 'Light' },
+              { value: 'dark',  label: 'Dark' },
+            ]}
+          />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

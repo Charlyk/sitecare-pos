@@ -156,6 +156,7 @@ function App() {
           {screen === 'pos' && <window.PosScreen lang={lang} onCreate={createOrder} />}
           {screen === 'detail' && selectedOrder && <window.OrderDetailScreen order={orders.find(o => o.id === selectedOrder.id) || selectedOrder} lang={lang} onBack={() => setScreen('orders')} onAdvance={advance} onPrint={doPrint} />}
           {screen === 'menu' && <window.MenuScreen lang={lang} />}
+          {screen === 'history' && <window.HistoryScreen lang={lang} onReprint={(o) => pushToast('print', o.export ? (lang === 'ro' ? 'Export pornit' : 'Export started') : t('toast_printed'), o.id)} />}
           {screen === 'printer' && <window.PrinterScreen lang={lang} onTestPrint={() => pushToast('print', t('toast_printed'), 'Test print')} />}
           {screen === 'settings' && <window.SettingsScreen lang={lang} />}
         </window.Shell>
