@@ -289,11 +289,45 @@ function SummaryStrip({ t, isLoading, isError, isEmptyState, summary }) {
   );
 }
 
-// Task 2 scaffold: search + export only (the two inert controls the Task-1 populated test
-// asserts). Task 3 adds the period/status filter-pill groups to complete the D-14 contract.
+// Full inert filter bar (D-14): period presets, status pills, search, and export all render at
+// final visual position/size — visible, dimmed, not clickable — so later phases (Filters +
+// Search) can wire them up with zero layout shift. The "30 days" period pill is the sole
+// exception: it renders at full opacity/selected styling because it reflects real current state.
 function FilterBar({ t }) {
+  const periods = [
+    { id: 'today', label: t('h_period_today') },
+    { id: '7', label: t('h_period_7') },
+    { id: '30', label: t('h_period_30') },
+    { id: 'custom', label: t('h_period_custom') },
+  ];
+  const statusFilters = [
+    { id: 'all', label: t('all') },
+    { id: 'completed', label: t('h_status_completed') },
+    { id: 'canceled', label: t('h_status_canceled') },
+    { id: 'refunded', label: t('h_status_refunded') },
+  ];
+  const inertBtn = { border: 0, padding: '7px 12px', borderRadius: 8, fontWeight: 600, fontSize: 13, fontFamily: 'inherit', cursor: 'not-allowed', pointerEvents: 'none' };
+
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+      {/* Period presets — the h_period_30 pill is the single exception rendered at full opacity.
+          Unrolled (not mapped) so each pill's disabled attribute is independently readable. */}
+      <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3 }}>
+        <button disabled style={{ ...inertBtn, background: 'transparent', color: '#555', opacity: 0.5 }}>{periods[0].label}</button>
+        <button disabled style={{ ...inertBtn, background: 'transparent', color: '#555', opacity: 0.5 }}>{periods[1].label}</button>
+        <button disabled style={{ ...inertBtn, background: 'var(--sc-foreground)', color: '#fff', opacity: 1 }}>{periods[2].label}</button>
+        <button disabled style={{ ...inertBtn, background: 'transparent', color: '#555', opacity: 0.5 }}>{periods[3].label}</button>
+      </div>
+
+      {/* Status pills — dimmed as a group, no live counts yet (Phase 10 wires those up) */}
+      <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3, opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }}>
+        {statusFilters.map((f) => (
+          <button key={f.id} disabled style={{ ...inertBtn, background: f.id === 'all' ? 'var(--sc-primary)' : 'transparent', color: f.id === 'all' ? '#fff' : '#555' }}>
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       <div className="search" style={{ width: 220, opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }}>
         <Icon name="search" size={15} style={{ color: 'var(--sc-muted-foreground)' }} />
         <input placeholder={t('h_search')} disabled />
