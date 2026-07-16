@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: Phase 7 — History Screen Foundation (planned — ready to execute)
+current_phase: 07
+current_plan: 2
 status: ready_to_execute
-stopped_at: Phase 7 planned — 6 plans in 4 waves, checker passed
-last_updated: "2026-07-17T00:00:00.000Z"
+stopped_at: Completed 07-01-PLAN.md (history-utils + normalizeOrder dailyNumber fix)
+last_updated: "2026-07-16T22:20:25.374Z"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 6
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
-current_plan: ""
 ---
 
 # State: SiteCare POS Desktop App
@@ -26,7 +26,7 @@ current_plan: ""
 See: `.planning/PROJECT.md` (updated 2026-07-16)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** v1.1 Orders History Screen (replanned 2026-07-16) — Phase 7 ready to plan
+**Current focus:** Phase 07 — history-screen-foundation
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -36,13 +36,16 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16
-**Current Phase:** Phase 7 — History Screen Foundation (not started)
-**Overall Status:** Roadmap replanned against the new design handoff + SDK v1.1.59. Nothing from the
-original Phase 7–9 breakdown was executed. Ready for `/gsd:plan-phase 7`.
+**Current Phase:** 07
+**Current Plan:** 2
+**Total Plans in Phase:** 6
+**Overall Status:** Phase 7 executing. Plan 07-01 (history-utils + normalizeOrder dailyNumber fix)
+complete — 3 tasks committed, 27+6 new unit tests green. Ready for the remaining Wave 1 plan
+(07-02) and subsequent waves.
 
 ```
-Progress: [........................................] 0% (0/4 phases)
-Milestone v1.1 — Phase 7 next
+Progress: [██░░░░░░░░] 17% (1/6 plans, phase 7)
+Milestone v1.1 — Phase 7 in progress
 ```
 
 ---
@@ -75,6 +78,11 @@ Milestone v1.1 — Phase 7 next
 | Sessions | 13 |
 
 ---
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 07 P01 | ~2 minutes | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -184,13 +192,14 @@ Milestone v1.1 — Phase 7 next
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/07-history-screen-foundation/07-01-PLAN.md
+**Resume file:** .planning/phases/07-history-screen-foundation/07-02-PLAN.md
 
-**Last session:** 2026-07-17
-**Stopped at:** Phase 7 planned — 6 plans in 4 waves; plan-checker passed (0 blockers, 2 warnings since fixed)
+**Last session:** 2026-07-16T22:20:25.369Z
+**Stopped at:** Completed 07-01-PLAN.md (history-utils + normalizeOrder dailyNumber fix)
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
+
 - Wave 1: 07-01 (history-utils + normalizeOrder `dailyNumber` fix) ∥ 07-02 (i18n + store + sidebar nav)
 - Wave 2: 07-03 (useHistoryOrders hook) ∥ 07-05 (screen-detail readOnly)
 - Wave 3: 07-04 (HistoryScreen) · Wave 4: 07-06 (app.jsx router + blocking human checkpoint)
@@ -198,9 +207,11 @@ Milestone v1.1 — Phase 7 next
   (they need live API access; a mocked test would encode the assumption rather than verify it):
   server `from`/`to` timezone interpretation, and `AdminOrder.total` cents-vs-RON. See
   `07-VALIDATION.md` → Manual-Only Verifications and `COVERAGE.md` → Edge-probe accounting.
+
 - **Routing decision:** `add-alongside` (`openHistoryOrder` / `screen: 'history-detail'`) rather than
   generalizing `openOrder()`. Recorded as accepted debt in `07-02-PLAN.md`'s
   `<assumption_delta_decision>`; the next phase's `getOrder(id)` is what should force a promote.
+
 - **⚠ Phases 8–10 in ROADMAP.md are stale** — CONTEXT.md `<roadmap_impact>` (D-07/D-15 reversals)
   requires `/gsd-phase` to insert the new detail-view phase and rewrite HIST-06/HIST-10 before
   Phase 8 is planned. Phase 7 itself is unaffected.
@@ -208,3 +219,8 @@ Milestone v1.1 — Phase 7 next
 ---
 *State initialized: 2026-04-22*
 *Last updated: 2026-07-16 — v1.1 roadmap replanned; 4 phases (7–10), 13 requirements*
+
+## Decisions
+
+- [Phase 07]: normalizeOrder's dailyOrderNumber fallback chain extended to o.dailyOrderNumber ?? o.dailyNumber ?? o.id (D-05) — additive only, kitchen Order path unchanged
+- [Phase 07]: history-utils.js stays pure: no react/data.jsx/@charlyk imports, no re-division by 100, no UTC-slicing day keys (Nyquist Wave-0 target)

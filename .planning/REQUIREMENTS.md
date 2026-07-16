@@ -28,9 +28,9 @@
 
 - [ ] **HIST-01**: User can navigate to a History screen via a dedicated sidebar item (same level as Orders, KDS, POS)
 - [ ] **HIST-02**: History screen loads orders via `listAdminOrders({ from, to })`; all status, type, and search filtering is applied client-side on the returned array
-- [ ] **HIST-03**: History screen defaults to the last 30 days on first open
+- [x] **HIST-03**: History screen defaults to the last 30 days on first open
 - [ ] **HIST-04**: User can switch the period via presets — Today / 7 days / 30 days / custom range — and the list reloads for the new range
-- [ ] **HIST-05**: User can see orders grouped by calendar day, newest first, each day header showing that day's order count and revenue subtotal
+- [x] **HIST-05**: User can see orders grouped by calendar day, newest first, each day header showing that day's order count and revenue subtotal
 - [ ] **HIST-06**: User can see a summary strip for the selected period — orders, revenue, and average order value from `getAdminDashboard`; the refunds tile shows count only
 - [ ] **HIST-07**: User can filter by status — All / Completed / Refunded / Canceled — each showing a live count
 - [ ] **HIST-08**: User can filter by order type — All / Delivery / Pickup / Dine-in (`orderType: 'local'` maps to Dine-in)
@@ -92,9 +92,9 @@ Revisit if the API adds these fields.
 |--------|-------|------|--------|
 | HIST-01 | Phase 7 | TBD | Pending |
 | HIST-02 | Phase 7 | TBD | Pending |
-| HIST-03 | Phase 7 | TBD | Pending |
+| HIST-03 | Phase 7 | TBD | Complete |
 | HIST-04 | Phase 8 | TBD | Pending |
-| HIST-05 | Phase 7 | TBD | Pending |
+| HIST-05 | Phase 7 | TBD | Complete |
 | HIST-06 | Phase 8 | TBD | Pending |
 | HIST-07 | Phase 9 | TBD | Pending |
 | HIST-08 | Phase 9 | TBD | Pending |
