@@ -43,6 +43,7 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
             { id: 'orders', icon: 'zap', label: t('nav_orders'), count: orderCount.live, dot: orderCount.new > 0 },
             { id: 'pos', icon: 'plus', label: t('nav_new') },
             { id: 'kitchen', icon: 'chef', label: t('nav_kitchen'), count: orderCount.active },
+            { id: 'history', icon: 'history', label: t('nav_history') },
           ],
     },
     {
@@ -63,6 +64,8 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
     printer: t('nav_printer'),
     settings: t('nav_settings'),
     detail: lang === 'ro' ? 'Detalii comandă' : 'Order details',
+    history: t('nav_history'),
+    'history-detail': lang === 'ro' ? 'Detalii comandă' : 'Order details',
   };
 
   const sidebarWidth = sidebarCollapsed ? 72 : 240;
