@@ -53,8 +53,22 @@ Full phase details → `.planning/milestones/v1.0-ROADMAP.md`
   2. On first open the screen loads the last 30 days of orders via `listAdminOrders({ from, to })` with no user interaction
   3. Orders appear grouped by calendar day, newest day first, and each day header shows that day's order count and revenue subtotal
   4. When the period returns no orders, a clear empty state is shown instead of a blank list; loading and error states render without crashing
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — pure derivation utilities (`history-utils.js`) + `normalizeOrder` `dailyNumber` fallback
+- [ ] 07-02-PLAN.md — i18n keys, store screen/route additions, sidebar History entry (HIST-01)
+- [ ] 07-03-PLAN.md — `useHistoryOrders` hook: 30-day `listAdminOrders` fetch on a collision-free cache key
+- [ ] 07-04-PLAN.md — `HistoryScreen`: day-grouped table, computed summary strip, inert filter bar, empty/loading/error
+- [ ] 07-05-PLAN.md — `readOnly` mode on `screen-detail.jsx` for the archived-order detail
+- [ ] 07-06-PLAN.md — `app.jsx` router wiring, rehydrate backstop, live-API human verification
 **UI hint**: yes
+
+> ⚠ **Phases 8–10 below are STALE.** CONTEXT.md's `<roadmap_impact>` records two user-directed
+> reversals (D-07, D-15) that invalidate the HIST-06 and HIST-10 requirement text and shift the phase
+> boundaries: a NEW read-only detail-view phase inserts after Phase 7, pushing 8→9, 9→10, 10→11.
+> Phase 7's own scope is settled and unaffected. Run `/gsd-phase` to restructure before planning
+> Phase 8.
 
 ### Phase 8: Period Control + Summary Strip
 **Goal**: Staff can retarget the whole screen to any period and read that period's totals at a glance
@@ -104,7 +118,7 @@ Full phase details → `.planning/milestones/v1.0-ROADMAP.md`
 | 4. Core Screens | v1.0 | 11/11 | Complete | 2026-04-27 |
 | 5. Native Integration | v1.0 | 4/4 | Complete | 2026-04-29 |
 | 6. Build Pipeline | v1.0 | 4/4 | Complete | 2026-05-02 |
-| 7. History Screen Foundation | v1.1 | 0/? | Not started | - |
+| 7. History Screen Foundation | v1.1 | 0/6 | Planned | - |
 | 8. Period Control + Summary Strip | v1.1 | 0/? | Not started | - |
 | 9. Filters + Search | v1.1 | 0/? | Not started | - |
 | 10. Receipt Detail + Output | v1.1 | 0/? | Not started | - |
