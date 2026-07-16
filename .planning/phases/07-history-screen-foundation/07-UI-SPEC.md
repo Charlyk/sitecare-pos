@@ -344,22 +344,104 @@ behavior as today, more horizontal space available than in the table row.
 
 ## UI Considerations
 
-Applicable state considerations resolved: 11 covered, 1 backstop, 0 unresolved.
+Authored by the `ui-consideration-probe` engine post-verification over 7 described surfaces
+(E1–E7), then resolved. **51 applicable considerations: 25 covered, 4 backstop, 22 dismissed,
+0 unresolved.** Empty- and error-state COPY lives in `## Copywriting Contract` / `## New i18n Keys`;
+the rows below reference it rather than restating it.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| empty | Day-grouped order list | ✅ covered | Empty State Contract above — one component, period-worded copy (`h_empty`/`h_empty_sub`) |
-| empty | Summary strip tiles | ✅ covered | Zero-state renders computed zeros, not dashes — dashes reserved for error only |
-| loading | Day-grouped order list | ✅ covered | Skeleton rows at exact row height (D-16), no day-group headers during loading |
-| loading | Summary strip tiles | ✅ covered | Placeholder shimmer blocks at same tile dimensions (D-16) |
-| loading | Sidebar History nav item | dismissed | Static nav link, not data-driven — no loading state applies |
-| error | Day-grouped order list | ✅ covered | Message + retry replaces table body area only, header row stays (D-16) |
-| error | Summary strip tiles | ✅ covered | All 4 tiles show `—`, icon tiles greyed (D-16) |
-| populated | Day-grouped order list | ✅ covered | No cap, no virtualization (D-03); row/column contract fully specified above |
-| partial | Day-grouped order list (missing `dailyNumber`) | ✅ covered | D-05 fallback to short UUID slice |
-| overflow | Customer name (row) | ✅ covered | `nowrap` + ellipsis truncation in the table row (space-constrained) |
-| overflow | Customer name (detail route) | ✅ covered | Wraps instead of truncating — more space available in detail view |
-| zero-one-many | Day-grouped order list | 🧪 backstop | Singular/plural day-count copy (`h_orders_count_one` vs `h_orders_count_other`) — verify a 1-order day renders "1 comandă"/"1 order", not the plural form, at implementation/QA time |
+Detected element kinds (engine `classifyElement`): E1 `list-collection`+`interactive-control`,
+E2/E3 `list-collection`, E4 `form`+`interactive-control`, E5 `list-collection`+`static-content`,
+E6 `list-collection`+`nav`+`media`, E7 `form`+`list-collection`+`interactive-control`. Kind-confirmation
+was run: adding the kinds judged missing (`static-content` on E2/E3/E7, `interactive-control` on E6)
+raises no category beyond a `long-text` on E2/E3 that a date header and numeric tiles do not warrant.
+Recall accepted as-is.
+
+### E1 — Day-grouped order list
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | ✅ covered | Empty State Contract — one component, period-worded `h_empty`/`h_empty_sub`, rendered inside the table card in place of all rows and day-groups (D-13) |
+| loading | ✅ covered | 6–8 skeleton rows at the **exact** real row height (13px/20px padding, single line); no day-group headers during loading (D-16) |
+| error | ✅ covered | Table body replaced by centered `h_error_title` + `check_connection` + `h_retry` button; header row still renders (D-16) |
+| populated | ✅ covered | Row & Table Layout Contract (8 tracks); every row rendered — no cap, no virtualization (D-03) |
+| partial (missing `dailyNumber`) | ✅ covered | D-05 — fall back to a short UUID slice |
+| partial (missing `customerName`) | 🧪 backstop | **Statement:** the Customer cell must render a readable placeholder, never a visually empty cell, when `customerName` is absent. Exact copy is the planner's call (a new key likely needs both `ro` and `en`). **Verification:** backstop — confirm a row with no `customerName` renders a placeholder. *(Not verified against SDK nullability; treated as possible rather than assumed away.)* |
+| overflow | ✅ covered | Customer column `nowrap` + `overflow:hidden` + `text-overflow:ellipsis`; the list scrolls vertically (no cap per D-03) |
+| zero-one-many | ✅ covered | Zero → empty state; one/many → day-header plural keys `h_orders_count_one`/`h_orders_count_other` |
+| long-text | ✅ covered | Ellipsis truncation in the space-constrained row; wraps in the detail route (E7) |
+
+### E2 — Day-group header
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | dismissed | Headers exist only for days that have rows — a zero-row day produces no header. Zero orders for the whole period is E5's empty state |
+| loading | ✅ covered | No day-group header renders during loading; skeleton rows are ungrouped (D-16) |
+| error | dismissed | The whole table body, including every day header, is replaced by the error message (D-16) |
+| populated | ✅ covered | Day-Group Header Contract — label left; `{count} {noun}` · `{revenue}` right |
+| partial (day of only canceled/refunded rows) | 🧪 backstop | **Statement:** by D-10 + D-11 such a day renders a non-zero count with `0,00 lei` revenue (count = every visible row; revenue = completed-only). This is correct by construction but reads as a bug if wrong. **Verification:** backstop — confirm an all-canceled day shows its true row count and zero revenue |
+| overflow | ✅ covered | Flex `space-between`; short localized date left, count·revenue right |
+| zero-one-many | ✅ covered | Explicit plural handling — a 1-order day must read "1 comandă", never "1 comenzi" |
+
+### E3 — Summary strip
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | ✅ covered | Renders computed **zeros**, not dashes — dashes are reserved for the error state |
+| loading | ✅ covered | Placeholder shimmer blocks at identical tile dimensions (D-16) |
+| error | ✅ covered | All 4 tiles show `—`; icon tiles render neutral grey, distinguishing "no confirmed data" from the empty state's colored zeros (D-16) |
+| populated | ✅ covered | 4 tiles computed client-side from the same fetched list (D-15); refunds tile is count-only |
+| partial | dismissed | D-15 collapsed the second data source — the strip derives from the same single fetched list as the table, so no independent partial state exists |
+| overflow | 🧪 backstop | **Statement:** a large revenue or AOV figure (wide period, high volume) must not overflow or wrap its fixed-dimension tile. **Verification:** backstop — render the strip against a wide-period, high-revenue dataset |
+| zero-one-many | ✅ covered | Zeros at zero; count-only refunds tile carries no amount to pluralize |
+
+### E4 — Filter bar (inert this phase, D-14)
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | dismissed | Inert this phase — no data drives any control |
+| loading | dismissed | Renders immediately and statically; it is precisely what reserves the page's shape so there is no layout jump (D-14 + D-16) |
+| error | dismissed | No query backs it this phase |
+| partial | dismissed | Every control renders in full, greyed-out; none is data-populated |
+| long-text | dismissed | Fixed short i18n labels in both `ro` and `en` |
+
+### E5 — Empty state
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | ✅ covered | It *is* the empty state — `h_empty` (15px/600) + `h_empty_sub` (13px/400), centered, 48–56px padding (D-13) |
+| loading | dismissed | Mutually exclusive with the skeleton state — never co-rendered |
+| error | dismissed | Mutually exclusive — the error message replaces the table area instead |
+| populated | dismissed | Mutually exclusive with rendered rows |
+| partial | dismissed | Fixed two-line copy, not data-driven |
+| overflow | dismissed | Fixed short copy in a centered block with generous padding |
+| zero-one-many | dismissed | A single fixed message; the later filters phase swaps only the sub-line |
+| long-text | ✅ covered | Copy authored in both `ro` and `en`; `ro` is the longer locale and fits the centered block |
+
+### E6 — Sidebar History nav entry
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | dismissed | Static nav link — not data-driven |
+| loading | dismissed | Static nav link — not data-driven |
+| error | dismissed | Static nav link — not data-driven |
+| partial | dismissed | Static nav link — not data-driven |
+| populated | ✅ covered | Sidebar Entry Contract — 4th in cashier `navGroups[0]` after Kitchen; existing `Icon name="history"`; `nav_history` label |
+| overflow | ✅ covered | Short label, identical treatment to the existing nav items it sits beside |
+| zero-one-many | dismissed | A single static item |
+| long-text | ✅ covered | `nav_history` is short in both locales (`Istoric` / `History`) |
+
+### E7 — Read-only detail route
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | 🧪 backstop | **Statement:** `screen` is persisted but `selectedOrder` is **not** (`store.js` partialize), and `openOrder` sets both atomically — so restarting the app on a detail route rehydrates `screen: 'detail'` with `selectedOrder: null`. The route must render a safe fallback (redirect to the originating list, or a "no order selected" surface), never a blank screen. Mechanism is the planner's call. **Verification:** backstop — restart the app while on a detail route and confirm no blank render. *(Related: CONTEXT.md `<code_context>` flags the same rehydrate risk for `screen: 'history'` itself — add `'history'` to any screen validation.)* |
+| loading | dismissed | Phase 7 renders the `AdminOrder` already in hand from the list — `openOrder` sets `selectedOrder` atomically and no fetch occurs. ⚠ The next phase's `getOrder(id)` introduces a real loading state and **must** spec it on this same surface |
+| error | dismissed | Same reason — no fetch this phase. ⚠ Becomes applicable when `getOrder(id)` lands next phase |
+| populated | ✅ covered | `readOnly` prop contract table — region-by-region, with `screen-detail.jsx` line citations |
+| partial | ✅ covered | Timeline, notes, address, items card + thermal rail all hidden (no `items[]`/`notes`/address on `AdminOrder`); the minimal totals card fills the vacated slot so the layout never collapses to zero height |
+| overflow | ✅ covered | Long customer names wrap rather than truncate — more horizontal space than the table row |
+| zero-one-many | dismissed | A single order surface |
+| long-text | ✅ covered | Names wrap, not truncate |
 
 ---
 
