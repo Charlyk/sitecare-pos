@@ -97,3 +97,129 @@ describe('ACT-04: print receipt from Order Detail screen', () => {
     expect(onPrint).toHaveBeenCalledWith(MINIMAL_ORDER, 'customer')
   })
 })
+
+// AdminOrder-shaped fixture: no items[], no notes, no address — matches the fields
+// Phase 7's history list call actually returns (post-normalizeOrder).
+const HISTORY_ORDER = {
+  id: 'ord-history-1',
+  dailyOrderNumber: 77,
+  placedAt: '2026-06-01T12:00:00Z',
+  state: 'done',
+  type: 'delivery',
+  source: 'app',
+  table: null,
+  customer: { name: 'Maria Ionescu', phone: '0722111222' },
+  total: 128.50,
+  payment: 'card',
+  paid: true,
+}
+
+// Same shape but with a non-terminal state, to prove Advance/Cancel gating is
+// unconditional on readOnly rather than derived from order.state.
+const HISTORY_ORDER_NON_TERMINAL = { ...HISTORY_ORDER, state: 'new' }
+
+describe('readOnly mode', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  test('readOnly omitted renders exactly as shipped: timeline and Advance present, default back label', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: MINIMAL_ORDER,
+        lang: 'ro',
+        restaurantSettings: null,
+        deliveryAreas: [],
+        onBack: vi.fn(),
+        onAdvance: vi.fn(),
+        onPrint: vi.fn(),
+        onCancel: vi.fn(),
+        isOffline: false,
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Înapoi la comenzi')).toBeTruthy()
+    // Advance button present for a non-terminal 'accepted' order
+    expect(screen.getByText('Începe')).toBeTruthy()
+  })
+
+  test('readOnly hides timeline, notes card, Call customer, items card, thermal rail, print buttons, Advance, Cancel', () => {
+    const onBack = vi.fn()
+    render(
+      createElement(OrderDetailScreen, {
+        order: HISTORY_ORDER,
+        lang: 'ro',
+        readOnly: true,
+        onBack,
+      }),
+      { wrapper: w }
+    )
+    expect(screen.queryByText('Nicio notă')).toBeNull()
+    expect(screen.queryByText('Sună clientul')).toBeNull()
+    expect(screen.queryByText('Modifică')).toBeNull()
+    expect(screen.queryByText('Bon imprimantă')).toBeNull()
+    expect(screen.queryByText('Print kitchen')).toBeNull()
+    expect(screen.queryByText('Print customer')).toBeNull()
+    expect(screen.queryByText('Începe')).toBeNull()
+    expect(screen.queryByText('Anulează comanda')).toBeNull()
+
+    // back label switches to history copy, onBack still wired through the same prop
+    const backBtn = screen.getByText('Înapoi la istoric')
+    fireEvent.click(backBtn)
+    expect(onBack).toHaveBeenCalledTimes(1)
+  })
+
+  test('readOnly hides Advance and Cancel unconditionally, even for a non-terminal order state', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HISTORY_ORDER_NON_TERMINAL,
+        lang: 'ro',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.queryByText('Acceptă')).toBeNull()
+    expect(screen.queryByText('Anulează comanda')).toBeNull()
+  })
+
+  test('readOnly still renders customer name and phone', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HISTORY_ORDER,
+        lang: 'ro',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Maria Ionescu')).toBeTruthy()
+    expect(screen.getByText('0722111222')).toBeTruthy()
+  })
+
+  test('readOnly with items-less order collapses the outer grid to a single 1fr column', () => {
+    const { container } = render(
+      createElement(OrderDetailScreen, {
+        order: HISTORY_ORDER,
+        lang: 'ro',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    const outerGrid = container.firstChild
+    expect(outerGrid.style.gridTemplateColumns).toBe('1fr')
+  })
+
+  test('readOnly renders the minimal totals card: total label + formatted RON total', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HISTORY_ORDER,
+        lang: 'ro',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Total')).toBeTruthy()
+    expect(screen.getByText('128,50 lei')).toBeTruthy()
+  })
+})

@@ -186,6 +186,22 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
           </div>
           );
         })()}
+
+        {/* Minimal totals card — fills the slot the items card vacates when AdminOrder carries no items[] */}
+        {order.items == null && (
+          <div className="card" style={{ padding: 16 }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+              <span className={`chip ${st.chip}`}>{st.label}</span>
+              <span className="chip chip-slate"><Icon name={typ.icon} size={11} />{typ.label}{order.table ? ` · ${t('table')} ${order.table}` : ''}</span>
+              <span className="chip chip-slate"><Icon name={order.payment === 'card' ? 'card' : order.payment === 'online' ? 'wifi' : 'cash'} size={11} />{t(order.payment ?? 'cash')}</span>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', marginBottom: 12 }}>{orderTimeLabel(order.placedAt)}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontWeight: 900, fontSize: 16 }}>{t('total')}</span>
+              <span style={{ fontWeight: 900, fontSize: 26, letterSpacing: '-0.02em', color: 'var(--sc-primary)' }}>{formatRON(order.total)}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Right: thermal ticket preview */}
