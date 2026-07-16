@@ -102,15 +102,19 @@ known, sourced deviation from the generic cap — not exceeded silently.**
 | 14px | 900 | Order # column, tabular-nums, tracking -0.01em | design source `screen-history.jsx:107`; weight precedent already-shipped `src/screen-orders.jsx:64` |
 | 14.5px | 900 | Total column, tabular-nums, tracking -0.01em | design source `screen-history.jsx:130`; weight precedent already-shipped `src/screen-orders.jsx:137` |
 | 15px | 600 | Empty-state heading | already-shipped, `src/screen-orders.jsx:294,299` |
-| 20px | 900 | Summary tile value (Display — largest number on screen) | already-shipped, `src/screen-orders.jsx:217`; design source `screen-history.jsx:220` |
+| 20px | 900 | Summary tile value (Display — largest number on screen) | design source `screen-history.jsx:220`; weight precedent already-shipped `src/screen-orders.jsx:217` (weight 900 there, but at `fontSize: 22` — the 20px size itself is a design-source port, not shipped precedent) |
 
 **Two different kinds of "already exists" — kept distinct per the prior review pass (not softened):**
 - **Weight 900 at its established sizes (14/18/20/22/26/32px roles) is already shipped and identical
   in role** — confirmed verbatim in `src/screen-orders.jsx:64,137,217` and
   `src/screen-detail.jsx:46,126,131,145,178,179,192` (order numbers, totals, tile values). The 14px
   and 14.5px rows above reuse that exact precedent.
-- **The half-pixel sizes (10.5, 11.5, 12.5, 13.5, 14.5px) and weight 800 are NOT found anywhere in
-  the already-shipped `screen-orders.jsx` / `screen-detail.jsx`** — grepped and confirmed absent.
+- **Weight 800 is already shipped** — `src/screen-detail.jsx:137` (`fontWeight: 800, fontSize: 14`,
+  the item-total figure), which is the same file D-09 extends with `readOnly` mode. An earlier draft
+  of this ledger asserted weight 800 was "confirmed absent"; that claim was false and is corrected
+  here.
+- **The half-pixel sizes (10.5, 11.5, 12.5, 13.5, 14.5px) are NOT found anywhere in the
+  already-shipped `screen-orders.jsx` / `screen-detail.jsx`** — grep verified absent.
   They are newly introduced to the shipped codebase BY this phase. This is not a spec invention: they
   are copied pixel-for-pixel from the Phase 7 design source itself, `screen-history.jsx` (cited per
   row above) — the exact file CLAUDE.md's "pixel-perfect port" rule designates as the porting target
