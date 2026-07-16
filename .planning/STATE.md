@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 07
-current_plan: 5
+current_plan: 6
 status: ready_to_execute
-stopped_at: Completed 07-05-PLAN.md (screen-detail readOnly mode)
-last_updated: "2026-07-16T22:37:25.496Z"
+stopped_at: Completed 07-04-PLAN.md (HistoryScreen table + summary strip + inert filter bar)
+last_updated: "2026-07-16T22:54:38.790Z"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -37,14 +37,14 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16
 **Current Phase:** 07
-**Current Plan:** 5
+**Current Plan:** 6
 **Total Plans in Phase:** 6
 **Overall Status:** Phase 7 executing. Plan 07-01 (history-utils + normalizeOrder dailyNumber fix)
 complete — 3 tasks committed, 27+6 new unit tests green. Ready for the remaining Wave 1 plan
 (07-02) and subsequent waves.
 
 ```
-Progress: [███████░░░] 67% (1/6 plans, phase 7)
+Progress: [████████░░] 83% (1/6 plans, phase 7)
 Milestone v1.1 — Phase 7 in progress
 ```
 
@@ -86,6 +86,7 @@ Milestone v1.1 — Phase 7 in progress
 | Phase 07 P02 | 3min | 3 tasks | 5 files |
 | Phase 07 P03 | 5min | 2 tasks | 2 files |
 | Phase 07 P05 | 9min | 2 tasks | 2 files |
+| Phase 07 P04 | 20min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -197,8 +198,8 @@ Milestone v1.1 — Phase 7 in progress
 
 **Resume file:** None
 
-**Last session:** 2026-07-16T22:37:25.489Z
-**Stopped at:** Completed 07-05-PLAN.md (screen-detail readOnly mode)
+**Last session:** 2026-07-16T22:54:38.785Z
+**Stopped at:** Completed 07-04-PLAN.md (HistoryScreen table + summary strip + inert filter bar)
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
@@ -233,3 +234,5 @@ Milestone v1.1 — Phase 7 in progress
 - [Phase 07]: useHistoryOrders() returns the order array directly as data (not { ...rest, orders }) since AdminOrderListResponse has no sibling fields worth preserving
 - [Phase 07]: order.items != null used as the single gating condition for the items card/thermal rail/grid collapse; !readOnly used directly for the remaining gated regions
 - [Phase 07]: Minimal totals card reuses existing card/chip classes, orderTimeLabel, formatRON, and the pre-existing total i18n key - no new CSS class or i18n key added
+- [Phase ?]: Phase 07: Avg summary tile shows a computed zero (not em-dash) when the whole period has zero finished orders; em-dash reserved for the error state
+- [Phase ?]: Phase 07: HistoryScreen's inert filter bar unrolls period-preset pills as explicit buttons (not mapped) so the D-14 30-day full-opacity exception is independently readable in source

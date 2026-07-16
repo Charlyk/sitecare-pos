@@ -38,7 +38,7 @@
 - [ ] **HIST-10**: User can click any row to expand an inline read-only receipt showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, handled-by, and prep time — fetched on demand via `getOrder(id)`
 - [ ] **HIST-11**: User can reprint a receipt from the expanded row (greyed-out when no printer is configured)
 - [ ] **HIST-12**: User can export the current filtered results as a CSV file via a native Save dialog — generated client-side
-- [ ] **HIST-13**: User sees a clear empty state when no orders match the active filters
+- [x] **HIST-13**: User sees a clear empty state when no orders match the active filters
 
 ---
 
@@ -102,7 +102,7 @@ Revisit if the API adds these fields.
 | HIST-10 | Phase 10 | TBD | Pending |
 | HIST-11 | Phase 10 | TBD | Pending |
 | HIST-12 | Phase 10 | TBD | Pending |
-| HIST-13 | Phase 7 | TBD | Pending |
+| HIST-13 | Phase 7 | TBD | Complete |
 
 ---
 
