@@ -186,6 +186,15 @@ function App() {
     if (role === 'kitchen' && !['kitchen', 'orders'].includes(screen)) setScreen('kitchen');
   }, [role, screen, setScreen]);
 
+  // Rehydrate backstop (UI-SPEC E7, RESEARCH Pitfall 6): store.js's partialize persists
+  // `screen` but NOT `historyOrder` (session-only, same treatment as the detail route's
+  // order value). A cold start that quit while on 'history-detail' rehydrates with
+  // historyOrder: null, which would otherwise leave the router's && short-circuit
+  // rendering a blank content area inside a working shell. Redirect back to the list.
+  useEffect(() => {
+    if (screen === 'history-detail' && !historyOrder) setScreen('history');
+  }, [screen, historyOrder, setScreen]);
+
   const orderCount = {
     live:   orders.filter(o => !['done', 'cancelled'].includes(o.state)).length,
     new:    orders.filter(o => o.state === 'new').length,
