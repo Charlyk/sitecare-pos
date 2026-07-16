@@ -450,14 +450,23 @@ Not applicable — this phase uses only already-established, already-pinned patt
 | A2 | `AdminOrder.total` (and other money fields returned by `listAdminOrders`) are in the same cents-based unit as the kitchen `Order` shape, so passing them through `normalizeOrder()`'s existing `cRON` (÷100) conversion is correct. | Standard Stack, Don't Hand-Roll | The installed type definition documents `total: number` with no unit comment specific to `AdminOrder` (unlike some other fields). If `AdminOrder.total` is actually already in RON (not cents), every revenue figure in the summary strip and day headers would be 100x too small. Low risk — the codebase-wide convention (documented at `data.jsx:196`, "SDK returns monetary values in cents") is applied uniformly across every other endpoint already integrated — but this specific field was not independently confirmed against a live API response in this research session. **Recommend a smoke-test checkpoint** (compare one known order's total in the admin UI/database against the rendered History total) before merging. |
 | A3 | The server's `from`/`to` range comparison on `/v1/admin/orders` treats these as inclusive-start/exclusive-end (or some other well-defined boundary) consistent with the ISO-instant boundaries D-04 computes, rather than truncating to a UTC calendar day server-side. | Pitfall 3 | If the server internally truncates `from`/`to` to UTC calendar days before filtering (ignoring the time-of-day/offset portion of the ISO instant), Romanian local-day boundaries sent as precise instants would not produce the intended 30-day window — orders from the last ~2-3 hours of each UTC day could be systematically excluded or a day boundary could shift. Not verifiable without live API access in this research session; flagged for a manual smoke test against real data during Phase 7 execution. |
 
-## Open Questions
+## Open Questions (DEFERRED — routed to backstop predicates + blocking human checkpoint)
+
+> **Resolution status:** Both questions below are deliberately NOT resolved in-plan. Neither is
+> answerable without live API access, and a mocked unit test would encode the assumption rather than
+> verify it. Both are routed to `backstop` predicates in `must_haves` and to the blocking human
+> checkpoint in `07-06-PLAN.md` Task 3, which is the only step that can actually answer them.
+> See also `07-VALIDATION.md` → *Manual-Only Verifications*. This section is a live deferral record,
+> not an unaddressed research gap.
 
 1. **Does the server's date-range filter respect ISO instant boundaries, or truncate to UTC calendar days?**
+   - *Resolution: routed to backstop — see `07-06-PLAN.md` Task 3 (day-boundary smoke test).*
    - What we know: The type signature documents `from`/`to` as plain "ISO 8601" strings with no further semantics (A3 above).
    - What's unclear: Whether sending `2026-07-01T21:00:00.000Z` (= local midnight in Bucharest, UTC+2/+3 depending on DST) as `from` correctly starts the window there, or whether the server rounds/truncates to `2026-07-01T00:00:00Z`.
    - Recommendation: Ship D-04's approach as specified (it's the only client-side-correct approach regardless of server behavior); add a manual smoke-test step comparing rendered day boundaries against a few known real orders placed near midnight, during phase execution/verification, not as a blocking research gap.
 
 2. **Is `AdminOrder.total` in cents or RON?**
+   - *Resolution: routed to backstop — see `07-06-PLAN.md` Task 3 (currency-unit smoke test).*
    - What we know: No `AdminOrder`-specific unit documentation; codebase-wide convention elsewhere is cents (A2 above).
    - What's unclear: Independent confirmation against a live response.
    - Recommendation: Same as above — smoke-test one real order's total against the admin dashboard/database during execution.

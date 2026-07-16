@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: Phase 7 — History Screen Foundation (not started)
-status: planning
-stopped_at: Phase 7 context gathered — 2 locked v1.1 decisions reversed; roadmap reconciliation needed
-last_updated: "2026-07-16T21:05:55.989Z"
+current_phase: Phase 7 — History Screen Foundation (planned — ready to execute)
+status: ready_to_execute
+stopped_at: Phase 7 planned — 6 plans in 4 waves, checker passed
+last_updated: "2026-07-17T00:00:00.000Z"
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 6
   completed_plans: 0
   percent: 0
 current_plan: ""
@@ -57,7 +57,7 @@ Milestone v1.1 — Phase 7 next
 | 4 | Core Screens | Complete — all 10 plans done, 20/20 verification, 125 tests passing (2026-04-27) |
 | 5 | Native Integration | Complete — 4 plans done, 166 tests passing, approved-no-hardware (2026-04-29) |
 | 6 | Build Pipeline | Complete — all 4 plans done, human-approved 2026-05-02 |
-| 7 | History Screen Foundation | Not started — HIST-01, HIST-02, HIST-03, HIST-05, HIST-13 |
+| 7 | History Screen Foundation | Planned — 6 plans in 4 waves, ready to execute — HIST-01, HIST-02, HIST-03, HIST-05, HIST-13 |
 | 8 | Period Control + Summary Strip | Not started — HIST-04, HIST-06 |
 | 9 | Filters + Search | Not started — HIST-07, HIST-08, HIST-09 |
 | 10 | Receipt Detail + Output | Not started — HIST-10, HIST-11, HIST-12 |
@@ -184,11 +184,26 @@ Milestone v1.1 — Phase 7 next
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/07-history-screen-foundation/07-CONTEXT.md
+**Resume file:** .planning/phases/07-history-screen-foundation/07-01-PLAN.md
 
-**Last session:** 2026-07-16T21:05:55.982Z
-**Stopped at:** Phase 7 context gathered — 2 locked v1.1 decisions reversed; roadmap reconciliation needed
-**Next action:** `/gsd:plan-phase 7` — plan Phase 7 (History Screen Foundation)
+**Last session:** 2026-07-17
+**Stopped at:** Phase 7 planned — 6 plans in 4 waves; plan-checker passed (0 blockers, 2 warnings since fixed)
+**Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
+
+**Phase 7 planning notes:**
+- Wave 1: 07-01 (history-utils + normalizeOrder `dailyNumber` fix) ∥ 07-02 (i18n + store + sidebar nav)
+- Wave 2: 07-03 (useHistoryOrders hook) ∥ 07-05 (screen-detail readOnly)
+- Wave 3: 07-04 (HistoryScreen) · Wave 4: 07-06 (app.jsx router + blocking human checkpoint)
+- **Two open v1.1 questions are deliberately unresolved and routed to the Plan 06 human checkpoint**
+  (they need live API access; a mocked test would encode the assumption rather than verify it):
+  server `from`/`to` timezone interpretation, and `AdminOrder.total` cents-vs-RON. See
+  `07-VALIDATION.md` → Manual-Only Verifications and `COVERAGE.md` → Edge-probe accounting.
+- **Routing decision:** `add-alongside` (`openHistoryOrder` / `screen: 'history-detail'`) rather than
+  generalizing `openOrder()`. Recorded as accepted debt in `07-02-PLAN.md`'s
+  `<assumption_delta_decision>`; the next phase's `getOrder(id)` is what should force a promote.
+- **⚠ Phases 8–10 in ROADMAP.md are stale** — CONTEXT.md `<roadmap_impact>` (D-07/D-15 reversals)
+  requires `/gsd-phase` to insert the new detail-view phase and rewrite HIST-06/HIST-10 before
+  Phase 8 is planned. Phase 7 itself is unaffected.
 
 ---
 *State initialized: 2026-04-22*

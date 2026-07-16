@@ -45,23 +45,38 @@ Full phase details → `.planning/milestones/v1.0-ROADMAP.md`
 ## Phase Details
 
 ### Phase 7: History Screen Foundation
+
 **Goal**: Staff can open a History screen from the sidebar and see the last 30 days of orders grouped by day
 **Depends on**: Phase 6 (shipped v1.0 shell, navigation, and SDK data layer)
 **Requirements**: HIST-01, HIST-02, HIST-03, HIST-05, HIST-13
 **Success Criteria** (what must be TRUE):
+
   1. A "History" item is visible and clickable in the sidebar at the same level as Orders, KDS, and POS; clicking it opens the History screen without breaking any existing screen
   2. On first open the screen loads the last 30 days of orders via `listAdminOrders({ from, to })` with no user interaction
   3. Orders appear grouped by calendar day, newest day first, and each day header shows that day's order count and revenue subtotal
   4. When the period returns no orders, a clear empty state is shown instead of a blank list; loading and error states render without crashing
+
 **Plans**: 6 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 07-01-PLAN.md — pure derivation utilities (`history-utils.js`) + `normalizeOrder` `dailyNumber` fallback
 - [ ] 07-02-PLAN.md — i18n keys, store screen/route additions, sidebar History entry (HIST-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 07-03-PLAN.md — `useHistoryOrders` hook: 30-day `listAdminOrders` fetch on a collision-free cache key
-- [ ] 07-04-PLAN.md — `HistoryScreen`: day-grouped table, computed summary strip, inert filter bar, empty/loading/error
 - [ ] 07-05-PLAN.md — `readOnly` mode on `screen-detail.jsx` for the archived-order detail
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 07-04-PLAN.md — `HistoryScreen`: day-grouped table, computed summary strip, inert filter bar, empty/loading/error
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 07-06-PLAN.md — `app.jsx` router wiring, rehydrate backstop, live-API human verification
+
 **UI hint**: yes
 
 > ⚠ **Phases 8–10 below are STALE.** CONTEXT.md's `<roadmap_impact>` records two user-directed
@@ -71,38 +86,47 @@ Plans:
 > Phase 8.
 
 ### Phase 8: Period Control + Summary Strip
+
 **Goal**: Staff can retarget the whole screen to any period and read that period's totals at a glance
 **Depends on**: Phase 7
 **Requirements**: HIST-04, HIST-06
 **Success Criteria** (what must be TRUE):
+
   1. Staff can switch the period with Today / 7 days / 30 days presets and the day-grouped list reloads for the new range
   2. Staff can pick a custom start and end date and the list reloads for exactly that range
   3. A summary strip above the list shows orders, revenue, and average order value for the selected period, sourced from `getAdminDashboard({ from, to })`, and updates whenever the period changes
   4. The refunds tile shows a count only (no amount), and the summary strip renders its own loading and error state independently of the list — a failure in one does not blank the other
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 9: Filters + Search
+
 **Goal**: Staff can narrow a period's orders down to the ones they are looking for
 **Depends on**: Phase 7 (list), Phase 8 (period control)
 **Requirements**: HIST-07, HIST-08, HIST-09
 **Success Criteria** (what must be TRUE):
+
   1. Staff can filter by status — All / Completed / Refunded / Canceled — and see only matching rows, with each option showing a live count for the current period
   2. Staff can filter by order type — All / Delivery / Pickup / Dine-in — and see only matching rows, with `orderType: 'local'` presented as Dine-in
   3. Staff can type an order number or customer name and the list narrows to matching orders, debounced so no filtering runs on every keystroke
   4. Filters, search, and period compose — day headers and their counts/subtotals reflect only the visible (filtered) orders, and the empty state appears when nothing matches
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 10: Receipt Detail + Output
+
 **Goal**: Staff can inspect any historical order's full receipt, reprint it, and export the filtered list for accounting
 **Depends on**: Phase 9
 **Requirements**: HIST-10, HIST-11, HIST-12
 **Success Criteria** (what must be TRUE):
+
   1. Clicking any row expands an inline read-only receipt showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, handled-by, and prep time — fetched on demand via `getOrder(id)`, with no controls that mutate order state
   2. The expanded row shows its own loading state while fetching and a readable fallback if `getOrder(id)` fails or is unauthorized; collapsing and re-expanding does not refetch unnecessarily
   3. Staff can reprint the receipt from the expanded row to the configured thermal printer; the button is greyed-out when no printer is configured
   4. Staff can export the currently filtered results as CSV via a native Save dialog and open the resulting file with correct rows, headers, and escaped fields
+
 **Plans**: TBD
 **UI hint**: yes
 
