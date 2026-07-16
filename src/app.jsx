@@ -6,6 +6,7 @@ import { OrdersScreen } from './screen-orders.jsx';
 import { KitchenScreen } from './screen-kitchen.jsx';
 import { PosScreen } from './screen-pos.jsx';
 import { OrderDetailScreen } from './screen-detail.jsx';
+import { HistoryScreen } from './screen-history.jsx';
 import { MenuScreen } from './screen-menu.jsx';
 import { PrinterScreen } from './screen-printer.jsx';
 import { SettingsScreen } from './screen-settings.jsx';
@@ -54,6 +55,8 @@ function App() {
   const setDensity = useAppStore((s) => s.setDensity);
   const setSidebarCollapsed = useAppStore((s) => s.setSidebarCollapsed);
   const openOrder = useAppStore((s) => s.openOrder);
+  const historyOrder = useAppStore((s) => s.historyOrder);
+  const openHistoryOrder = useAppStore((s) => s.openHistoryOrder);
   const pushToast = useAppStore((s) => s.pushToast);
   const dismissToast = useAppStore((s) => s.dismissToast);
   const setAcceptDialog = useAppStore((s) => s.setAcceptDialog);
@@ -225,6 +228,10 @@ function App() {
         {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={handleAdvance} isOffline={isOffline} />}
         {screen === 'pos'     && <PosScreen     lang={lang} isOffline={isOffline} />}
         {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} restaurantSettings={restaurantSettings} deliveryAreas={deliveryAreas} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={handlePrint} onCancel={() => setCancelDialog({ order: selectedOrder })} isOffline={isOffline} />}
+        {screen === 'history' && <HistoryScreen lang={lang} onOpenOrder={openHistoryOrder} isOffline={isOffline} />}
+        {screen === 'history-detail' && historyOrder && (
+          <OrderDetailScreen order={historyOrder} lang={lang} readOnly onBack={() => setScreen('history')} isOffline={isOffline} />
+        )}
         {screen === 'menu'    && <MenuScreen    lang={lang} isOffline={isOffline} />}
         {screen === 'printer' && <PrinterScreen lang={lang} restaurantSettings={restaurantSettings} isOffline={isOffline} />}
         {screen === 'settings'&& <SettingsScreen lang={lang} isOffline={isOffline} />}
