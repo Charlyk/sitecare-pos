@@ -68,24 +68,53 @@ future auditor can verify no quiet drift:**
 - Card radius `16px` (`.card`): `src/styles.css:211`
 - Chip pill radius `999px` (`.chip`, padding `3px 9px`): `src/styles.css:217`
 
+> **Carried-forward legacy values — do not copy-paste into future phases without re-checking.**
+> Every value in the exceptions list above is scoped to what THIS screen already renders, cited to
+> its exact source line. It is not a general-purpose "extra spacing tokens" palette. A future phase
+> needing a new odd-pixel value must find and cite its own source line the same way — do not assume
+> an exception listed here transfers to a different screen just because it's already "established."
+
 ---
 
 ## Typography
 
-| Role | Size | Weight | Line Height |
-|------|------|--------|-------------|
-| Body (row cell text — customer name, time, payment label) | 13.5px | 600 | 1.3 |
-| Label (column headers, tile labels — uppercase, 0.06em tracking) | 10.5px | 700 | 1.3 |
-| Heading (day-group header label) | 12.5px | 800 | 1.2 |
-| Display (summary tile value — largest number on screen) | 20px | 900 | 1.1 |
+**Declared cap deviation — explicit, reasoned, not silent.** This table lists 9 sizes and 5 weights,
+exceeding the generic UI-SPEC guidance of 3–4 sizes / 2 weights. That guidance is calibrated for a
+NEW design system being invented from scratch in a greenfield phase — it does not fit a
+fidelity-constrained port into an ALREADY-SHIPPED, mature type system. CLAUDE.md is explicit: "The
+UI must match the prototype pixel-perfectly. Do not change colors, spacing, typography, or component
+layout without explicit instruction." No instruction sanctions changing typography this phase —
+D-06, D-07, and D-15 are the only sanctioned deviations, and none of them touch the type scale.
+Collapsing 9 sizes into 4 would itself be an unsanctioned typography change and a worse outcome than
+exceeding a generic cap. **The full scale is therefore declared in full below and accepted as a
+known, sourced deviation from the generic cap — not exceeded silently.**
 
-**Documented weight exceptions, verified against what's actually already shipped** (CLAUDE.md
-forbids changing typography without instruction, so nothing here is a phase-specific invention —
-but honesty requires distinguishing two different kinds of "already exists"):
+| Size | Weight | Role / where used | Source |
+|------|--------|--------------------|--------|
+| 10.5px | 700 | Column headers, uppercase, 0.06em tracking (`h_col_*` labels) | design source `screen-history.jsx:274` |
+| 11.5px | 600 | Day-group meta text ("N comenzi · ...") | design source `screen-history.jsx:293` |
+| 11.5px | 800 | Day-group revenue figure (span inside the meta text, `var(--sc-primary)`) | design source `screen-history.jsx:294` |
+| 12.5px | 600 | Payment column (icon + label) | design source `screen-history.jsx:123` |
+| 12.5px | 800 | Day-group header day-label ("Astăzi · joi, 2 iulie") | design source `screen-history.jsx:292` |
+| 13px | 600 | Time column, tabular-nums | design source `screen-history.jsx:119` |
+| 13px | 400 | Empty-state body copy | already-shipped, `src/screen-orders.jsx:295` (inherits the default `--sc-type-body` weight 400, `src/colors_and_type.css:72`) |
+| 13.5px | 600 | Customer column | design source `screen-history.jsx:113` |
+| 14px | 900 | Order # column, tabular-nums, tracking -0.01em | design source `screen-history.jsx:107`; weight precedent already-shipped `src/screen-orders.jsx:64` |
+| 14.5px | 900 | Total column, tabular-nums, tracking -0.01em | design source `screen-history.jsx:130`; weight precedent already-shipped `src/screen-orders.jsx:137` |
+| 15px | 600 | Empty-state heading | already-shipped, `src/screen-orders.jsx:294,299` |
+| 20px | 900 | Summary tile value (Display — largest number on screen) | already-shipped, `src/screen-orders.jsx:217`; design source `screen-history.jsx:220` |
 
-- **Weight 900 is already shipped and identical in role** — confirmed verbatim in `src/screen-orders.jsx:64,137,217` and `src/screen-detail.jsx:46,126,131,145,178,179,192` (order numbers, totals, tile values). Order number (row) / Total (row) here reuse that exact precedent at 14px/14.5px, tabular-nums, tracking -0.01em.
-- **The half-pixel sizes (10.5, 12.5, 13.5, 14.5, 11.5px) and weight 800 are NOT found anywhere in the already-shipped `screen-orders.jsx` / `screen-detail.jsx`** — grepped and confirmed absent. They are newly introduced to the shipped codebase BY this phase. This is not a spec invention, though: they are copied pixel-for-pixel from the Phase 7 design source itself, `sitecare-orders/project/src/screen-history.jsx` (lines 54,60,108,113,123,130,220,274,292,293 for the sizes; lines 34,59,292,294 for weight 800) — i.e. the exact file CLAUDE.md's "pixel-perfect port" rule designates as the porting target for this screen. Porting its type scale verbatim is compliance with that rule, not a deviation from it.
-- Empty-state heading: 15px / weight **600** (matches the already-shipped empty-state pattern, `src/screen-orders.jsx:294,299`); empty-state body: 13px / weight **400**.
+**Two different kinds of "already exists" — kept distinct per the prior review pass (not softened):**
+- **Weight 900 at its established sizes (14/18/20/22/26/32px roles) is already shipped and identical
+  in role** — confirmed verbatim in `src/screen-orders.jsx:64,137,217` and
+  `src/screen-detail.jsx:46,126,131,145,178,179,192` (order numbers, totals, tile values). The 14px
+  and 14.5px rows above reuse that exact precedent.
+- **The half-pixel sizes (10.5, 11.5, 12.5, 13.5, 14.5px) and weight 800 are NOT found anywhere in
+  the already-shipped `screen-orders.jsx` / `screen-detail.jsx`** — grepped and confirmed absent.
+  They are newly introduced to the shipped codebase BY this phase. This is not a spec invention: they
+  are copied pixel-for-pixel from the Phase 7 design source itself, `screen-history.jsx` (cited per
+  row above) — the exact file CLAUDE.md's "pixel-perfect port" rule designates as the porting target
+  for this screen. Porting its type scale verbatim is compliance with that rule, not a deviation.
 
 All numeric figures (totals, tile values, day revenue) use `font-variant-numeric: tabular-nums`.
 
