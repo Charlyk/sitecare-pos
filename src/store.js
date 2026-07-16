@@ -42,7 +42,7 @@ export const useAppStore = create(
   persist(
     (set) => ({
       // --- Persisted UI state (mirrors prototype sc_* localStorage keys) ---
-      screen: 'orders',        // Valid: 'orders'|'kitchen'|'pos'|'detail'|'menu'|'printer'|'settings'
+      screen: 'orders',        // Valid: 'orders'|'kitchen'|'pos'|'detail'|'menu'|'printer'|'settings'|'history'|'history-detail'
       role: 'cashier',         // Valid: 'cashier'|'kitchen'
       lang: 'ro',              // Valid: 'ro'|'en'
       accent: 'sage',          // Valid: 'sage'|'indigo'|'terracotta'|'charcoal'
@@ -51,6 +51,7 @@ export const useAppStore = create(
 
       // --- Session-only state (NOT persisted — reset on restart) ---
       selectedOrder: null,     // Set by openOrder(); consumed by screen-detail
+      historyOrder: null,      // Set by openHistoryOrder(); consumed by screen-detail in readOnly mode; session-only (NOT persisted — mirrors selectedOrder)
       toasts: [],              // Managed by pushToast/dismissToast
       acceptDialog: null,      // Set by setAcceptDialog(); consumed by AcceptDialog in app.jsx
       soundMuted: false,       // KDS mute toggle (D-07) — session-only, NOT in partialize
@@ -61,8 +62,8 @@ export const useAppStore = create(
       authUser: null,
 
       // --- Actions ---
-      // setScreen resets selectedOrder so detail screen can't show stale data
-      setScreen: (screen) => set({ screen, selectedOrder: null }),
+      // setScreen resets selectedOrder and historyOrder so no detail route can show stale data
+      setScreen: (screen) => set({ screen, selectedOrder: null, historyOrder: null }),
       setRole: (role) => set({ role }),
       setLang: (lang) => set({ lang }),
       setAccent: (accent) => set({ accent }),
@@ -70,6 +71,8 @@ export const useAppStore = create(
       setSidebarCollapsed: (v) => set({ sidebarCollapsed: v }),
       // openOrder navigates to detail screen and sets the order in one atomic update
       openOrder: (order) => set({ selectedOrder: order, screen: 'detail' }),
+      // openHistoryOrder navigates to the history detail route in one atomic update (D-07/D-08)
+      openHistoryOrder: (order) => set({ historyOrder: order, screen: 'history-detail' }),
       pushToast: (toast) => set((s) => ({ toasts: [...s.toasts, toast] })),
       dismissToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
       setAcceptDialog: (dialog) => set({ acceptDialog: dialog }),

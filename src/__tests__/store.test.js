@@ -106,3 +106,56 @@ describe('ORD-02: role switch reflects in store', () => {
     useAppStore.getState().setRole('cashier')
   })
 })
+
+// ── HIST-01: history route additions (D-07/D-08) ─────────────────────────
+
+describe('HIST-01: openHistoryOrder / historyOrder / setScreen reset (D-07, D-08)', () => {
+  beforeEach(() => {
+    useAppStore.setState({ selectedOrder: null, historyOrder: null, screen: 'orders' })
+  })
+
+  test('historyOrder defaults to null on a fresh store', () => {
+    expect(useAppStore.getState().historyOrder).toBe(null)
+  })
+
+  test('openHistoryOrder(order) sets historyOrder and screen to history-detail in one update', () => {
+    const order = { id: 'hist-1' }
+    useAppStore.getState().openHistoryOrder(order)
+    const state = useAppStore.getState()
+    expect(state.historyOrder).toBe(order)
+    expect(state.screen).toBe('history-detail')
+  })
+
+  test('openHistoryOrder(order) leaves selectedOrder at null', () => {
+    const order = { id: 'hist-2' }
+    useAppStore.getState().openHistoryOrder(order)
+    expect(useAppStore.getState().selectedOrder).toBe(null)
+  })
+
+  test('openOrder(order) still sets selectedOrder and screen to detail, leaving historyOrder null (unchanged shipped behavior)', () => {
+    const order = { id: 'live-1' }
+    useAppStore.getState().openOrder(order)
+    const state = useAppStore.getState()
+    expect(state.selectedOrder).toBe(order)
+    expect(state.screen).toBe('detail')
+    expect(state.historyOrder).toBe(null)
+  })
+
+  test('setScreen resets both selectedOrder and historyOrder to null', () => {
+    useAppStore.getState().openOrder({ id: 'live-2' })
+    useAppStore.getState().openHistoryOrder({ id: 'hist-3' })
+    useAppStore.getState().setScreen('history')
+    const state = useAppStore.getState()
+    expect(state.screen).toBe('history')
+    expect(state.selectedOrder).toBe(null)
+    expect(state.historyOrder).toBe(null)
+  })
+
+  test('historyOrder is NOT included in the partialize output (session-only)', () => {
+    useAppStore.getState().openHistoryOrder({ id: 'hist-4' })
+    const state = useAppStore.getState()
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+    expect(persisted).not.toHaveProperty('historyOrder')
+  })
+})
