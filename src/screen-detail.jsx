@@ -4,7 +4,7 @@ import { useT } from './i18n.jsx';
 import { formatRON, elapsedMinutes, orderTimeLabel, formatDuration } from './data.jsx';
 import { sourceMeta, typeMeta, stateMeta } from './screen-orders.jsx';
 
-function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = [], onBack, onAdvance, onPrint, onCancel, isOffline }) {
+function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = [], onBack, onAdvance, onPrint, onCancel, isOffline, readOnly = false }) {
   const t = useT(lang);
   const [tab, setTab] = useState('overview');
 
@@ -34,11 +34,11 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
   ];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: order.items != null ? '1fr 380px' : '1fr', height: '100%', overflow: 'hidden' }}>
       <div style={{ overflow: 'auto', padding: 24 }}>
         {/* Back + header */}
         <button className="btn-ghost" onClick={onBack} style={{ marginBottom: 12, paddingLeft: 0 }}>
-          <Icon name="arrowLeft" size={14} /> {lang === 'ro' ? 'Înapoi la comenzi' : 'Back to orders'}
+          <Icon name="arrowLeft" size={14} /> {readOnly ? t('h_back_to_history') : (lang === 'ro' ? 'Înapoi la comenzi' : 'Back to orders')}
         </button>
 
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
@@ -56,6 +56,7 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
         </div>
 
         {/* Timeline */}
+        {!readOnly && (
         <div className="card" style={{ padding: 18, marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, position: 'relative' }}>
             {timeline.map((step, i) => (
@@ -73,6 +74,7 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
             ))}
           </div>
         </div>
+        )}
 
         {/* Customer + notes */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
@@ -94,13 +96,14 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
                 </div>
               </div>
             )}
-            {order.customer.phone && (
+            {!readOnly && order.customer.phone && (
               <button className="btn-secondary" style={{ marginTop: 12, width: '100%', justifyContent: 'center' }}>
                 <Icon name="phone" size={13} /> {t('call_customer')}
               </button>
             )}
           </div>
 
+          {!readOnly && (
           <div className="card" style={{ padding: 16 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--sc-muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{t('notes')}</div>
             {order.notes ? (
@@ -113,10 +116,11 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
               {order.paid && <span className="chip chip-sage"><Icon name="check" size={11} />{lang === 'ro' ? 'Plătit' : 'Paid'}</span>}
             </div>
           </div>
+          )}
         </div>
 
         {/* Items */}
-        {(() => {
+        {order.items != null && (() => {
           const menuItems = order.items.filter((it) => it.source !== 'global_product');
           const globalProducts = order.items.filter((it) => it.source === 'global_product');
           const hasExtras = globalProducts.length > 0 || order.deliveryFee > 0;
@@ -185,6 +189,7 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
       </div>
 
       {/* Right: thermal ticket preview */}
+      {order.items != null && (
       <div style={{ background: '#ede9de', padding: 24, display: 'flex', flexDirection: 'column', gap: 12, overflow: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
@@ -204,6 +209,7 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
         {/* The ticket */}
         <ThermalTicket order={order} lang={lang} kind={tab} restaurantSettings={restaurantSettings} displayAddress={displayAddress} />
 
+        {!readOnly && (
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-secondary" style={{ flex: 1, justifyContent: 'center' }} onClick={() => onPrint(order, 'kitchen')}>
             <Icon name="printer" size={14} /> {t('print_kitchen')}
@@ -212,9 +218,10 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
             <Icon name="printer" size={14} /> {t('print_customer')}
           </button>
         </div>
+        )}
 
         {/* Advance */}
-        {order.state !== 'done' && order.state !== 'cancelled' && (
+        {!readOnly && order.state !== 'done' && order.state !== 'cancelled' && (
           <button
             className={`btn-terracotta${isOffline ? ' btn-disabled-offline' : ''}`}
             style={{ height: 44, justifyContent: 'center', fontSize: 14 }}
@@ -230,7 +237,7 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
         )}
 
         {/* Cancel — only visible for new orders */}
-        {order.state === 'new' && (
+        {!readOnly && order.state === 'new' && (
           <button
             className="btn-secondary"
             style={{
@@ -246,6 +253,7 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
           </button>
         )}
       </div>
+      )}
     </div>
   );
 }
