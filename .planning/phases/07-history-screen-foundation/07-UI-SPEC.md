@@ -30,6 +30,17 @@ created: 2026-07-17
 
 ---
 
+## Visual Hierarchy
+
+**Primary focal point: the summary strip's Revenue tile value** (20px/900 — the single largest
+text on the screen), followed immediately by the day-group revenue figures (11.5px/800, sage-
+colored) directly below it — together these are the numbers staff scan first to reconcile a shift.
+**Secondary focus:** the Order-number and Total columns within each row (both 900-weight,
+tabular-nums — the two figures staff cross-reference per order). **Tertiary:** status chips
+(color-coded but small, 11px) and the inert filter bar (dimmed, intentionally recessive).
+
+---
+
 ## Spacing Scale
 
 Declared values (must be multiples of 4), matching the existing app-wide convention:
@@ -45,13 +56,17 @@ Declared values (must be multiples of 4), matching the existing app-wide convent
 | 3xl | 64px | not used this phase |
 
 **Exceptions (inherited verbatim from the design source — do not normalize, this is the shipped
-system, not phase-specific invention):**
-- Table/day-header row padding: `9–13px vertical, 20px horizontal` (odd values, established in `screen-orders.jsx` and the history design source alike)
-- Status icon tile: `30×30px`, radius `9px`
-- Summary tile icon tile: `44×44px`, radius `12px`
-- Row action button height: `34px`
-- Filter pill container padding: `3px`
-- Card radius: `16px` (`.card`), pill radius: `999px`
+system, not phase-specific invention). Each cites the exact file:line it is copied from, so a
+future auditor can verify no quiet drift:**
+- Data-row padding `13px 20px`: `sitecare-orders/project/src/screen-history.jsx:98`
+- Table header-row padding `11px 20px`: `sitecare-orders/project/src/screen-history.jsx:274`
+- Day-group header-row padding `9px 20px`: `sitecare-orders/project/src/screen-history.jsx:291`
+- Status icon tile `30×30px`, radius `9px`: `sitecare-orders/project/src/screen-history.jsx:103`
+- Summary tile icon tile `44×44px`, radius `12px`: already-shipped in `src/screen-orders.jsx:212` (identical values also at `screen-history.jsx:215`)
+- Row action button height `34px`: already-shipped in `src/screen-orders.jsx:140,143,149`
+- Filter pill container padding `3px`: already-shipped in `src/screen-orders.jsx:225,235`
+- Card radius `16px` (`.card`): `src/styles.css:211`
+- Chip pill radius `999px` (`.chip`, padding `3px 9px`): `src/styles.css:217`
 
 ---
 
@@ -64,12 +79,13 @@ system, not phase-specific invention):**
 | Heading (day-group header label) | 12.5px | 800 | 1.2 |
 | Display (summary tile value — largest number on screen) | 20px | 900 | 1.1 |
 
-**Documented weight exceptions** (this project's shipped design system already uses 4 weights
-consistently across v1.0 screens — CLAUDE.md forbids changing typography without instruction, so
-the existing multi-weight system is carried forward rather than collapsed to 2 for this phase):
-- Order number (row) / Total (row): 14px–14.5px / weight **900** / tabular-nums, tracking -0.01em
-- Day-group revenue figure: 11.5px / weight **800** / color `var(--sc-primary)`
-- Empty-state heading: 15px / weight **600**; empty-state body: 13px / weight **400**
+**Documented weight exceptions, verified against what's actually already shipped** (CLAUDE.md
+forbids changing typography without instruction, so nothing here is a phase-specific invention —
+but honesty requires distinguishing two different kinds of "already exists"):
+
+- **Weight 900 is already shipped and identical in role** — confirmed verbatim in `src/screen-orders.jsx:64,137,217` and `src/screen-detail.jsx:46,126,131,145,178,179,192` (order numbers, totals, tile values). Order number (row) / Total (row) here reuse that exact precedent at 14px/14.5px, tabular-nums, tracking -0.01em.
+- **The half-pixel sizes (10.5, 12.5, 13.5, 14.5, 11.5px) and weight 800 are NOT found anywhere in the already-shipped `screen-orders.jsx` / `screen-detail.jsx`** — grepped and confirmed absent. They are newly introduced to the shipped codebase BY this phase. This is not a spec invention, though: they are copied pixel-for-pixel from the Phase 7 design source itself, `sitecare-orders/project/src/screen-history.jsx` (lines 54,60,108,113,123,130,220,274,292,293 for the sizes; lines 34,59,292,294 for weight 800) — i.e. the exact file CLAUDE.md's "pixel-perfect port" rule designates as the porting target for this screen. Porting its type scale verbatim is compliance with that rule, not a deviation from it.
+- Empty-state heading: 15px / weight **600** (matches the already-shipped empty-state pattern, `src/screen-orders.jsx:294,299`); empty-state body: 13px / weight **400**.
 
 All numeric figures (totals, tile values, day revenue) use `font-variant-numeric: tabular-nums`.
 
@@ -255,30 +271,41 @@ pattern (`text-align: center`).
 
 ---
 
-## Detail Route Contract — Phase 7 Partial Scope (D-07, D-08, D-09)
+## Detail Route Contract — `readOnly` mode on `screen-detail.jsx` (D-07, D-08, D-09)
 
-Rows navigate to a detail route instead of expanding inline. **Phase 7 ships the route and a
-minimal read-only view using ONLY the `AdminOrder` fields already fetched by the list call** —
+Rows navigate to a detail route instead of expanding inline. **D-09 is locked (no reversal marker
+in CONTEXT.md) and unambiguous: reuse `src/screen-detail.jsx` via a new `readOnly` prop, not a
+purpose-built history screen.** D-09's own text already accepts that this makes the file serve two
+callers with different data shapes — that shape mismatch (no `items[]` yet, see below) is the known,
+accepted cost of the decision, not grounds to fork a separate component. This section specs the
+`readOnly` prop, not an alternative surface.
+
+**Phase 7 supplies ONLY the `AdminOrder` fields already fetched by the list call** —
 `customerName`, `customerPhone`, `orderType`, `total`, `paymentType`, `createdAt`, derived status.
 The full itemized receipt (`items[]`, address, handled-by, prep time) requires `getOrder(id)` and
-belongs to the next phase (roadmap_impact "NEW" phase) — **do not attempt to render an items list
-this phase; there is no item data to show.**
+belongs to the next phase (roadmap_impact "NEW" phase) — that phase extends this SAME `readOnly`
+surface with the additional data; it does not replace it with a different component.
 
-Because the data shape here has no `items[]`, the existing `OrderDetailScreen` (`screen-detail.jsx`)
-two-column itemized/thermal-ticket layout cannot be reused as-is (it assumes `order.items` exists
-and iterates it). For Phase 7, build a **minimal single-column read-only summary** reusing the
-existing card/chip visual language (not the full component):
+**`readOnly` prop contract on `OrderDetailScreen` (`src/screen-detail.jsx`):**
 
-- Back button: `btn-ghost`, `arrowLeft` icon, new key `h_back_to_history` (ro: `Înapoi la istoric` ·
-  en: `Back to history`) — returns to the History screen (not `orders`).
-- Header block: order number (32px/900, same treatment as `OrderDetailScreen`'s header) + status
-  chip + type chip + payment chip + formatted local time.
-- Customer card: name + phone (if present) — no address (not available this phase).
-- Total card: total only, no line-item subtotal/tax/delivery breakdown (not available this phase).
-- No thermal ticket preview, no advance/cancel/print buttons — this view is read-only by
-  construction (nothing to mutate, nothing to print yet).
-- Long customer names wrap (do not truncate) — more horizontal space is available in the detail
-  view than in the table row.
+| Existing region | Current behavior | `readOnly = true` behavior |
+|---|---|---|
+| Back button (`screen-detail.jsx:40-42`) | Hardcoded label "Înapoi la comenzi"/"Back to orders", `onBack` prop already caller-supplied | Same `onBack` prop mechanism — the History call-site passes `onBack={() => setScreen('history')}` instead of the Orders call-site's `setScreen('orders')` (`app.jsx:227`). Label becomes prop-driven (or an in-component `readOnly` ternary) using new key `h_back_to_history` (ro: `Înapoi la istoric` · en: `Back to history`) |
+| Timeline (`screen-detail.jsx:28-34, 58-75`) | Renders a 5-step live-state progression (new→accepted→preparing→ready→done) | **Hidden.** A finished history order has no in-flight progression to show |
+| Customer card (`screen-detail.jsx:78-102`) | Name, phone, address, "Call customer" button | Name + phone render (both present on `AdminOrder`). Address block doesn't render (`displayAddress` naturally resolves to `null` — no new field exists to feed it). "Call customer" button (`screen-detail.jsx:97-101`) hidden — nothing actionable in a read-only view |
+| Notes card (`screen-detail.jsx:104-116`) | Renders `order.notes` or an empty-state placeholder | **Hidden entirely** — `AdminOrder` carries no `notes` field this phase; hiding (not showing a permanent "no notes" placeholder) avoids implying notes were checked and found absent |
+| Items card + right-rail thermal-ticket preview (`screen-detail.jsx:118-249`) | Two-column layout (`grid-template-columns: 1fr 380px`), left column iterates `order.items`, right column renders `<ThermalTicket>` | **Both hidden** — guard on `order.items != null` (or an explicit `!readOnly` check); grid collapses to a single `1fr` column when the right rail has nothing to show. Replaced by a small totals card in the same visual slot (below) so the layout doesn't collapse to zero-height where the items card used to be |
+| Advance button (`screen-detail.jsx:217-230`) | Visible whenever `order.state !== 'done'/'cancelled'` | **Hidden unconditionally** when `readOnly`, regardless of derived status — nothing to advance on a finished order |
+| Cancel button (`screen-detail.jsx:232-247`) | Visible when `order.state === 'new'` | **Hidden unconditionally** when `readOnly` |
+| Print buttons (`screen-detail.jsx:207-214`) | Kitchen/customer print buttons next to the ticket preview | **Hidden** — no ticket to print without `items[]` |
+
+**New minimal totals card (fills the visual slot the items card vacates):** status chip + type chip
++ payment chip + formatted local time, and a single total line (`t('total')` + `formatRON(order.total)`)
+— same card/typography language as the rest of `screen-detail.jsx` (card padding, chip classes,
+900-weight total figure), just without a line-item breakdown that doesn't exist yet.
+
+**Unaffected by `readOnly`:** long customer names wrap (do not truncate) in the detail view — same
+behavior as today, more horizontal space available than in the table row.
 
 ---
 
