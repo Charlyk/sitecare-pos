@@ -217,7 +217,7 @@ export function normalizeOrder(o) {
 
   return {
     ...o,
-    dailyOrderNumber: o.dailyOrderNumber ?? o.id,
+    dailyOrderNumber: o.dailyOrderNumber ?? o.dailyNumber ?? o.id,
     state,
     type: o.type ?? o.orderType ?? 'dinein',
     source: o.source ?? 'counter',
