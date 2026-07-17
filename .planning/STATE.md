@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 09
-current_plan: 4
+current_plan: 5
 status: ready_to_execute
-stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-07-17T20:26:30.911Z"
+stopped_at: Completed 09-04-PLAN.md
+last_updated: "2026-07-17T20:30:43.280Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 19
-  completed_plans: 14
+  total_plans: 20
+  completed_plans: 15
   percent: 40
 ---
 
@@ -37,8 +37,8 @@ See: `.planning/PROJECT.md` (updated 2026-07-17)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 09
-**Current Plan:** 4
-**Total Plans in Phase:** 4
+**Current Plan:** 5
+**Total Plans in Phase:** 5
 **Overall Status:** Phase 8 COMPLETE — 5/5 plans, verification passed 9/9 must-haves, UAT 20/20 with
 zero issues (16 auto-passed from coverage blocks, 4 human-confirmed), security verified with
 `threats_open: 0` across 13 threats. HIST-10 delivered: archived-order detail hydrates via
@@ -47,7 +47,7 @@ controls reachable in readOnly mode. Phase 7 before it: 6/6 plans, UAT 26/26 wit
 Phase 9 (Period Control) is ready to plan.
 
 ```
-Progress: [████████████████████] 11/11 plans ([███████░░░] 74%)
+Progress: [████████████████████] 11/11 plans ([████████░░] 75%)
 Milestone v1.1 — Phases 7 and 8 complete (2/5), Phase 9 ready to plan
 ```
 
@@ -109,6 +109,7 @@ the plan-checker against source.
 | Phase 09 P01 | 12min | 3 tasks | 2 files |
 | Phase 09 P02 | 5min | 2 tasks | 2 files |
 | Phase 09 P3 | 10min | 2 tasks | 2 files |
+| Phase 09 P04 | 13min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -215,6 +216,19 @@ the plan-checker against source.
 
 *()*
 
+### Notes
+
+- **2026-07-17, 09-04 execution:** A concurrent commit (`89b7608 docs(10): create phase plan — 4
+  plans, verification passed`) landed on `master` between this session's start and its
+  `state.advance-plan` call, and appears to have overwritten `Current Plan`/`Total Plans in Phase`
+  in this file's "Current Position" section from Phase 9's correct values (4/5) to Phase 10's plan
+  count (4/4) via a race condition — both processes writing the same prose fields concurrently.
+  Manually corrected here to `Current Plan: 5` / `Total Plans in Phase: 5` (verified via
+  `gsd-tools query phase.list-plans 09` → 5 PLAN.md files on disk). Phase 09 is NOT ready for
+  verification — `09-05-PLAN.md` (the custom-range popover, `autonomous: false`, SC2) remains.
+  Flagging for awareness in case parallel phase-planning and phase-execution sessions need
+  additional write coordination on `STATE.md`.
+
 ---
 - 09-04 must update src/__tests__/screen-history.test.jsx (2 assertions) and src/__tests__/app-history-route.test.jsx (2 assertions) that still expect the removed 'Nicio comandă în ultimele 30 de zile.' literal — h_empty_prefix (09-02) was renamed but the consumer's tests were not in 09-02's scope. Full suite is 7 failed/342 passed until this lands.
 
@@ -222,8 +236,8 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T20:14:51.607Z
-**Stopped at:** Completed 09-03-PLAN.md
+**Last session:** 2026-07-17T20:30:43.273Z
+**Stopped at:** Completed 09-04-PLAN.md
 **Next action:** `/gsd-discuss-phase 9` — gather context for Period Control (HIST-04)
 
 **Phase 7 planning notes:**
@@ -279,3 +293,5 @@ the plan-checker against source.
 - [Phase ?]: [Phase 09-02]: h_empty renamed (not duplicated) to h_empty_prefix carrying no trailing period or period name — sentence composition deferred to 09-04's component code (D-13)
 - [Phase ?]: [Phase 09-02]: npx vitest run does not fully pass after this plan (4 pre-existing screen-history.jsx/app-history-route.jsx test assertions on the removed h_empty string) — reported per the plan's own instruction, not patched; 09-04 must update those 4 assertions when it updates the consumer
 - [Phase ?]: 09-03: promoted the range from a mount-frozen constant to a caller-supplied parameter (assumption-delta chosen); add-alongside rejected to avoid a second, label-blind way to fetch history data
+- [Phase ?]: [Phase 09-04]: settledPeriod effect gates on isSuccess && !isPlaceholderData (not isLoading/isError) — matches D-06's mechanism exactly and avoids advancing on stale flags during errors
+- [Phase ?]: [Phase 09-04]: periodLabel()/periodPhrase() are the single lookup site for pill text, tile sub-labels, and empty-state copy (D-12) — FilterBar's own periods array now calls periodLabel() instead of a direct t() call so the pill's label and the tile's sub-label cannot drift
