@@ -223,3 +223,100 @@ describe('readOnly mode', () => {
     expect(screen.getByText('128,50 lei')).toBeTruthy()
   })
 })
+
+describe('readOnly duration row', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  test('readOnly + COMPLETED event 25 min after placedAt renders prep-time label and duration, no elapsed label', () => {
+    const order = {
+      ...HISTORY_ORDER,
+      events: [{ toStatus: 'COMPLETED', createdAt: '2026-06-01T12:25:00Z' }],
+    }
+    render(
+      createElement(OrderDetailScreen, { order, lang: 'en', readOnly: true, onBack: vi.fn() }),
+      { wrapper: w }
+    )
+    expect(screen.getByText(/Prep time: 25 min/)).toBeTruthy()
+    expect(screen.queryByText(/Elapsed/i)).toBeNull()
+  })
+
+  test('readOnly + COMPLETED event 25 min after placedAt renders Romanian prep-time label', () => {
+    const order = {
+      ...HISTORY_ORDER,
+      events: [{ toStatus: 'COMPLETED', createdAt: '2026-06-01T12:25:00Z' }],
+    }
+    render(
+      createElement(OrderDetailScreen, { order, lang: 'ro', readOnly: true, onBack: vi.fn() }),
+      { wrapper: w }
+    )
+    expect(screen.getByText(/Timp de pregătire: 25 min/)).toBeTruthy()
+  })
+
+  test('readOnly + CANCELLED event 65 min after placedAt renders canceled-after label and 1h 5m', () => {
+    const order = {
+      ...HISTORY_ORDER,
+      events: [{ toStatus: 'CANCELLED', createdAt: '2026-06-01T13:05:00Z' }],
+    }
+    render(
+      createElement(OrderDetailScreen, { order, lang: 'en', readOnly: true, onBack: vi.fn() }),
+      { wrapper: w }
+    )
+    expect(screen.getByText(/Canceled after: 1h 5m/)).toBeTruthy()
+  })
+
+  test('readOnly + empty events renders placed-at time with no duration label and no trailing separator', () => {
+    const order = { ...HISTORY_ORDER, events: [] }
+    const { container } = render(
+      createElement(OrderDetailScreen, { order, lang: 'en', readOnly: true, onBack: vi.fn() }),
+      { wrapper: w }
+    )
+    const metaLine = container.querySelector('div[style*="margin-top: 4px"]')
+    expect(metaLine).toBeTruthy()
+    expect(metaLine.textContent).not.toContain('·')
+    expect(metaLine.textContent).not.toMatch(/Prep time|Canceled after/)
+  })
+
+  test('readOnly + no events key renders placed-at time and does not throw', () => {
+    const order = { ...HISTORY_ORDER }
+    delete order.events
+    expect(() => {
+      render(
+        createElement(OrderDetailScreen, { order, lang: 'en', readOnly: true, onBack: vi.fn() }),
+        { wrapper: w }
+      )
+    }).not.toThrow()
+    expect(screen.queryByText(/Prep time|Canceled after/)).toBeNull()
+  })
+
+  test('readOnly + both COMPLETED and CANCELLED events renders prep-time label (COMPLETED precedence)', () => {
+    const order = {
+      ...HISTORY_ORDER,
+      events: [
+        { toStatus: 'CANCELLED', createdAt: '2026-06-01T12:10:00Z' },
+        { toStatus: 'COMPLETED', createdAt: '2026-06-01T12:25:00Z' },
+      ],
+    }
+    render(
+      createElement(OrderDetailScreen, { order, lang: 'en', readOnly: true, onBack: vi.fn() }),
+      { wrapper: w }
+    )
+    expect(screen.getByText(/Prep time: 25 min/)).toBeTruthy()
+  })
+
+  test('NOT readOnly (MINIMAL_ORDER) still renders the elapsed label, no prep-time or canceled-after label', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: MINIMAL_ORDER,
+        lang: 'en',
+        onBack: vi.fn(),
+        onAdvance: vi.fn(),
+        onPrint: vi.fn(),
+        onCancel: vi.fn(),
+        isOffline: false,
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText(/elapsed/i)).toBeTruthy()
+    expect(screen.queryByText(/Prep time|Canceled after/)).toBeNull()
+  })
+})
