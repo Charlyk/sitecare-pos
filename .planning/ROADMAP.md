@@ -100,7 +100,7 @@ Plans:
   3. No control that mutates order state is reachable — Advance, Cancel, and the timeline stay hidden, as the `readOnly` mode shipped in Phase 7 already enforces
   4. Back returns to History with the list and period intact, not to Orders
 
-**Plans**: 2/5 plans executed
+**Plans**: 3/5 plans executed
 **UI hint**: yes
 
 Plans:
@@ -111,7 +111,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 08-03-PLAN.md — screen-detail: derived duration row (D-10) + readOnly status chip (D-05)
+- [x] 08-03-PLAN.md — screen-detail: derived duration row (D-10) + readOnly status chip (D-05)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -176,7 +176,7 @@ Plans:
 | 5. Native Integration | v1.0 | 4/4 | Complete | 2026-04-29 |
 | 6. Build Pipeline | v1.0 | 4/4 | Complete | 2026-05-02 |
 | 7. History Screen Foundation | v1.1 | 6/6 | Complete    | 2026-07-17 |
-| 8. Read-Only Order Detail View | v1.1 | 2/5 | In Progress|  |
+| 8. Read-Only Order Detail View | v1.1 | 3/5 | In Progress|  |
 | 9. Period Control | v1.1 | 0/? | Not started | - |
 | 10. Filters + Search | v1.1 | 0/? | Not started | - |
 | 11. Reprint + CSV Export | v1.1 | 0/? | Not started | - |
