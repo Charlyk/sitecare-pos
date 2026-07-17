@@ -185,13 +185,13 @@ describe('HistoryScreen', () => {
       expect(onOpenOrder).toHaveBeenCalledWith(order)
     })
 
-    test('the filter bar renders inert: Export button and search input are disabled', () => {
+    test('the filter bar: Export stays inert, search is activated (Phase 10, HIST-09)', () => {
       const order = makeOrder({ id: 'inert-1', total: 10 })
       useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, error: null, isSuccess: true, refetch: vi.fn() })
       render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
 
       const searchInput = screen.getByPlaceholderText('Caută după # sau client')
-      expect(searchInput.disabled).toBe(true)
+      expect(searchInput.disabled).toBe(false)
 
       const exportBtn = screen.getByText('Exportă CSV').closest('button')
       expect(exportBtn.disabled).toBe(true)
@@ -269,14 +269,16 @@ describe('period pills — live (HIST-04)', () => {
     expect(secondArg.to).toBe(firstArg.to)
   })
 
-  test('the status pills, search input, and Export button all still carry disabled', () => {
+  test('status pills, type pills, and search are activated (Phase 10); Export stays disabled', () => {
     useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
     render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
 
-    expect(screen.getByPlaceholderText('Caută după # sau client').disabled).toBe(true)
+    expect(screen.getByPlaceholderText('Caută după # sau client').disabled).toBe(false)
     expect(screen.getByText('Exportă CSV').closest('button').disabled).toBe(true)
-    expect(screen.getByText('Toate').closest('button').disabled).toBe(true)
-    expect(screen.getByText('Finalizate').closest('button').disabled).toBe(true)
+    // 'Toate' is the shared 'all' label for both the status AND type groups (F-03/HIST-08) — the
+    // status group renders first in DOM order, so index 0 is the status pill.
+    expect(screen.getAllByText('Toate')[0].closest('button').disabled).toBe(false)
+    expect(screen.getByText('Finalizate').closest('button').disabled).toBe(false)
   })
 
   test('clicking a status pill or the Export button changes nothing about the fetched range', () => {
@@ -284,7 +286,7 @@ describe('period pills — live (HIST-04)', () => {
     render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
 
     const callsBefore = useHistoryOrders.mock.calls.length
-    fireEvent.click(screen.getByText('Toate').closest('button'))
+    fireEvent.click(screen.getAllByText('Toate')[0].closest('button'))
     fireEvent.click(screen.getByText('Exportă CSV').closest('button'))
     expect(useHistoryOrders.mock.calls.length).toBe(callsBefore)
   })
@@ -338,7 +340,9 @@ describe('D-05 — dimmed-in-place loading treatment + spinner (period switch)',
     useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: true, isPlaceholderData: true, isSuccess: true, refetch: vi.fn() })
     render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
 
-    expect(screen.getByText('1')).toBeTruthy() // ordersCount tile value, rendered as real text, not a shimmer bar
+    // ordersCount tile value, rendered as real text, not a shimmer bar. Scoped to the Comenzi
+    // card since Phase 10's status-pill count badges can also render '1' elsewhere on screen.
+    expect(screen.getByText('Comenzi').closest('.card').textContent).toContain('1')
     expect(screen.queryAllByTestId('history-skeleton-row').length).toBe(0)
   })
 
@@ -378,13 +382,16 @@ describe('D-05 — dimmed-in-place loading treatment + spinner (period switch)',
     expect(screen.queryByTestId('history-switch-spinner')).toBeNull()
   })
 
-  test('the inert status pills (0.5) and the dimmed rows (0.6) render simultaneously with different opacity values', () => {
+  test('the inert Export button (0.5) and the dimmed rows (0.6) render simultaneously with different opacity values', () => {
+    // Phase 10 activates the status pills (no longer group-dimmed) — the surviving "unready
+    // feature" dimming on this bar is scoped to the Export button itself (D-07), which still
+    // needs to coexist with the D-05 loading-dim of the rows region at a different opacity.
     const order = makeOrder({ id: 'switch-4' })
     useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: true, isPlaceholderData: true, isSuccess: true, refetch: vi.fn() })
     render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
 
-    const statusGroup = screen.getByText('Toate').closest('div[style*="opacity"]')
-    expect(statusGroup.style.opacity).toBe('0.5')
+    const exportBtn = screen.getByText('Exportă CSV').closest('button')
+    expect(exportBtn.style.opacity).toBe('0.5')
     expect(screen.getByTestId('history-rows').style.opacity).toBe('0.6')
   })
 })

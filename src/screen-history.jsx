@@ -621,10 +621,13 @@ export function CustomRangePopover({ t, onApply, onClose, containerRef }) {
   );
 }
 
-// Filter bar (D-14/HIST-04): period presets are now LIVE — clicking a pill retargets the fetch.
-// Status pills, search, and export stay inert this phase (Phase 10/11) so those later phases can
-// wire them up with zero layout shift.
-function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange, isFetching, isPlaceholderData, isLoading }) {
+// Filter bar (D-14/HIST-04, Phase 10 HIST-07/08/09): period presets, status pills (with live
+// faceted counts, F-03 order), the net-new type-filter group, and search are all LIVE. Export
+// stays inert (Phase 11).
+function FilterBar({
+  t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange, isFetching, isPlaceholderData, isLoading,
+  statusFilter, setStatusFilter, typeFilter, setTypeFilter, query, setQuery, statusCounts,
+}) {
   // 09-05/D-04: the popover unmounts entirely when closed (rangeOpen false) so its blank local
   // state is genuinely fresh on each open — nothing is remembered across a close/reopen cycle.
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -650,15 +653,24 @@ function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange
     { id: '30', label: periodLabel({ id: '30' }, t, lang) },
     { id: 'custom', label: customPillLabel },
   ];
+  // F-03: corrected order — All / Completed / Refunded / Canceled (production's inert bar had
+  // Canceled before Refunded; the design/REQUIREMENTS wording is authoritative).
   const statusFilters = [
     { id: 'all', label: t('all') },
     { id: 'completed', label: t('h_status_completed') },
-    { id: 'canceled', label: t('h_status_canceled') },
     { id: 'refunded', label: t('h_status_refunded') },
+    { id: 'canceled', label: t('h_status_canceled') },
   ];
-  const inertBtn = { border: 0, padding: '7px 12px', borderRadius: 8, fontWeight: 600, fontSize: 13, fontFamily: 'inherit', cursor: 'not-allowed', pointerEvents: 'none' };
-  // Live pills get their own style constant (not inertBtn): same border/padding/radius/weight,
-  // but cursor: pointer and no pointerEvents override — no opacity override either, since 0.5 was
+  // F-03: net-new type-filter group (never ported before this phase) — no count badge
+  // (screenshot evidence, Type Filter Contract), cream/sage selected treatment ported verbatim.
+  const typeFilters = [
+    { id: 'all', label: t('all'), icon: 'grid' },
+    { id: 'delivery', label: t('delivery'), icon: 'moped' },
+    { id: 'pickup', label: t('pickup'), icon: 'bag' },
+    { id: 'dinein', label: t('dinein'), icon: 'utensils' },
+  ];
+  // Live pills get their own style constant: same border/padding/radius/weight, but
+  // cursor: pointer and no pointerEvents override — no opacity override either, since 0.5 was
   // the inert marker and these pills are no longer inert (UI-SPEC Period Pills Contract).
   const periodBtn = { border: 0, padding: '7px 12px', borderRadius: 8, fontWeight: 600, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' };
   // D-05/WR-02: a switch is a fetch that is also showing placeholder data for a NEW range — see
@@ -727,22 +739,70 @@ function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange
         </span>
       )}
 
-      {/* Status pills — dimmed as a group, no live counts yet (Phase 10 wires those up) */}
-      <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3, opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }}>
-        {statusFilters.map((f) => (
-          <button key={f.id} disabled style={{ ...inertBtn, background: f.id === 'all' ? 'var(--sc-primary)' : 'transparent', color: f.id === 'all' ? '#fff' : '#555' }}>
-            {f.label}
-          </button>
-        ))}
+      {/* Status pills — activated (HIST-07): live faceted counts (D-01/D-02), F-03 order.
+          D-03: a 0-count pill stays clickable and reads 0 — no disable, no dim. */}
+      <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3 }}>
+        {statusFilters.map((f) => {
+          const selected = statusFilter === f.id;
+          return (
+            <button
+              key={f.id}
+              onClick={() => setStatusFilter(f.id)}
+              style={{
+                border: 0, padding: '7px 12px', borderRadius: 8, fontWeight: 600, fontSize: 13,
+                fontFamily: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                background: selected ? 'var(--sc-primary)' : 'transparent',
+                color: selected ? '#fff' : '#555',
+              }}
+            >
+              {f.label}
+              <span
+                style={{
+                  fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 999,
+                  color: 'currentColor',
+                  background: selected ? 'rgba(255,255,255,0.25)' : 'hsl(120 10% 90%)',
+                }}
+              >
+                {statusCounts[f.id]}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      <div className="search" style={{ width: 220, opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }}>
-        <Icon name="search" size={15} style={{ color: 'var(--sc-muted-foreground)' }} />
-        <input placeholder={t('h_search')} disabled />
+      {/* Type pills — net-new (HIST-08/F-03), no count badge (Type Filter Contract). Cream/sage
+          selected treatment is the design's own choice — a third distinct selected register in
+          this bar, ported as drawn. */}
+      <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3 }}>
+        {typeFilters.map((f) => {
+          const selected = typeFilter === f.id;
+          return (
+            <button
+              key={f.id}
+              onClick={() => setTypeFilter(f.id)}
+              style={{
+                border: 0, padding: '7px 11px', borderRadius: 8, fontWeight: 600, fontSize: 13,
+                fontFamily: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                background: selected ? '#f7f1e1' : 'transparent',
+                color: selected ? 'var(--sc-primary)' : '#777',
+              }}
+            >
+              <Icon name={f.icon} size={13} /> {f.label}
+            </button>
+          );
+        })}
       </div>
 
-      <div style={{ marginLeft: 'auto', opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }}>
-        <button className="btn-secondary" disabled>
+      {/* D-07: ONE marginLeft:auto container holding BOTH search and Export, so they wrap
+          together to a right-aligned row 2. Search is activated (HIST-09); Export stays inert
+          (Phase 11) — its own opacity/pointerEvents dimming moves onto the button itself since
+          the container is no longer exclusively its own. */}
+      <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="search" style={{ width: 220 }}>
+          <Icon name="search" size={15} style={{ color: 'var(--sc-muted-foreground)' }} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('h_search')} />
+        </div>
+        <button className="btn-secondary" disabled style={{ opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }}>
           <Icon name="download" size={14} /> {t('h_export')}
         </button>
       </div>
