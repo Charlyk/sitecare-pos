@@ -444,6 +444,45 @@ describe('D-12/D-13 — period-dependent copy (tile sub-labels + empty state)', 
     expect(ordersCardAfter.textContent).toContain('7 zile')
   })
 
+  test('WR-03: settledPeriod advances on the SAME render the settled data arrives on, with no separate flush step', () => {
+    // Unlike the D-06 test above (which forces a second fireEvent.click purely to trigger a
+    // re-render), this locks the actual WR-03 guarantee: settledPeriod is derived synchronously
+    // during render (a ref updated in the render body), not via a post-paint useEffect — so a
+    // single re-render carrying settled (non-placeholder) data for the new range is enough to
+    // flip the label. Real usage never gets an "extra click" to force a flush; an async query
+    // resolving on its own must land the label and the numbers together on the very same paint.
+    const thirtyDayOrder = makeOrder({ id: 'wr03-1', total: 100 })
+    useHistoryOrders.mockReturnValue({
+      data: [thirtyDayOrder], isLoading: false, isError: false, isFetching: false,
+      isPlaceholderData: false, isSuccess: true, refetch: vi.fn(),
+    })
+    const { rerender } = render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.getByText('Comenzi').closest('.card').textContent).toContain('30 zile')
+
+    // In-flight switch to 7 days (user's one and only click — nothing further triggers a render).
+    useHistoryOrders.mockReturnValue({
+      data: [thirtyDayOrder], isLoading: false, isError: false, isFetching: true,
+      isPlaceholderData: true, isSuccess: true, refetch: vi.fn(),
+    })
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
+    fireEvent.click(sevenPill)
+    expect(screen.getByText('Comenzi').closest('.card').textContent).toContain('30 zile')
+
+    // The query settles on its own — modeled here as a parent-driven rerender (React re-rendering
+    // the tree because the query's state changed), NOT a further click on anything.
+    const sevenDayOrder = makeOrder({ id: 'wr03-2', total: 20 })
+    useHistoryOrders.mockReturnValue({
+      data: [sevenDayOrder], isLoading: false, isError: false, isFetching: false,
+      isPlaceholderData: false, isSuccess: true, refetch: vi.fn(),
+    })
+    rerender(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const ordersCard = screen.getByText('Comenzi').closest('.card')
+    expect(ordersCard.textContent).toContain('7 zile')
+    expect(ordersCard.textContent).not.toContain('30 zile')
+  })
+
   test('empty state, settled today (ro): main line reads "Nicio comandă azi." with h_empty_sub on its own line', () => {
     useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
     render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))

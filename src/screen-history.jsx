@@ -292,15 +292,24 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
   }, [selectedPeriod]);
   const { data, isLoading, isError, isFetching, isPlaceholderData, isSuccess, refetch } = useHistoryOrders(range ?? {});
 
-  // D-06: settledPeriod tracks the range that actually PRODUCED the visible data — advances only
-  // once the query succeeds with real (non-placeholder) data. Every period-dependent render (tile
-  // sub-labels, empty-state copy) reads settledPeriod; ONLY the pill styling reads selectedPeriod.
-  const [settledPeriod, setSettledPeriod] = useState(selectedPeriod);
-  useEffect(() => {
-    if (isSuccess && !isPlaceholderData) {
-      setSettledPeriod(selectedPeriod);
-    }
-  }, [isSuccess, isPlaceholderData, selectedPeriod]);
+  // D-06/WR-03 (09-REVIEW.md): settledPeriod tracks the range that actually PRODUCED the visible
+  // data — advances only once the query succeeds with real (non-placeholder) data. Every
+  // period-dependent render (tile sub-labels, empty-state copy) reads settledPeriod; ONLY the
+  // pill styling reads selectedPeriod.
+  //
+  // WR-03 fix: this is derived with a ref updated DURING render (React's documented
+  // "adjust state during render" pattern for derived state), not via useEffect. useEffect runs
+  // after paint — when the in-flight query resolves, `data`/`finished`/`summary` are recomputed
+  // from the new range in that same render, but the old useEffect-driven settledPeriod hadn't
+  // advanced yet, so the browser could paint one frame of new numbers next to the OLD period's
+  // label before the effect fired a correcting re-render. Updating the ref synchronously in the
+  // render body closes that window: settledPeriod and the numbers it labels can never disagree on
+  // a paint, by construction.
+  const settledPeriodRef = useRef(selectedPeriod);
+  if (isSuccess && !isPlaceholderData && settledPeriodRef.current !== selectedPeriod) {
+    settledPeriodRef.current = selectedPeriod;
+  }
+  const settledPeriod = settledPeriodRef.current;
 
   // 09-05/D-04: a preset click always clears any applied custom range — setSelectedPeriod({id})
   // carries no customRange field, so the Custom pill reverts and a reopened popover starts blank.
