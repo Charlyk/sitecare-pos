@@ -56,7 +56,7 @@ Full phase details → `.planning/milestones/v1.0-ROADMAP.md`
   3. Orders appear grouped by calendar day, newest day first, and each day header shows that day's order count and revenue subtotal
   4. When the period returns no orders, a clear empty state is shown instead of a blank list; loading and error states render without crashing
 
-**Plans**: 5/6 plans executed
+**Plans**: 6/6 plans executed
 
 Plans:
 **Wave 1**
@@ -75,7 +75,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 07-06-PLAN.md — `app.jsx` router wiring, rehydrate backstop, live-API human verification
+- [x] 07-06-PLAN.md — `app.jsx` router wiring, rehydrate backstop, live-API human verification
 
 **UI hint**: yes
 
@@ -142,7 +142,7 @@ Plans:
 | 4. Core Screens | v1.0 | 11/11 | Complete | 2026-04-27 |
 | 5. Native Integration | v1.0 | 4/4 | Complete | 2026-04-29 |
 | 6. Build Pipeline | v1.0 | 4/4 | Complete | 2026-05-02 |
-| 7. History Screen Foundation | v1.1 | 5/6 | In Progress|  |
+| 7. History Screen Foundation | v1.1 | 6/6 | In Progress|  |
 | 8. Period Control + Summary Strip | v1.1 | 0/? | Not started | - |
 | 9. Filters + Search | v1.1 | 0/? | Not started | - |
 | 10. Receipt Detail + Output | v1.1 | 0/? | Not started | - |

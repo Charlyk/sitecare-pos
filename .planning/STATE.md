@@ -5,14 +5,14 @@ milestone_name: Orders History Screen
 current_phase: 07
 current_plan: 6
 status: ready_to_execute
-stopped_at: Completed 07-04-PLAN.md (HistoryScreen table + summary strip + inert filter bar)
-last_updated: "2026-07-16T22:54:38.790Z"
+stopped_at: Completed 07-06-PLAN.md (app.jsx router wiring + human-verified checkpoint; Phase 7 complete)
+last_updated: "2026-07-17T09:19:31.596Z"
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 5
-  percent: 0
+  completed_plans: 6
+  percent: 25
 ---
 
 # State: SiteCare POS Desktop App
@@ -44,7 +44,7 @@ complete — 3 tasks committed, 27+6 new unit tests green. Ready for the remaini
 (07-02) and subsequent waves.
 
 ```
-Progress: [████████░░] 83% (1/6 plans, phase 7)
+Progress: [██████████] 100% (1/6 plans, phase 7)
 Milestone v1.1 — Phase 7 in progress
 ```
 
@@ -87,6 +87,7 @@ Milestone v1.1 — Phase 7 in progress
 | Phase 07 P03 | 5min | 2 tasks | 2 files |
 | Phase 07 P05 | 9min | 2 tasks | 2 files |
 | Phase 07 P04 | 20min | 3 tasks | 2 files |
+| Phase 07 P06 | ~7min + checkpoint | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -157,7 +158,8 @@ Milestone v1.1 — Phase 7 in progress
 - Tax calculation bug in `screen-pos.jsx` (total excludes tax) — confirm in Phase 4 whether API returns a server-calculated total (preferred) or the client must apply Romanian VAT rates (5%/9%/19%).
 - Which thermal printer model(s) are targeted? Needed before Phase 5 plugin validation.
 - **v1.1:** Does the admin token have access to `/v1/orders/{id}` (kitchen endpoint)? If 401 on getOrder, detail view must fall back to AdminOrder summary fields only.
-- **v1.1:** What timezone does the API treat `from`/`to` date params as? Verify Romanian orders appear on the correct calendar day.
+- ~~**v1.1:** What timezone does the API treat `from`/`to` date params as? Verify Romanian orders appear on the correct calendar day.~~ — RESOLVED (07-06 human verification, 2026-07-17): confirmed by human verification against the live API — orders land under their correct Romanian calendar day, and the oldest day header is ~30 days back. The API's `from`/`to` params behave correctly for Romanian local calendar days.
+- ~~**v1.1:** `AdminOrder.total` units (cents vs RON) — needs live API confirmation.~~ — RESOLVED (07-06 human verification, 2026-07-17): confirmed by human verification against the live API — total is in RON (the day-header revenue subtotal matched the SiteCare admin dashboard, i.e. NOT off by 100×). No `normalizeOrder` change needed.
 
 ### Critical Watch-Outs (carry forward)
 
@@ -198,8 +200,8 @@ Milestone v1.1 — Phase 7 in progress
 
 **Resume file:** None
 
-**Last session:** 2026-07-16T22:54:38.785Z
-**Stopped at:** Completed 07-04-PLAN.md (HistoryScreen table + summary strip + inert filter bar)
+**Last session:** 2026-07-17T09:19:31.590Z
+**Stopped at:** Completed 07-06-PLAN.md (app.jsx router wiring + human-verified checkpoint; Phase 7 complete)
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
@@ -236,3 +238,5 @@ Milestone v1.1 — Phase 7 in progress
 - [Phase 07]: Minimal totals card reuses existing card/chip classes, orderTimeLabel, formatRON, and the pre-existing total i18n key - no new CSS class or i18n key added
 - [Phase ?]: Phase 07: Avg summary tile shows a computed zero (not em-dash) when the whole period has zero finished orders; em-dash reserved for the error state
 - [Phase ?]: Phase 07: HistoryScreen's inert filter bar unrolls period-preset pills as explicit buttons (not mapped) so the D-14 30-day full-opacity exception is independently readable in source
+- [Phase ?]: [Phase 07]: Confirmed by human verification against the live API on 2026-07-17: AdminOrder.total is in RON, not cents (day-header revenue subtotal matched the SiteCare admin dashboard).
+- [Phase ?]: [Phase 07]: Confirmed by human verification against the live API on 2026-07-17: the API's from/to date params behave correctly for Romanian local calendar days.
