@@ -3,7 +3,7 @@ phase: 8
 slug: read-only-order-detail-view
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
+status: validated
 nyquist_compliant: true
 wave_0_complete: true
 created: 2026-07-17
@@ -31,7 +31,10 @@ created: 2026-07-17
 
 - **After every task commit:** Run `npx vitest run src/__tests__/screen-detail.test.jsx src/__tests__/history-utils.test.js src/__tests__/app-history-route.test.jsx`
 - **After every plan wave:** Run `npx vitest run`
-- **Before `/gsd-verify-work`:** Full suite must be green
+- **Before `/gsd-verify-work`:** Full suite must be green **except** the two pre-existing failures
+  logged in `deferred-items.md` (`build-pipeline.test.js:101`, `offline-buttons.test.jsx`). Both predate
+  Phase 8 and are outside it; neither touches history or order-detail code. Current baseline:
+  **3 failed / 311 passed**. Any *fourth* failure is a Phase 8 regression and blocks.
 - **Max feedback latency:** 25 seconds
 
 No watch-mode flags are used anywhere — every command above is a one-shot `vitest run`.
@@ -42,16 +45,31 @@ No watch-mode flags are used anywhere — every command above is a one-shot `vit
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 8-01-01 | 01 | 1 | HIST-10 | T-08-04 | Documents stop promising a staff-attribution field, removing the pressure to synthesize it from `events[].actor` | doc assertion | `grep -c 'handled-by' .planning/ROADMAP.md .planning/REQUIREMENTS.md` → 0 | ✅ | ⬜ pending |
-| 8-01-02 | 01 | 1 | HIST-10 | — | N/A | unit | `npx vitest run src/__tests__/i18n.test.js` | ✅ | ⬜ pending |
-| 8-02-01 | 02 | 1 | HIST-10 | T-08-04 / T-08-05 / T-08-06 | `deriveDuration` reads only `toStatus`/`createdAt`, never `actor`; selects by max `createdAt` (not first match); returns `null` rather than throwing or emitting NaN/negative minutes | unit | `npx vitest run src/__tests__/history-utils.test.js` | ✅ | ⬜ pending |
-| 8-02-02 | 02 | 1 | HIST-10 | — | N/A — export-visibility change only | unit | `npx vitest run src/__tests__/screen-history.test.jsx` | ✅ | ⬜ pending |
-| 8-03-01 | 03 | 2 | HIST-10 | T-08-04 | Duration row consumes only `deriveDuration`'s `{ kind, minutes }`; no `events[]` field read directly in the presenter | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "duration"` | ✅ | ⬜ pending |
-| 8-03-02 | 03 | 2 | HIST-10 | T-08-07 / T-08-08 | Refunded/canceled orders render their true chip; a null derived status degrades to `stateMeta` rather than falsely claiming Completed | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "status"` | ✅ | ⬜ pending |
-| 8-04-01 | 04 | 3 | HIST-10 | T-08-02 / T-08-10 / T-08-11 | Fixed i18n error copy only (no raw SDK string); the empty claim is unreachable while loading or errored; the totals block survives every state | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "items-card"` | ✅ | ⬜ pending |
-| 8-04-02 | 04 | 3 | HIST-10 | **T-08-01 (high)** / T-08-09 | No mutating control reachable under `readOnly` with hydrated items; gate is DOM removal, not `disabled`; standing allowlist test over every `button` in the file | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "Modif"` | ✅ | ⬜ pending |
-| 8-05-01 | 05 | 4 | HIST-10 | T-08-12 / T-08-03 | Hook placed above `App()`'s conditional returns (no hook-count throw at sign-in/out); shared cache key accepted per D-02 | unit | `npx vitest run src/__tests__/app-guard.test.jsx src/__tests__/app-history-route.test.jsx` | ✅ | ⬜ pending |
-| 8-05-02 | 05 | 4 | HIST-10 | T-08-10 | Loading/error wired through so a silent failure cannot render as a complete receipt | unit/integration | `npx vitest run src/__tests__/app-history-route.test.jsx` | ✅ | ⬜ pending |
+| 8-01-01 | 01 | 1 | HIST-10 | T-08-04 | Documents stop promising a staff-attribution field, removing the pressure to synthesize it from `events[].actor` | doc assertion | `awk '/^### Phase 8:/,/^### Phase 9:/' .planning/ROADMAP.md \| grep -c 'handled-by'` → 0 | ✅ | ✅ green |
+| 8-01-02 | 01 | 1 | HIST-10 | — | N/A | unit | `npx vitest run src/__tests__/i18n.test.js` | ✅ | ✅ green |
+| 8-02-01 | 02 | 1 | HIST-10 | T-08-04 / T-08-05 / T-08-06 | `deriveDuration` reads only `toStatus`/`createdAt`, never `actor`; selects by max `createdAt` (not first match); returns `null` rather than throwing or emitting NaN/negative minutes | unit | `npx vitest run src/__tests__/history-utils.test.js` | ✅ | ✅ green |
+| 8-02-02 | 02 | 1 | HIST-10 | — | N/A — export-visibility change only | unit | `npx vitest run src/__tests__/screen-history.test.jsx` | ✅ | ✅ green |
+| 8-03-01 | 03 | 2 | HIST-10 | T-08-04 | Duration row consumes only `deriveDuration`'s `{ kind, minutes }`; no `events[]` field read directly in the presenter | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "duration row"` | ✅ | ✅ green (7 tests) |
+| 8-03-02 | 03 | 2 | HIST-10 | T-08-07 / T-08-08 | Refunded/canceled orders render their true chip; a null derived status degrades to `stateMeta` rather than falsely claiming Completed | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "readOnly mode"` | ✅ | ✅ green (11 tests) |
+| 8-04-01 | 04 | 3 | HIST-10 | T-08-02 / T-08-10 / T-08-11 | Fixed i18n error copy only (no raw SDK string); the empty claim is unreachable while loading or errored; the totals block survives every state | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "items-card"` | ✅ | ✅ green (10 tests) |
+| 8-04-02 | 04 | 3 | HIST-10 | **T-08-01 (high)** / T-08-09 | No mutating control reachable under `readOnly` with hydrated items; gate is DOM removal, not `disabled`; standing allowlist test over every `button` in the file | unit | `npx vitest run src/__tests__/screen-detail.test.jsx -t "mutating-control gate"` | ✅ | ✅ green (6 tests) |
+| 8-05-01 | 05 | 4 | HIST-10 | T-08-12 / T-08-03 | Hook placed above `App()`'s conditional returns (no hook-count throw at sign-in/out); shared cache key accepted per D-02 | unit | `npx vitest run src/__tests__/app-guard.test.jsx src/__tests__/app-history-route.test.jsx` | ✅ | ✅ green |
+| 8-05-02 | 05 | 4 | HIST-10 | T-08-10 | Loading/error wired through so a silent failure cannot render as a complete receipt | unit/integration | `npx vitest run src/__tests__/app-history-route.test.jsx` | ✅ | ✅ green |
+
+**Filter-selectivity note (2026-07-17 audit).** Three commands above were corrected because the
+originals did not exercise the behavior their own Secure Behavior column names — a live sampling gap,
+since each passed green while skipping the tests that carry the threat:
+
+- **8-03-02** ran `-t "status"`, matching **1 of 11** `readOnly mode` tests. The refunded (`:226`),
+  cancelled (`:236`), and completed (`:247`) chip assertions — i.e. T-08-07/T-08-08 themselves — contain
+  no literal "status" in their names and never ran. Rescoped to the describe block.
+- **8-04-02** ran `-t "Modif"`, matching **4 of 6** `mutating-control gate` tests. The two exhaustive
+  button-sweep allowlist tests (`:615`, `:646`) — the standing T-08-01 (high) guard this row exists for —
+  were skipped. Rescoped to the describe block.
+- **8-01-01** grepped both files whole and returned 1, not 0, permanently red. The surviving hit
+  (`REQUIREMENTS.md:21`) is SDK reference prose describing what `events[]` carries, not a promise to
+  render staff attribution. 08-01's real acceptance check was scoped to the Phase 8 ROADMAP block
+  (see 08-01-SUMMARY.md deviation 1); restored that scoping.
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -107,5 +125,31 @@ this phase must use `items: []` for the summary shape. 08-05 Task 2 corrects the
 - [x] No watch-mode flags
 - [x] Feedback latency < 25s
 - [x] `nyquist_compliant: true` set in frontmatter
+- [x] Every documented command re-run and confirmed green as written (2026-07-17 audit)
+- [x] Every `-t` filter confirmed to select the tests its Secure Behavior column names — no vacuous passes
 
 **Approval:** approved 2026-07-17
+
+---
+
+## Validation Audit 2026-07-17
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 3 |
+| Resolved | 3 |
+| Escalated | 0 |
+
+**Gap class:** all three were command-selectivity defects in the map, not missing tests and not
+implementation bugs. Phase 8 ships 113 passing tests across its 6 files; every behavior in the
+Per-Task Map was already covered. What was broken was the *sampling contract* — two commands passed
+green while silently skipping the threat-carrying tests (T-08-07/T-08-08 chips; T-08-01 button sweep),
+and one grep was permanently red against legitimate SDK prose. A regression in the refunded chip or a
+newly reachable mutating control would not have been caught by running the map as written.
+
+**Method:** each of the 10 commands was executed as literally transcribed and its selected-test count
+compared against the tests the row claims to guard. No test files were generated or modified; no
+`gsd-nyquist-auditor` spawn was needed.
+
+**Not addressed (out of scope, pre-existing):** `build-pipeline.test.js:101` and
+`offline-buttons.test.jsx` remain red — tracked in `deferred-items.md`, unrelated to Phase 8.
