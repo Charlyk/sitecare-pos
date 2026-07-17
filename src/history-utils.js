@@ -313,6 +313,40 @@ export function groupOrdersByDay(orders) {
 }
 
 /**
+ * D-11: folds diacritics for loose matching — NFD-decomposes the string, then strips the
+ * Unicode combining-diacritical-marks block (U+0300–U+036F). Pure, locale-agnostic. Targets the
+ * WHOLE block (not a hand-picked subset) so both the modern comma-below (U+0219/U+021B ș/ț) and
+ * the legacy cedilla (U+015F/U+0163 ș/ț) encodings fold, alongside ă/â/î (RESEARCH Pitfall 2).
+ * @param {string} s
+ * @returns {string}
+ */
+export function foldDiacritics(s) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+}
+
+/**
+ * HIST-09: predicate for the free-text search input. Matches the SAME `#` label the row renders
+ * (`dailyOrderNumber` when numeric, else `id.slice(0, 8)` — mirrors `orderNumberLabel` in
+ * screen-history.jsx, D-09/RESEARCH Pitfall 4) plus a diacritic-folded `customer.name`. Query and
+ * name are folded on the same axis (D-11) before comparison. An empty or whitespace-only query
+ * matches every order. Never throws on a missing `order.customer`.
+ * @param {object} order
+ * @param {string} query
+ * @returns {boolean}
+ */
+export function matchesSearch(order, query) {
+  const q = foldDiacritics(query.trim().toLowerCase())
+  if (!q) return true
+
+  const numLabel = String(
+    typeof order.dailyOrderNumber === 'number' ? order.dailyOrderNumber : order.id.slice(0, 8)
+  ).toLowerCase()
+  const name = foldDiacritics((order.customer?.name ?? '').toLowerCase())
+
+  return numLabel.includes(q) || name.includes(q)
+}
+
+/**
  * D-15: client-computed summary tiles from the same finished-orders list groupOrdersByDay uses,
  * so tiles and day headers can never disagree.
  * @param {Array<object>} orders

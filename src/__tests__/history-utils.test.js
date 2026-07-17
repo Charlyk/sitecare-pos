@@ -15,6 +15,8 @@ import {
   groupOrdersByDay,
   computeSummary,
   deriveDuration,
+  foldDiacritics,
+  matchesSearch,
 } from '../history-utils.js'
 
 // Local Y-M-D formatter for building `<input type="date">` value strings from test fixtures —
@@ -618,5 +620,100 @@ describe('deriveDuration', () => {
       expect(r.minutes).toBeGreaterThanOrEqual(0)
       expect(Number.isNaN(r.minutes)).toBe(false)
     }
+  })
+})
+
+// ── foldDiacritics — HIST-09, D-11 (RESEARCH Pitfall 2: both ș/ț encodings) ────
+
+describe('foldDiacritics', () => {
+  test('folds ă (breve)', () => {
+    expect(foldDiacritics('Rădulescu')).toBe('Radulescu')
+  })
+
+  test('folds â and î (circumflex)', () => {
+    expect(foldDiacritics('Câmpină')).toBe('Campina')
+  })
+
+  test('folds ș/ț modern comma-below encoding (U+0219/U+021B)', () => {
+    expect(foldDiacritics('Gheorghița')).toBe('Gheorghita') // ț U+021B
+    expect(foldDiacritics('șerban')).toBe('serban') // ș U+0219
+  })
+
+  test('folds ș/ț legacy cedilla encoding (U+015F/U+0163)', () => {
+    expect(foldDiacritics('Gheorghiţa')).toBe('Gheorghita') // ţ U+0163 (cedilla)
+    expect(foldDiacritics('şerban')).toBe('serban') // ş U+015F (cedilla)
+  })
+
+  test('both ș/ț encodings fold to the identical result for the same word', () => {
+    const modern = foldDiacritics('Gheorghița') // comma-below ț
+    const legacy = foldDiacritics('Gheorghiţa') // cedilla ţ
+    expect(modern).toBe(legacy)
+    expect(modern).toBe('Gheorghita')
+  })
+
+  test('folds the leading Ș in both encodings', () => {
+    expect(foldDiacritics('Șerban')).toBe('Serban') // Ș U+0218 (comma-below, upper)
+    expect(foldDiacritics('Şerban')).toBe('Serban') // Ş U+015E (cedilla, upper)
+  })
+
+  test('a string with no diacritics is returned unchanged', () => {
+    expect(foldDiacritics('Popescu')).toBe('Popescu')
+  })
+
+  test('empty string returns empty string', () => {
+    expect(foldDiacritics('')).toBe('')
+  })
+})
+
+// ── matchesSearch — HIST-09, D-09/D-11 ────────────────────────────────────
+
+describe('matchesSearch', () => {
+  test('empty query matches every order', () => {
+    const order = { id: 'abc12345678', dailyOrderNumber: 42, customer: { name: 'Ion Pop' } }
+    expect(matchesSearch(order, '')).toBe(true)
+  })
+
+  test('whitespace-only query matches every order', () => {
+    const order = { id: 'abc12345678', dailyOrderNumber: 42, customer: { name: 'Ion Pop' } }
+    expect(matchesSearch(order, '   ')).toBe(true)
+  })
+
+  test('matches when the query is a substring of dailyOrderNumber', () => {
+    const order = { id: 'abc12345678', dailyOrderNumber: 4217, customer: { name: 'Ion Pop' } }
+    expect(matchesSearch(order, '21')).toBe(true)
+    expect(matchesSearch(order, '99')).toBe(false)
+  })
+
+  test('matches on order.id.slice(0,8) when dailyOrderNumber is null (Pitfall 4)', () => {
+    const order = { id: 'a3f9c201-dead-beef', dailyOrderNumber: null, customer: { name: 'Ion Pop' } }
+    expect(matchesSearch(order, 'a3f9c2')).toBe(true)
+    expect(matchesSearch(order, 'dead')).toBe(false) // outside the [0,8) slice
+  })
+
+  test('matches on order.id.slice(0,8) when dailyOrderNumber is undefined', () => {
+    const order = { id: 'a3f9c201-dead-beef', customer: { name: 'Ion Pop' } }
+    expect(matchesSearch(order, 'a3f9c201')).toBe(true)
+  })
+
+  test('matches a diacritic-folded customer.name (query without diacritics matches name with diacritics)', () => {
+    const order = { id: 'abc12345678', dailyOrderNumber: 5, customer: { name: 'Rădulescu' } } // Rădulescu
+    expect(matchesSearch(order, 'radulescu')).toBe(true)
+  })
+
+  test('match is case-insensitive on the customer name', () => {
+    const order = { id: 'abc12345678', dailyOrderNumber: 5, customer: { name: 'Ion Popescu' } }
+    expect(matchesSearch(order, 'POPESCU')).toBe(true)
+  })
+
+  test('does not throw when order.customer is undefined', () => {
+    const order = { id: 'abc12345678', dailyOrderNumber: 5 }
+    expect(() => matchesSearch(order, 'anything')).not.toThrow()
+    expect(matchesSearch(order, 'anything')).toBe(false)
+    expect(matchesSearch(order, '')).toBe(true)
+  })
+
+  test('non-matching query returns false', () => {
+    const order = { id: 'abc12345678', dailyOrderNumber: 42, customer: { name: 'Ion Pop' } }
+    expect(matchesSearch(order, 'zzz')).toBe(false)
   })
 })
