@@ -9,8 +9,8 @@ import { render, screen, fireEvent } from '@testing-library/react'
 vi.mock('../use-history-orders.js', () => ({ useHistoryOrders: vi.fn() }))
 
 import { useHistoryOrders } from '../use-history-orders.js'
-import { HistoryScreen, historyStatusMeta } from '../screen-history.jsx'
-import { getPresetRange } from '../history-utils.js'
+import { HistoryScreen, historyStatusMeta, CustomRangePopover } from '../screen-history.jsx'
+import { getPresetRange, customRangeToQuery } from '../history-utils.js'
 
 // Helper — build a POST-normalizeOrder-shaped fixture (RON totals, resolved dailyOrderNumber,
 // nested customer object) — never a raw SDK/cents shape.
@@ -485,5 +485,163 @@ describe('historyStatusMeta', () => {
 
   test('falls back to the completed mapping for an unrecognized status', () => {
     expect(historyStatusMeta('unknown', t)).toEqual(historyStatusMeta('completed', t))
+  })
+})
+
+// ── CustomRangePopover — popover fields, guardrails, Apply (09-05 Task 1, HIST-04 SC2) ─────
+
+describe('CustomRangePopover popover (09-05)', () => {
+  const t = (key) => key
+  const noopOnApply = () => {}
+  const noopOnClose = () => {}
+
+  // Local-midnight-safe 'YYYY-MM-DD' formatter — mirrors screen-history.jsx's own
+  // toDateInputValue, never `.toISOString()` (UTC-slice drift).
+  const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+  test('renders both field labels, two date inputs (blank), and the Apply button', () => {
+    render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose: noopOnClose }))
+
+    expect(screen.getByText('h_range_start')).toBeTruthy()
+    expect(screen.getByText('h_range_end')).toBeTruthy()
+    expect(screen.getByTestId('history-range-start').value).toBe('')
+    expect(screen.getByTestId('history-range-end').value).toBe('')
+    expect(screen.getByTestId('history-range-apply')).toBeTruthy()
+  })
+
+  test('with both fields empty, Apply is disabled and no cap message renders', () => {
+    render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose: noopOnClose }))
+
+    expect(screen.getByTestId('history-range-apply').disabled).toBe(true)
+    expect(screen.queryByTestId('history-range-cap')).toBeNull()
+  })
+
+  test('with only the start field filled, Apply stays disabled', () => {
+    render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose: noopOnClose }))
+
+    fireEvent.change(screen.getByTestId('history-range-start'), { target: { value: '2020-03-03' } })
+    expect(screen.getByTestId('history-range-apply').disabled).toBe(true)
+  })
+
+  test('with a valid range, Apply is enabled and no cap message renders', () => {
+    render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose: noopOnClose }))
+
+    fireEvent.change(screen.getByTestId('history-range-start'), { target: { value: '2020-03-03' } })
+    fireEvent.change(screen.getByTestId('history-range-end'), { target: { value: '2020-03-17' } })
+
+    expect(screen.getByTestId('history-range-apply').disabled).toBe(false)
+    expect(screen.queryByTestId('history-range-cap')).toBeNull()
+  })
+
+  test('clicking Apply with a valid range calls onApply once with customRangeToQuery(...), then closes', () => {
+    const onApply = vi.fn()
+    const onClose = vi.fn()
+    render(createElement(CustomRangePopover, { t, onApply, onClose }))
+
+    fireEvent.change(screen.getByTestId('history-range-start'), { target: { value: '2020-03-03' } })
+    fireEvent.change(screen.getByTestId('history-range-end'), { target: { value: '2020-03-17' } })
+    fireEvent.click(screen.getByTestId('history-range-apply'))
+
+    expect(onApply).toHaveBeenCalledTimes(1)
+    expect(onApply).toHaveBeenCalledWith(customRangeToQuery('2020-03-03', '2020-03-17'))
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  test('with end before start, Apply is disabled and onApply is never called on click', () => {
+    const onApply = vi.fn()
+    render(createElement(CustomRangePopover, { t, onApply, onClose: noopOnClose }))
+
+    fireEvent.change(screen.getByTestId('history-range-start'), { target: { value: '2020-03-17' } })
+    fireEvent.change(screen.getByTestId('history-range-end'), { target: { value: '2020-03-03' } })
+
+    expect(screen.getByTestId('history-range-apply').disabled).toBe(true)
+    fireEvent.click(screen.getByTestId('history-range-apply'))
+    expect(onApply).not.toHaveBeenCalled()
+  })
+
+  test('with a span over 366 days, Apply is disabled and the cap message renders in var(--sc-destructive)', () => {
+    render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose: noopOnClose }))
+
+    fireEvent.change(screen.getByTestId('history-range-start'), { target: { value: '2018-03-17' } })
+    fireEvent.change(screen.getByTestId('history-range-end'), { target: { value: '2020-03-17' } })
+
+    expect(screen.getByTestId('history-range-apply').disabled).toBe(true)
+    const cap = screen.getByTestId('history-range-cap')
+    expect(cap.textContent).toBe('h_range_cap_message')
+    expect(cap.style.color).toBe('var(--sc-destructive)')
+  })
+
+  test('with a span of exactly 366 days, Apply is enabled and no cap message renders', () => {
+    render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose: noopOnClose }))
+
+    const end = new Date(2020, 2, 17)
+    const start = new Date(2020, 2, 17)
+    start.setDate(start.getDate() - 365) // inclusive span of exactly 366 days
+
+    fireEvent.change(screen.getByTestId('history-range-start'), { target: { value: fmt(start) } })
+    fireEvent.change(screen.getByTestId('history-range-end'), { target: { value: fmt(end) } })
+
+    expect(screen.getByTestId('history-range-apply').disabled).toBe(false)
+    expect(screen.queryByTestId('history-range-cap')).toBeNull()
+  })
+
+  test('with start equal to end, Apply is enabled (adjacency edge)', () => {
+    render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose: noopOnClose }))
+
+    fireEvent.change(screen.getByTestId('history-range-start'), { target: { value: '2020-03-10' } })
+    fireEvent.change(screen.getByTestId('history-range-end'), { target: { value: '2020-03-10' } })
+
+    expect(screen.getByTestId('history-range-apply').disabled).toBe(false)
+  })
+
+  test("the End input's max is today; after picking End, Start's max is that date and min is 366 days earlier", () => {
+    render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose: noopOnClose }))
+
+    const today = fmt(new Date())
+    expect(screen.getByTestId('history-range-end').max).toBe(today)
+
+    fireEvent.change(screen.getByTestId('history-range-end'), { target: { value: '2020-03-17' } })
+    expect(screen.getByTestId('history-range-start').max).toBe('2020-03-17')
+
+    const expectedMin = new Date(2020, 2, 17)
+    expectedMin.setDate(expectedMin.getDate() - 365)
+    expect(screen.getByTestId('history-range-start').min).toBe(fmt(expectedMin))
+  })
+
+  test('a mousedown outside the panel calls onClose and never onApply', () => {
+    const onApply = vi.fn()
+    const onClose = vi.fn()
+    render(createElement('div', null, createElement(CustomRangePopover, { t, onApply, onClose })))
+
+    fireEvent.mouseDown(document.body)
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(onApply).not.toHaveBeenCalled()
+  })
+
+  test('an Escape keydown calls onClose and never onApply', () => {
+    const onApply = vi.fn()
+    const onClose = vi.fn()
+    render(createElement(CustomRangePopover, { t, onApply, onClose }))
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(onApply).not.toHaveBeenCalled()
+  })
+
+  test('a mousedown INSIDE the panel does not close it', () => {
+    const onClose = vi.fn()
+    render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose }))
+
+    fireEvent.mouseDown(screen.getByTestId('history-range-popover'))
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  test('unmounting the popover removes both document listeners — a post-unmount Escape does not call onClose', () => {
+    const onClose = vi.fn()
+    const { unmount } = render(createElement(CustomRangePopover, { t, onApply: noopOnApply, onClose }))
+
+    unmount()
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(onClose).not.toHaveBeenCalled()
   })
 })

@@ -2,7 +2,7 @@
 // Screen-owns-its-hook: calls its own data hook and does zero derivation inline — every
 // filter/group/summary computation is delegated to history-utils.js (Plan 01).
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useHistoryOrders } from './use-history-orders.js';
 import {
   filterFinishedOrders,
@@ -11,6 +11,9 @@ import {
   computeSummary,
   getPresetRange,
   formatDateRange,
+  validateCustomRange,
+  customRangeToQuery,
+  MAX_RANGE_DAYS,
 } from './history-utils.js';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
@@ -23,6 +26,22 @@ import { typeMeta } from './screen-orders.jsx';
 const HIST_GRID = '150px minmax(200px, 1.8fr) 118px 78px 116px 132px 116px 34px';
 
 const pad2 = (n) => String(n).padStart(2, '0');
+
+// Module-private (09-05): a local-midnight-safe 'YYYY-MM-DD' formatter for the popover's native
+// date inputs — never `.toISOString()`, which would slice at UTC midnight and drift the displayed
+// day near the local day boundary (same local-Date-getters convention as history-utils.js).
+function toDateInputValue(d) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+// Module-private (09-05, D-11): the earliest pickable Start value once End is chosen — End minus
+// (MAX_RANGE_DAYS - 1) days, the earliest start whose inclusive span (see history-utils.js's
+// validateCustomRange spanDays formula) is still within the cap. Imports MAX_RANGE_DAYS rather
+// than re-literalling the cap number in this file (D-10).
+function minStartFor(endValue) {
+  const [y, m, d] = endValue.split('-').map(Number);
+  return toDateInputValue(new Date(y, m - 1, d - (MAX_RANGE_DAYS - 1), 0, 0, 0, 0));
+}
 
 // Exported (was module-private): chip class + icon-tile colors for a row's derived display
 // status. Precedence itself is history-utils.js's job (deriveDisplayStatus, D-02) — this only
@@ -77,8 +96,9 @@ function periodPhrase(period, t, lang) {
   if (period.id === '7') return t('h_period_in_7');
   if (period.id === '30') return t('h_period_in_30');
   if (period.id === 'custom') {
+    if (!period.customRange) return '';
     const locale = lang === 'ro' ? 'ro-RO' : 'en-GB';
-    return `${t('h_period_in_range_prefix')} ${formatDateRange(period.from, period.to, locale)}`;
+    return `${t('h_period_in_range_prefix')} ${formatDateRange(period.customRange.from, period.customRange.to, locale)}`;
   }
   return '';
 }
@@ -92,8 +112,9 @@ function periodLabel(period, t, lang) {
   if (period.id === '7') return t('h_period_7');
   if (period.id === '30') return t('h_period_30');
   if (period.id === 'custom') {
+    if (!period.customRange) return t('h_period_custom');
     const locale = lang === 'ro' ? 'ro-RO' : 'en-GB';
-    return formatDateRange(period.from, period.to, locale);
+    return formatDateRange(period.customRange.from, period.customRange.to, locale);
   }
   return '';
 }
@@ -377,6 +398,120 @@ function SummaryStrip({ t, isLoading, isError, isFetching, isEmptyState, summary
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// Custom-range popover (09-05, HIST-04 SC2) — the phase's one genuinely net-new visual surface.
+// Chrome copied verbatim from shell.jsx:148-150 (the app's only other popover); the outside-click
+// dismissal effect copied from shell.jsx:20-28 and extended with an Escape listener (UI-SPEC).
+// Exported (not truly module-private) so this component is directly unit-testable in isolation,
+// ahead of 09-05 Task 2 wiring it into FilterBar — same reuse-precedent as historyStatusMeta.
+// Both dates live in local state per D-02: nothing here fetches; onApply fires only from the
+// Apply button's click handler, and only once validateCustomRange has passed.
+export function CustomRangePopover({ t, onApply, onClose }) {
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const panelRef = useRef(null);
+
+  useEffect(() => {
+    function handleMouseDown(e) {
+      if (panelRef.current && !panelRef.current.contains(e.target)) onClose();
+    }
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  // D-11: native min/max narrow what is pickable, recomputed as the other field changes. Future
+  // dates are excluded because History is finished-only (P7 D-01), and a future range is
+  // guaranteed empty.
+  const todayStr = toDateInputValue(new Date());
+  const startMax = end || todayStr;
+  const startMin = end ? minStartFor(end) : undefined;
+
+  // D-11: the Apply-time check re-runs regardless of the native min/max, because typed values
+  // bypass those entirely — validateCustomRange is the authoritative gate on every render AND at
+  // click time.
+  const reason = validateCustomRange(start, end);
+  const disabled = reason !== null;
+
+  const handleApply = () => {
+    if (validateCustomRange(start, end) !== null) return;
+    onApply(customRangeToQuery(start, end));
+    onClose();
+  };
+
+  return (
+    <div
+      ref={panelRef}
+      data-testid="history-range-popover"
+      style={{
+        position: 'absolute',
+        top: 'calc(100% + 6px)',
+        left: 0,
+        background: '#fff',
+        border: '1px solid hsl(120 10% 88%)',
+        borderRadius: 10,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+        zIndex: 50,
+        width: 280,
+        padding: 16,
+      }}
+    >
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sc-muted-foreground)' }}>
+            {t('h_range_start')}
+          </div>
+          <input
+            type="date"
+            data-testid="history-range-start"
+            value={start}
+            max={startMax}
+            min={startMin}
+            onChange={(e) => setStart(e.target.value)}
+            style={{ width: '100%', marginTop: 4, fontFamily: 'inherit' }}
+          />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sc-muted-foreground)' }}>
+            {t('h_range_end')}
+          </div>
+          <input
+            type="date"
+            data-testid="history-range-end"
+            value={end}
+            max={todayStr}
+            onChange={(e) => setEnd(e.target.value)}
+            style={{ width: '100%', marginTop: 4, fontFamily: 'inherit' }}
+          />
+        </div>
+      </div>
+
+      {reason === 'too-long' && (
+        <div data-testid="history-range-cap" style={{ fontSize: 11, fontWeight: 600, color: 'var(--sc-destructive)', marginTop: 8 }}>
+          {t('h_range_cap_message')}
+        </div>
+      )}
+
+      <div style={{ marginTop: 16, textAlign: 'right' }}>
+        <button
+          className="btn-primary"
+          data-testid="history-range-apply"
+          disabled={disabled}
+          onClick={handleApply}
+          style={disabled ? { opacity: 0.45, cursor: 'not-allowed' } : {}}
+        >
+          {t('h_range_apply')}
+        </button>
+      </div>
     </div>
   );
 }
