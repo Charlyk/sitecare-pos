@@ -6,7 +6,7 @@ import { sourceMeta, typeMeta, stateMeta } from './screen-orders.jsx';
 import { deriveDuration, deriveDisplayStatus } from './history-utils.js';
 import { historyStatusMeta } from './screen-history.jsx';
 
-function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = [], onBack, onAdvance, onPrint, onCancel, isOffline, readOnly = false }) {
+function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = [], onBack, onAdvance, onPrint, onCancel, isOffline, readOnly = false, detailLoading = false, detailError = false, onRetryDetail }) {
   const t = useT(lang);
   const [tab, setTab] = useState('overview');
 
@@ -142,44 +142,62 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
           return (
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid hsl(120 10% 92%)' }}>
-              <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: '-0.02em' }}>{order.items.length} {t('items')}</div>
-              <button className="btn-ghost"><Icon name="edit" size={13} />{lang === 'ro' ? 'Modifică' : 'Modify'}</button>
+              {detailLoading ? (
+                <div style={{ width: 100, height: 15, borderRadius: 4, background: 'hsl(210 15% 92%)' }} />
+              ) : detailError ? (
+                <div />
+              ) : (
+                <div style={{ fontWeight: 900, fontSize: 15, letterSpacing: '-0.02em' }}>{order.items.length} {t('items')}</div>
+              )}
+              {!readOnly && (
+                <button className="btn-ghost"><Icon name="edit" size={13} />{lang === 'ro' ? 'Modifică' : 'Modify'}</button>
+              )}
             </div>
-            {menuItems.map((it, i) => (
-              <div key={i} style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < menuItems.length - 1 ? '1px solid hsl(120 10% 94%)' : 'none' }}>
-                <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(120 14% 49% / 0.12)', color: 'var(--sc-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13 }}>{it.qty}×</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>{it.name}</div>
-                  {it.mods && it.mods.length > 0 && <div style={{ fontSize: 12, color: 'var(--sc-terracotta)', fontWeight: 600 }}>→ {it.mods.join(', ')}</div>}
-                </div>
-                <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{formatRON(it.price)}</div>
-                <div style={{ fontWeight: 800, fontSize: 14, minWidth: 72, textAlign: 'right' }}>{formatRON(it.price * it.qty)}</div>
-              </div>
-            ))}
-            {hasExtras && (
+            {detailError ? (
+              <ItemsErrorBlock t={t} onRetry={onRetryDetail} />
+            ) : detailLoading ? (
+              <ItemsSkeletonRows />
+            ) : order.items.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 18px', fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{t('h_detail_no_items')}</div>
+            ) : (
               <>
-                <div style={{ margin: '0 18px', borderTop: '1px dashed hsl(120 10% 85%)' }} />
-                {globalProducts.map((it, i) => (
-                  <div key={i} style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(210 15% 92%)', color: '#556', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13 }}>{it.qty}×</div>
+                {menuItems.map((it, i) => (
+                  <div key={i} style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < menuItems.length - 1 ? '1px solid hsl(120 10% 94%)' : 'none' }}>
+                    <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(120 14% 49% / 0.12)', color: 'var(--sc-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13 }}>{it.qty}×</div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{it.name}</div>
+                      <div style={{ fontWeight: 700, fontSize: 14 }}>{it.name}</div>
+                      {it.mods && it.mods.length > 0 && <div style={{ fontSize: 12, color: 'var(--sc-terracotta)', fontWeight: 600 }}>→ {it.mods.join(', ')}</div>}
                     </div>
                     <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{formatRON(it.price)}</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, minWidth: 72, textAlign: 'right' }}>{formatRON(it.price * it.qty)}</div>
+                    <div style={{ fontWeight: 800, fontSize: 14, minWidth: 72, textAlign: 'right' }}>{formatRON(it.price * it.qty)}</div>
                   </div>
                 ))}
-                {order.deliveryFee > 0 && (
-                  <div style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(210 15% 92%)', color: '#556', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon name="moped" size={14} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13 }}>{t('delivery_fee')}</div>
-                    </div>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{formatRON(order.deliveryFee)}</div>
-                    <div style={{ fontWeight: 700, fontSize: 13, minWidth: 72, textAlign: 'right' }}>{formatRON(order.deliveryFee)}</div>
-                  </div>
+                {hasExtras && (
+                  <>
+                    <div style={{ margin: '0 18px', borderTop: '1px dashed hsl(120 10% 85%)' }} />
+                    {globalProducts.map((it, i) => (
+                      <div key={i} style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(210 15% 92%)', color: '#556', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 13 }}>{it.qty}×</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{it.name}</div>
+                        </div>
+                        <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{formatRON(it.price)}</div>
+                        <div style={{ fontWeight: 700, fontSize: 13, minWidth: 72, textAlign: 'right' }}>{formatRON(it.price * it.qty)}</div>
+                      </div>
+                    ))}
+                    {order.deliveryFee > 0 && (
+                      <div style={{ padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ minWidth: 32, height: 32, borderRadius: 8, background: 'hsl(210 15% 92%)', color: '#556', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Icon name="moped" size={14} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: 13 }}>{t('delivery_fee')}</div>
+                        </div>
+                        <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--sc-muted-foreground)' }}>{formatRON(order.deliveryFee)}</div>
+                        <div style={{ fontWeight: 700, fontSize: 13, minWidth: 72, textAlign: 'right' }}>{formatRON(order.deliveryFee)}</div>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -285,6 +303,38 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
         )}
       </div>
       )}
+    </div>
+  );
+}
+
+function ItemsSkeletonRows() {
+  const bar = (w, h) => ({ width: w, height: h, borderRadius: 4, background: 'hsl(210 15% 92%)' });
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          data-testid="detail-skeleton-row"
+          style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: i < 2 ? '1px solid hsl(120 10% 94%)' : 'none' }}
+        >
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'hsl(210 15% 92%)' }} />
+          <div style={{ flex: 1 }}><div style={bar('60%', 14)} /></div>
+          <div style={bar(48, 13)} />
+          <div style={bar(56, 13)} />
+        </div>
+      ))}
+    </>
+  );
+}
+
+function ItemsErrorBlock({ t, onRetry }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '32px 18px', color: 'var(--sc-muted-foreground)' }}>
+      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--sc-foreground)' }}>{t('h_detail_error_title')}</div>
+      <div style={{ fontSize: 13, fontWeight: 400, marginTop: 4 }}>{t('check_connection')}</div>
+      <button className="btn-secondary" style={{ marginTop: 16 }} onClick={onRetry}>
+        <Icon name="refresh" size={14} /> {t('h_retry')}
+      </button>
     </div>
   );
 }

@@ -389,3 +389,191 @@ describe('readOnly duration row', () => {
     expect(screen.queryByText(/Prep time|Canceled after/)).toBeNull()
   })
 })
+
+// Production-shaped fixture per F-01: normalizeOrder always yields items: [], never null
+// and never omitted, and always yields numeric subtotal/tax/deliveryFee/tip/discount
+// (0-defaulted, never undefined — see data.jsx normalizeOrder). HISTORY_ORDER above omits
+// these fields, which is fine for the tests that never reach ThermalTicket (items == null
+// keeps the thermal rail unmounted); once items is an array the rail does mount, so these
+// fixtures must carry the full numeric shape to match what getOrder() actually returns.
+const HYDRATING_ORDER = { ...HISTORY_ORDER, items: [], subtotal: 118.50, tax: 10, deliveryFee: 0, tip: 0, discount: 0 }
+
+const HYDRATED_ITEMS = [
+  { name: 'Margherita', qty: 1, price: 32, mods: [], source: 'menu' },
+  { name: 'Coca-Cola', qty: 2, price: 8, mods: [], source: 'menu' },
+]
+const HYDRATED_ORDER = { ...HISTORY_ORDER, items: HYDRATED_ITEMS, subtotal: 118.50, tax: 10, deliveryFee: 0, tip: 0, discount: 0 }
+
+const DUPLICATE_ITEMS = [
+  { name: 'Same Item', qty: 1, price: 20, mods: [], source: 'menu' },
+  { name: 'Same Item', qty: 1, price: 20, mods: [], source: 'menu' },
+]
+const DUPLICATE_ITEMS_ORDER = { ...HISTORY_ORDER, items: DUPLICATE_ITEMS, subtotal: 118.50, tax: 10, deliveryFee: 0, tip: 0, discount: 0 }
+
+describe('readOnly items-card states', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  test('detailLoading: exactly 3 skeleton rows render, no no-items line, no error title', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATING_ORDER,
+        lang: 'en',
+        readOnly: true,
+        detailLoading: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getAllByTestId('detail-skeleton-row').length).toBe(3)
+    expect(screen.queryByText('No items on this order')).toBeNull()
+    expect(screen.queryByText("Couldn't load this receipt")).toBeNull()
+  })
+
+  test('detailLoading: the totals block still renders the formatted total', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATING_ORDER,
+        lang: 'en',
+        readOnly: true,
+        detailLoading: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('128,50 lei')).toBeTruthy()
+  })
+
+  test('detailError: error title, check-connection body, and Retry render; no skeleton, no no-items line', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATING_ORDER,
+        lang: 'ro',
+        readOnly: true,
+        detailError: true,
+        onBack: vi.fn(),
+        onRetryDetail: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Nu am putut încărca bonul')).toBeTruthy()
+    expect(screen.getByText('Verifică conexiunea și încearcă din nou.')).toBeTruthy()
+    expect(screen.getByText('Reîncearcă')).toBeTruthy()
+    expect(screen.queryAllByTestId('detail-skeleton-row').length).toBe(0)
+    expect(screen.queryByText('Nicio poziție pe această comandă')).toBeNull()
+  })
+
+  test('detailError: the totals block still renders the formatted total', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATING_ORDER,
+        lang: 'en',
+        readOnly: true,
+        detailError: true,
+        onBack: vi.fn(),
+        onRetryDetail: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('128,50 lei')).toBeTruthy()
+  })
+
+  test('detailError: clicking Retry calls onRetryDetail exactly once', () => {
+    const onRetryDetail = vi.fn()
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATING_ORDER,
+        lang: 'ro',
+        readOnly: true,
+        detailError: true,
+        onBack: vi.fn(),
+        onRetryDetail,
+      }),
+      { wrapper: w }
+    )
+    fireEvent.click(screen.getByText('Reîncearcă'))
+    expect(onRetryDetail).toHaveBeenCalledTimes(1)
+  })
+
+  test('settled (both flags false) + empty items: the no-items line renders; totals render; no skeleton', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATING_ORDER,
+        lang: 'ro',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Nicio poziție pe această comandă')).toBeTruthy()
+    expect(screen.getByText('128,50 lei')).toBeTruthy()
+    expect(screen.queryAllByTestId('detail-skeleton-row').length).toBe(0)
+  })
+
+  test('settled + hydrated 2-item array: both item names render, no skeleton, no error, no no-items line', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATED_ORDER,
+        lang: 'en',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Margherita')).toBeTruthy()
+    expect(screen.getByText('Coca-Cola')).toBeTruthy()
+    expect(screen.queryAllByTestId('detail-skeleton-row').length).toBe(0)
+    expect(screen.queryByText("Couldn't load this receipt")).toBeNull()
+    expect(screen.queryByText('No items on this order')).toBeNull()
+  })
+
+  test('settled + two items with identical name/price/qty: both rows render in server order', () => {
+    const { container } = render(
+      createElement(OrderDetailScreen, {
+        order: DUPLICATE_ITEMS_ORDER,
+        lang: 'en',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    const rows = screen.getAllByText('Same Item')
+    expect(rows.length).toBe(2)
+    // both rows present in the DOM in document order (server order preserved, no client sort)
+    const containerRows = Array.from(container.querySelectorAll('div')).filter(d => d.textContent === 'Same Item')
+    expect(containerRows.length).toBeGreaterThanOrEqual(2)
+  })
+
+  test('NOT readOnly + MINIMAL_ORDER, both flags omitted: renders exactly as today', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: MINIMAL_ORDER,
+        lang: 'en',
+        onBack: vi.fn(),
+        onAdvance: vi.fn(),
+        onPrint: vi.fn(),
+        onCancel: vi.fn(),
+        isOffline: false,
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Pizza')).toBeTruthy()
+    expect(screen.queryAllByTestId('detail-skeleton-row').length).toBe(0)
+    expect(screen.queryByText("Couldn't load this receipt")).toBeNull()
+  })
+
+  test('skeleton row inline padding is 12px 18px and gap is 12, matching a real item row', () => {
+    const { container } = render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATING_ORDER,
+        lang: 'en',
+        readOnly: true,
+        detailLoading: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    const row = container.querySelector('[data-testid="detail-skeleton-row"]')
+    expect(row.style.padding).toBe('12px 18px')
+    expect(row.style.gap).toBe('12px')
+  })
+})
