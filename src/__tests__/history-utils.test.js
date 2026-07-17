@@ -7,6 +7,7 @@ import {
   deriveDisplayStatus,
   groupOrdersByDay,
   computeSummary,
+  deriveDuration,
 } from '../history-utils.js'
 
 // ── getLast30DaysRange — HIST-03, D-04 ────────────────────────────────────
@@ -249,5 +250,118 @@ describe('computeSummary', () => {
       refundsCount: 0,
       canceledCount: 0,
     })
+  })
+})
+
+// ── deriveDuration — D-10, UI-SPEC E1 ─────────────────────────────────────
+
+describe('deriveDuration', () => {
+  const placedAt = new Date(2026, 6, 15, 10, 0, 0, 0).toISOString()
+
+  test('COMPLETED event 25 minutes after placedAt returns { kind: "prep", minutes: 25 }', () => {
+    const order = {
+      placedAt,
+      events: [{ toStatus: 'COMPLETED', createdAt: new Date(2026, 6, 15, 10, 25, 0, 0).toISOString() }],
+    }
+    expect(deriveDuration(order)).toEqual({ kind: 'prep', minutes: 25 })
+  })
+
+  test('CANCELLED event 65 minutes after placedAt, no COMPLETED, returns { kind: "canceled", minutes: 65 }', () => {
+    const order = {
+      placedAt,
+      events: [{ toStatus: 'CANCELLED', createdAt: new Date(2026, 6, 15, 11, 5, 0, 0).toISOString() }],
+    }
+    expect(deriveDuration(order)).toEqual({ kind: 'canceled', minutes: 65 })
+  })
+
+  test('COMPLETED takes precedence over CANCELLED, independent of timestamps', () => {
+    const order = {
+      placedAt,
+      events: [
+        { toStatus: 'COMPLETED', createdAt: new Date(2026, 6, 15, 10, 20, 0, 0).toISOString() },
+        { toStatus: 'CANCELLED', createdAt: new Date(2026, 6, 15, 12, 0, 0, 0).toISOString() },
+      ],
+    }
+    expect(deriveDuration(order)).toEqual({ kind: 'prep', minutes: 20 })
+  })
+
+  test('events: [] returns null', () => {
+    expect(deriveDuration({ placedAt, events: [] })).toBe(null)
+  })
+
+  test('events: undefined returns null', () => {
+    expect(deriveDuration({ placedAt })).toBe(null)
+  })
+
+  test('events with no terminal status returns null', () => {
+    const order = {
+      placedAt,
+      events: [{ toStatus: 'ACCEPTED', createdAt: new Date(2026, 6, 15, 10, 10, 0, 0).toISOString() }],
+    }
+    expect(deriveDuration(order)).toBe(null)
+  })
+
+  test('placedAt undefined with a valid COMPLETED event returns null', () => {
+    const order = {
+      events: [{ toStatus: 'COMPLETED', createdAt: new Date(2026, 6, 15, 10, 25, 0, 0).toISOString() }],
+    }
+    expect(deriveDuration(order)).toBe(null)
+  })
+
+  test('two COMPLETED events, listed newest-first in the array, max createdAt wins (not array-first)', () => {
+    const order = {
+      placedAt,
+      events: [
+        { toStatus: 'COMPLETED', createdAt: new Date(2026, 6, 15, 10, 40, 0, 0).toISOString() }, // 40 min, first in array
+        { toStatus: 'COMPLETED', createdAt: new Date(2026, 6, 15, 10, 10, 0, 0).toISOString() }, // 10 min, second in array
+      ],
+    }
+    expect(deriveDuration(order)).toEqual({ kind: 'prep', minutes: 40 })
+  })
+
+  test('two COMPLETED events with an identical createdAt: deterministic across repeated calls', () => {
+    const tied = new Date(2026, 6, 15, 10, 30, 0, 0).toISOString()
+    const order = {
+      placedAt,
+      events: [
+        { toStatus: 'COMPLETED', createdAt: tied },
+        { toStatus: 'COMPLETED', createdAt: tied },
+      ],
+    }
+    const first = deriveDuration(order)
+    const second = deriveDuration(order)
+    expect(first).toEqual(second)
+    expect(first).toEqual({ kind: 'prep', minutes: 30 })
+  })
+
+  test('a COMPLETED event predating placedAt clamps to 0, never negative', () => {
+    const order = {
+      placedAt,
+      events: [{ toStatus: 'COMPLETED', createdAt: new Date(2026, 6, 15, 9, 0, 0, 0).toISOString() }],
+    }
+    expect(deriveDuration(order)).toEqual({ kind: 'prep', minutes: 0 })
+  })
+
+  test('an unparseable createdAt does not throw and is ignored', () => {
+    const order = {
+      placedAt,
+      events: [
+        { toStatus: 'COMPLETED', createdAt: 'not-a-date' },
+        { toStatus: 'COMPLETED', createdAt: new Date(2026, 6, 15, 10, 15, 0, 0).toISOString() },
+      ],
+    }
+    expect(() => deriveDuration(order)).not.toThrow()
+    expect(deriveDuration(order)).toEqual({ kind: 'prep', minutes: 15 })
+  })
+
+  test('no returned minutes value is negative or NaN across the fixtures above', () => {
+    const results = [
+      deriveDuration({ placedAt, events: [{ toStatus: 'COMPLETED', createdAt: new Date(2026, 6, 15, 9, 0, 0, 0).toISOString() }] }),
+      deriveDuration({ placedAt, events: [{ toStatus: 'CANCELLED', createdAt: new Date(2026, 6, 15, 11, 5, 0, 0).toISOString() }] }),
+    ]
+    for (const r of results) {
+      expect(r.minutes).toBeGreaterThanOrEqual(0)
+      expect(Number.isNaN(r.minutes)).toBe(false)
+    }
   })
 })
