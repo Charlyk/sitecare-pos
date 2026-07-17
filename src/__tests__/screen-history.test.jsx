@@ -949,6 +949,25 @@ describe('Phase 10 integration — faceting, debounce, filtered recompute, empty
       vi.useRealTimers()
     }
   })
+
+  test('D-12: a status filter survives a period switch — period and filters are independent axes', () => {
+    useHistoryOrders.mockReturnValue({ data: facetedFixture(), isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    fireEvent.click(getStatusPill('Anulate'))
+    expect(getStatusPill('Anulate').style.background).toBe('var(--sc-primary)')
+    expect(screen.getAllByTestId('history-row').length).toBe(2)
+
+    // Switch period — this must NOT reset statusFilter (D-12: period and filters are separate
+    // axes; neither setter derives from or resets the other, by construction).
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
+    fireEvent.click(sevenPill)
+
+    expect(getStatusPill('Anulate').style.background).toBe('var(--sc-primary)')
+    // The mocked data is unchanged across the "switch" (useHistoryOrders is mocked, not a real
+    // fetch) — the canceled-only filter still narrows the same 2 rows post-switch.
+    expect(screen.getAllByTestId('history-row').length).toBe(2)
+  })
 })
 
 // ── historyStatusMeta — exported for reuse by screen-detail.jsx (D-05) ─────
