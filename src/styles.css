@@ -275,3 +275,7 @@
     100% { box-shadow: 0 0 0 0 hsl(0 53% 58% / 0); }
   }
   .pulse { animation: pulseRing 1.6s infinite; }
+
+  /* Period-switch loading affordance (D-05) — distinct from the greyed-out/inert convention */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spin { animation: spin 800ms linear infinite; }
