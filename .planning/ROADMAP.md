@@ -154,13 +154,13 @@ Plans:
   3. Staff can type an order number or customer name and the list narrows to matching orders, debounced so no filtering runs on every keystroke
   4. Filters, search, and period compose — day headers and their counts/subtotals reflect only the visible (filtered) orders, and the empty state appears when nothing matches
 
-**Plans**: 4 plans
+**Plans**: 1/4 plans executed
 
 Plans:
 
 **Wave 1**
 
-- [ ] 10-01-PLAN.md — pure filter predicates (`matchesStatus`/`matchesType`/`foldDiacritics`/`matchesSearch`) + filtered-empty-state i18n keys
+- [x] 10-01-PLAN.md — pure filter predicates (`matchesStatus`/`matchesType`/`foldDiacritics`/`matchesSearch`) + filtered-empty-state i18n keys
 - [ ] 10-02-PLAN.md — `normalizeOrder` `'local'`→`'dinein'` boundary fix (D-08) + F-02 live-path regression
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -201,7 +201,7 @@ Plans:
 | 7. History Screen Foundation | v1.1 | 6/6 | Complete    | 2026-07-17 |
 | 8. Read-Only Order Detail View | v1.1 | 5/5 | Complete    | 2026-07-17 |
 | 9. Period Control | v1.1 | 5/5 | Complete    | 2026-07-18 |
-| 10. Filters + Search | v1.1 | 0/? | Not started | - |
+| 10. Filters + Search | v1.1 | 1/4 | In Progress|  |
 | 11. Reprint + CSV Export | v1.1 | 0/? | Not started | - |
 
 ---

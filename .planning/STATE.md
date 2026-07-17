@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 10 — Filters + Search
-current_plan: Not started
-status: planning
+current_phase: 10
+current_plan: 2
+status: executing
 stopped_at: Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
-last_updated: "2026-07-17T21:19:29.986Z"
+last_updated: "2026-07-17T21:45:44.330Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 20
-  completed_plans: 16
+  completed_plans: 17
   percent: 60
 ---
 
@@ -26,7 +26,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-17)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 09 — period-control
+**Current focus:** Phase 10 — filters-search
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -36,9 +36,9 @@ See: `.planning/PROJECT.md` (updated 2026-07-17)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
-**Current Phase:** 10 — Filters + Search
-**Current Plan:** Not started
-**Total Plans in Phase:** 5
+**Current Phase:** 10
+**Current Plan:** 2
+**Total Plans in Phase:** 4
 **Overall Status:** Phase 9 (Period Control) COMPLETE — 5/5 plans, HIST-04 sealed. All four History
 periods (Today/7/30/Custom) are live: presets retarget the fetch, the custom-range popover applies
 an explicit start/end with a 366-day cap (D-09/D-10/D-11), and the applied range renders on the
@@ -51,7 +51,7 @@ checkpoint (live API, native picker chrome, 366-day timing, D-05 dimming percept
 planned (`10-01`..`10-04-PLAN.md`) and ready to execute.
 
 ```
-Progress: [████████████████████] 11/11 plans ([████████░░] 80%)
+Progress: [████████████████████] 11/11 plans ([█████████░] 85%)
 Milestone v1.1 — Phases 7, 8, and 9 complete (3/5), Phase 10 planned and ready to execute
 ```
 
@@ -115,6 +115,7 @@ the plan-checker against source.
 | Phase 09 P3 | 10min | 2 tasks | 2 files |
 | Phase 09 P04 | 13min | 3 tasks | 2 files |
 | Phase 09 P05 | 11min (+ human checkpoint) | 3 tasks | 2 files |
+| Phase 10 P01 | 12min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -239,10 +240,10 @@ the plan-checker against source.
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Ready to plan
+  derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**` in `## Session`,
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 10-01-PLAN.md — filter predicates (foldDiacritics/matchesSearch/matchesStatus/matchesType) + 2 i18n keys landed, 100/100 history-utils tests passing
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -254,7 +255,7 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T20:53:25.930Z
+**Last session:** 2026-07-17T21:45:44.322Z
 **Stopped at:** Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
 **Next action:** `/gsd-execute-phase 10` — Filters + Search (HIST-07/08/09) is already planned (`10-01`..`10-04-PLAN.md`) and ready to execute
 
@@ -316,3 +317,6 @@ the plan-checker against source.
 - [Phase ?]: [Phase 09-05]: CustomRangePopover exported (not module-private) so its fields/guardrails/Apply can be unit-tested in isolation ahead of FilterBar wiring — same testability precedent as historyStatusMeta's export
 - [Phase ?]: [Phase 09-05]: periodLabel()/periodPhrase()'s 'custom' branches read period.customRange (not flat period.from/to), matching the { id, customRange } selectedPeriod shape; periodLabel falls back to t('h_period_custom') when customRange is absent
 - [Phase ?]: [Phase 09-05]: Rule-1 fix — EmptyBlock's D-13 sentence composition now skips the trailing period when the phrase already ends with one, avoiding a double-dot with Romanian abbreviated month names (mar..) on custom-range empty states
+- [Phase ?]: [Phase 10-01]: foldDiacritics targets the whole Unicode combining-marks block (not a hand-picked subset) so both modern comma-below and legacy cedilla ș/ț encodings fold identically
+- [Phase ?]: [Phase 10-01]: matchesSearch mirrors screen-history.jsx's orderNumberLabel exactly (dailyOrderNumber when numeric, else id.slice(0,8)) so no row is unreachable by the text it displays
+- [Phase ?]: [Phase 10-01]: matchesStatus delegates to deriveDisplayStatus with zero inline status literals; matchesType is mapping-free equality only — the 'local'->'dinein' translation stays at normalizeOrder (D-08, plan 10-02)

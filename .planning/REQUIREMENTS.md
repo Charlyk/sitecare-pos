@@ -34,9 +34,9 @@
 - [x] **HIST-04**: User can switch the period via presets — Today / 7 days / 30 days / custom range — and the list reloads for the new range
 - [x] **HIST-05**: User can see orders grouped by calendar day, newest first, each day header showing that day's order count and revenue subtotal
 - [x] **HIST-06**: User can see a summary strip for the selected period — orders, revenue, and average order value computed client-side from the same fetched list that backs the rows (D-15 — `getAdminDashboard` is not used); the refunds tile shows count only
-- [ ] **HIST-07**: User can filter by status — All / Completed / Refunded / Canceled — each showing a live count
-- [ ] **HIST-08**: User can filter by order type — All / Delivery / Pickup / Dine-in (`orderType: 'local'` maps to Dine-in)
-- [ ] **HIST-09**: User can search by order number or customer name — debounced text input, filtered client-side
+- [x] **HIST-07**: User can filter by status — All / Completed / Refunded / Canceled — each showing a live count
+- [x] **HIST-08**: User can filter by order type — All / Delivery / Pickup / Dine-in (`orderType: 'local'` maps to Dine-in)
+- [x] **HIST-09**: User can search by order number or customer name — debounced text input, filtered client-side
 - [x] **HIST-10**: User can click any row to open a read-only detail view (reusing `screen-detail.jsx` in `readOnly` mode — D-07, D-09) showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, and prep time — hydrated on demand via `getOrder(id)`
   - **F-01 (planner finding):** `08-RESEARCH.md` and `08-CONTEXT.md` both assert the `AdminOrder` summary reaches `screen-detail.jsx` with a null `items` value. This is false and was verified false by executing `normalizeOrder` against an `AdminOrder`-shaped object: `normalizeOrder` maps `items: (o.items ?? []).map(...)`, which returns an empty array, never null, and `use-history-orders.js` runs every summary through `normalizeOrder`. Consequences: (1) the ungated Modify control is reachable on the `history-detail` route in production today — a live defect, not one this phase introduces; (2) the minimal-totals-card fallback at `screen-detail.jsx:191-204` is unreachable on both routes; (3) the pre-hydration state is an empty receipt, not an absent one, so loading must be distinguished from a genuinely empty order by query state rather than by the items value.
 - [ ] **HIST-11**: User can reprint a receipt from the read-only detail view (greyed-out when no printer is configured)
@@ -102,9 +102,9 @@ Revisit if the API adds these fields.
 | HIST-04 | Phase 9 | 09-01 – 09-05 | Complete (09-01..09-05) |
 | HIST-05 | Phase 7 | 07-01, 07-04 | Complete |
 | HIST-06 | Phase 7 | 07-04 | Complete |
-| HIST-07 | Phase 10 | TBD | Pending |
-| HIST-08 | Phase 10 | TBD | Pending |
-| HIST-09 | Phase 10 | TBD | Pending |
+| HIST-07 | Phase 10 | TBD | Complete |
+| HIST-08 | Phase 10 | TBD | Complete |
+| HIST-09 | Phase 10 | TBD | Complete |
 | HIST-10 | Phase 8 | 08-01..08-05 | Complete (08-01..08-05) |
 | HIST-11 | Phase 11 | TBD | Pending |
 | HIST-12 | Phase 11 | TBD | Pending |
