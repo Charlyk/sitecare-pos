@@ -6,12 +6,22 @@ import {
   getTodayRange,
   getLast7DaysRange,
   getPresetRange,
+  MAX_RANGE_DAYS,
+  validateCustomRange,
+  customRangeToQuery,
   filterFinishedOrders,
   deriveDisplayStatus,
   groupOrdersByDay,
   computeSummary,
   deriveDuration,
 } from '../history-utils.js'
+
+// Local Y-M-D formatter for building `<input type="date">` value strings from test fixtures —
+// mirrors the input's own contract (never derived via toISOString, which would shift on UTC offset).
+function toInputValue(date) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
 
 // ── getLast30DaysRange — HIST-03, D-04 ────────────────────────────────────
 
@@ -148,6 +158,104 @@ describe('getPresetRange', () => {
     expect(() => getPresetRange(undefined, fixedNow)).not.toThrow()
     expect(getPresetRange(undefined, fixedNow)).toBe(null)
     expect(getPresetRange(null, fixedNow)).toBe(null)
+  })
+})
+
+// ── validateCustomRange / customRangeToQuery — HIST-04, D-09/D-10/D-11 ────
+
+describe('validateCustomRange', () => {
+  const fixedNow = new Date(2026, 6, 17, 14, 30, 0, 0) // 2026-07-17 14:30 local
+  const todayValue = toInputValue(fixedNow)
+  const tomorrowValue = toInputValue(new Date(2026, 6, 18))
+
+  test('MAX_RANGE_DAYS equals 366 and is exported', () => {
+    expect(MAX_RANGE_DAYS).toBe(366)
+  })
+
+  test('a valid range returns null', () => {
+    expect(validateCustomRange('2026-03-03', '2026-03-17', fixedNow)).toBe(null)
+  })
+
+  test('start equals end (single day) is valid', () => {
+    expect(validateCustomRange('2026-03-17', '2026-03-17', fixedNow)).toBe(null)
+  })
+
+  test('empty startValue returns incomplete', () => {
+    expect(validateCustomRange('', '2026-03-17', fixedNow)).toBe('incomplete')
+  })
+
+  test('empty endValue returns incomplete', () => {
+    expect(validateCustomRange('2026-03-03', '', fixedNow)).toBe('incomplete')
+  })
+
+  test('both empty returns incomplete', () => {
+    expect(validateCustomRange('', '', fixedNow)).toBe('incomplete')
+  })
+
+  test('none of the empty-input cases throw', () => {
+    expect(() => validateCustomRange('', '', fixedNow)).not.toThrow()
+  })
+
+  test('end before start returns end-before-start', () => {
+    expect(validateCustomRange('2026-03-17', '2026-03-03', fixedNow)).toBe('end-before-start')
+  })
+
+  test('an endpoint after now\'s calendar day returns future', () => {
+    expect(validateCustomRange('2026-03-03', tomorrowValue, fixedNow)).toBe('future')
+  })
+
+  test("today itself is not a future date", () => {
+    expect(validateCustomRange(todayValue, todayValue, fixedNow)).toBe(null)
+  })
+
+  test('an inclusive span of exactly MAX_RANGE_DAYS (366) is valid', () => {
+    // end = todayValue, start = 365 days before today -> inclusive span of 366 days
+    const start = new Date(fixedNow.getFullYear(), fixedNow.getMonth(), fixedNow.getDate() - 365)
+    expect(validateCustomRange(toInputValue(start), todayValue, fixedNow)).toBe(null)
+  })
+
+  test('an inclusive span of MAX_RANGE_DAYS + 1 (367) returns too-long', () => {
+    const start = new Date(fixedNow.getFullYear(), fixedNow.getMonth(), fixedNow.getDate() - 366)
+    expect(validateCustomRange(toInputValue(start), todayValue, fixedNow)).toBe('too-long')
+  })
+
+  test('precedence: a range that is both end-before-start and too-long returns end-before-start', () => {
+    const farFutureStart = new Date(fixedNow.getFullYear(), fixedNow.getMonth(), fixedNow.getDate() + 1)
+    const farPastEnd = new Date(fixedNow.getFullYear() - 2, fixedNow.getMonth(), fixedNow.getDate())
+    expect(validateCustomRange(toInputValue(farFutureStart), toInputValue(farPastEnd), fixedNow)).toBe('end-before-start')
+  })
+
+  test('an unparseable date string returns incomplete, no throw', () => {
+    expect(() => validateCustomRange('not-a-date', '2026-03-17', fixedNow)).not.toThrow()
+    expect(validateCustomRange('not-a-date', '2026-03-17', fixedNow)).toBe('incomplete')
+  })
+})
+
+describe('customRangeToQuery', () => {
+  test('single-day range: from and to are exactly 24h apart at local-midnight boundaries', () => {
+    const { from, to } = customRangeToQuery('2026-03-17', '2026-03-17')
+    const fromD = new Date(from)
+    const toD = new Date(to)
+    expect(fromD.getHours()).toBe(0)
+    expect(toD.getHours()).toBe(0)
+    expect(fromD.getFullYear()).toBe(2026)
+    expect(fromD.getMonth()).toBe(2)
+    expect(fromD.getDate()).toBe(17)
+    expect(toD.getFullYear()).toBe(2026)
+    expect(toD.getMonth()).toBe(2)
+    expect(toD.getDate()).toBe(18) // exclusive upper bound: day AFTER endValue
+    const hours = (toD.getTime() - fromD.getTime()) / (60 * 60 * 1000)
+    expect(hours).toBe(24)
+  })
+
+  test('multi-day range: from is local midnight of startValue, to is local midnight the day after endValue', () => {
+    const { from, to } = customRangeToQuery('2026-03-03', '2026-03-17')
+    const fromD = new Date(from)
+    const toD = new Date(to)
+    expect(fromD.getDate()).toBe(3)
+    expect(fromD.getMonth()).toBe(2)
+    expect(toD.getDate()).toBe(18)
+    expect(toD.getMonth()).toBe(2)
   })
 })
 
