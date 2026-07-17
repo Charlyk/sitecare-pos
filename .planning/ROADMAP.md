@@ -100,7 +100,7 @@ Plans:
   3. No control that mutates order state is reachable — Advance, Cancel, and the timeline stay hidden, as the `readOnly` mode shipped in Phase 7 already enforces
   4. Back returns to History with the list and period intact, not to Orders
 
-**Plans**: 3/5 plans executed
+**Plans**: 4/5 plans executed
 **UI hint**: yes
 
 Plans:
@@ -115,7 +115,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 08-04-PLAN.md — screen-detail: items-card loading/error/empty states + gate the Modify button (SC3)
+- [x] 08-04-PLAN.md — screen-detail: items-card loading/error/empty states + gate the Modify button (SC3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -176,7 +176,7 @@ Plans:
 | 5. Native Integration | v1.0 | 4/4 | Complete | 2026-04-29 |
 | 6. Build Pipeline | v1.0 | 4/4 | Complete | 2026-05-02 |
 | 7. History Screen Foundation | v1.1 | 6/6 | Complete    | 2026-07-17 |
-| 8. Read-Only Order Detail View | v1.1 | 3/5 | In Progress|  |
+| 8. Read-Only Order Detail View | v1.1 | 4/5 | In Progress|  |
 | 9. Period Control | v1.1 | 0/? | Not started | - |
 | 10. Filters + Search | v1.1 | 0/? | Not started | - |
 | 11. Reprint + CSV Export | v1.1 | 0/? | Not started | - |

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 08
-current_plan: 4
+current_plan: 5
 status: ready_to_execute
-stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-07-17T12:30:37.398Z"
+stopped_at: Completed 08-04-PLAN.md
+last_updated: "2026-07-17T12:39:09.390Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
   percent: 20
 ---
 
@@ -37,7 +37,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 08
-**Current Plan:** 4
+**Current Plan:** 5
 **Total Plans in Phase:** 5
 **Overall Status:** Phase 8 planned — 5 plans across 4 waves, plan-checker passed on the first
 iteration, requirements and decision coverage gates green (HIST-10 covered; 10/10 CONTEXT decisions).
@@ -45,7 +45,7 @@ Phase 7 before it: 6/6 plans executed, verification passed, UAT 26/26 with zero 
 ready to execute.
 
 ```
-Progress: [████████░░] 82% (1/5 phases, v1.1)
+Progress: [█████████░] 91% (1/5 phases, v1.1)
 Milestone v1.1 — Phase 7 complete, Phase 8 planned and ready to execute
 ```
 
@@ -102,6 +102,7 @@ the plan-checker against source.
 | Phase 08 P01 | ~5min | 2 tasks | 3 files |
 | Phase 08 P02 | ~3min | 2 tasks | 4 files |
 | Phase 08 P03 | ~6min | 2 tasks | 2 files |
+| Phase 08 P04 | ~10min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -214,8 +215,8 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T12:30:27.688Z
-**Stopped at:** Completed 08-03-PLAN.md
+**Last session:** 2026-07-17T12:39:09.383Z
+**Stopped at:** Completed 08-04-PLAN.md
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
@@ -261,3 +262,5 @@ the plan-checker against source.
 - [Phase ?]: [Phase 08-02]: historyStatusMeta exported from screen-history.jsx (not duplicated, not extracted to a new module) — mirrors screen-orders.jsx's screen-to-screen meta-import precedent, makes D-05 row/detail agreement true by construction
 - [Phase ?]: [Phase 08-03]: readOnly duration segment fully replaces (not appends to) the elapsed-since-now segment; built as a single conditional so the '·' separator only appears when deriveDuration returns non-null
 - [Phase ?]: [Phase 08-03]: st chip binding: readOnly+non-null deriveDisplayStatus -> historyStatusMeta; readOnly+null -> stateMeta fallback (not historyStatusMeta's own completed default); not readOnly -> stateMeta unchanged (D-05)
+- [Phase ?]: Phase 08-04: Modify button gate landed inside Task 1's header restructuring commit rather than Task 2 as the plan's task split implied; Task 2's diff is test-only (standing allowlist regression test), verified by transiently un-gating Modify and confirming 5 assertions fail without it
+- [Phase ?]: Phase 08-04: readOnly items-card state machine keys on query state (detailError > detailLoading > items.length===0 > populated), not on the items value, per F-01 — items is [] both while loading and when genuinely empty
