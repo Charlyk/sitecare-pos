@@ -68,6 +68,12 @@ function App() {
   const { data: ordersData } = useOrders();
   const orders = ordersData?.orders ?? [];
   const { data: selectedOrder } = useOrderDetail(selectedOrderId);
+  const {
+    data: historyDetail,
+    isPending: historyDetailPending,
+    isError: historyDetailError,
+    refetch: refetchHistoryDetail,
+  } = useOrderDetail(historyOrder?.id);
   const { data: stats } = useStats();
   const { data: restaurantSettings } = useRestaurantSettings();
   const { data: deliveryAreas = [] } = useDeliveryAreas();
@@ -203,6 +209,11 @@ function App() {
     active: orders.filter(o => ['accepted', 'preparing'].includes(o.state)).length,
   };
 
+  // Merge the on-demand getOrder(id) payload over the AdminOrder summary (D-03): hydrated
+  // fields win, guarded with `?? {}` so a pending or errored query merges nothing rather than
+  // spreading undefined. Safe only because both sides have already been through normalizeOrder.
+  const mergedHistoryOrder = historyOrder ? { ...historyOrder, ...(historyDetail ?? {}) } : null;
+
   // Auth guard (AUTH-05): render LoginScreen for unauthenticated users
   if (coldStartBusy) {
     // Cold-start: keychain check in progress — render blank while awaiting result
@@ -241,7 +252,18 @@ function App() {
         {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} restaurantSettings={restaurantSettings} deliveryAreas={deliveryAreas} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={handlePrint} onCancel={() => setCancelDialog({ order: selectedOrder })} isOffline={isOffline} />}
         {screen === 'history' && <HistoryScreen lang={lang} onOpenOrder={openHistoryOrder} isOffline={isOffline} />}
         {screen === 'history-detail' && historyOrder && (
-          <OrderDetailScreen order={historyOrder} lang={lang} readOnly onBack={() => setScreen('history')} isOffline={isOffline} />
+          <OrderDetailScreen
+            order={mergedHistoryOrder}
+            lang={lang}
+            restaurantSettings={restaurantSettings}
+            deliveryAreas={deliveryAreas}
+            readOnly
+            detailLoading={historyDetailPending}
+            detailError={historyDetailError}
+            onRetryDetail={refetchHistoryDetail}
+            onBack={() => setScreen('history')}
+            isOffline={isOffline}
+          />
         )}
         {screen === 'menu'    && <MenuScreen    lang={lang} isOffline={isOffline} />}
         {screen === 'printer' && <PrinterScreen lang={lang} restaurantSettings={restaurantSettings} isOffline={isOffline} />}
