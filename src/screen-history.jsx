@@ -14,6 +14,9 @@ import {
   validateCustomRange,
   customRangeToQuery,
   MAX_RANGE_DAYS,
+  matchesStatus,
+  matchesType,
+  matchesSearch,
 } from './history-utils.js';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
@@ -326,9 +329,56 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
     setSelectedPeriod({ id: 'custom', customRange });
   };
 
+  // Phase 10 (HIST-07/08/09): status/type/search filter state, colocated with the period state
+  // above but NOT keyed to it — D-12 requires all three to survive a period switch, so none of
+  // this is derived from or reset by `selectedPeriod`/`range`.
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
+  // D-10: 250ms debounce on typing; clearing/emptying the box applies immediately (no timer) —
+  // widening a result set has no cost, and waiting to see MORE reads as broken. Cleanup cancels a
+  // superseded keystroke's pending apply (RESEARCH Pitfall 3).
+  useEffect(() => {
+    if (query === '') {
+      setDebouncedQuery('');
+      return;
+    }
+    const id = setTimeout(() => setDebouncedQuery(query), 250);
+    return () => clearTimeout(id);
+  }, [query]);
+
   const finished = useMemo(() => filterFinishedOrders(data ?? []), [data]);
-  const days = useMemo(() => groupOrdersByDay(finished), [finished]);
-  const summary = useMemo(() => computeSummary(finished), [finished]);
+
+  // D-01/D-02: two derived sets, one pass apart — byTypeAndSearch (type+search only) feeds the
+  // faceted status counts AND is the seed for `visible`; a single `.filter()` cannot produce both
+  // the exclude-self counts and the fully-filtered rows (RESEARCH Pattern 1 / Pitfall 1).
+  const byTypeAndSearch = useMemo(
+    () => finished.filter((o) => matchesType(o, typeFilter) && matchesSearch(o, debouncedQuery)),
+    [finished, typeFilter, debouncedQuery]
+  );
+
+  // Full filter (status too) — feeds rows/day-groups/summary (D-04).
+  const visible = useMemo(
+    () => byTypeAndSearch.filter((o) => matchesStatus(o, statusFilter)),
+    [byTypeAndSearch, statusFilter]
+  );
+
+  // D-02: exclude-self faceting — tallied via deriveDisplayStatus over byTypeAndSearch (never
+  // subtraction, RESEARCH Pitfall 1), so a sibling pill's count is unaffected by the status
+  // selection itself. `all` = byTypeAndSearch.length (D-02).
+  const statusCounts = useMemo(() => {
+    const counts = { all: 0, completed: 0, refunded: 0, canceled: 0 };
+    for (const o of byTypeAndSearch) {
+      counts.all += 1;
+      counts[deriveDisplayStatus(o)] += 1;
+    }
+    return counts;
+  }, [byTypeAndSearch]);
+
+  const days = useMemo(() => groupOrdersByDay(visible), [visible]);
+  const summary = useMemo(() => computeSummary(visible), [visible]);
 
   const isEmpty = !isLoading && !isError && days.length === 0;
   // D-05/WR-02 (09-REVIEW.md): a switch is a fetch that is also showing placeholder data for a
@@ -348,7 +398,6 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
         isError={isError}
         isFetching={isFetching}
         isPlaceholderData={isPlaceholderData}
-        isEmptyState={isEmpty}
         summary={summary}
         settledPeriod={settledPeriod}
         lang={lang}
@@ -362,6 +411,13 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
         isFetching={isFetching}
         isPlaceholderData={isPlaceholderData}
         isLoading={isLoading}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        typeFilter={typeFilter}
+        setTypeFilter={setTypeFilter}
+        query={query}
+        setQuery={setQuery}
+        statusCounts={statusCounts}
       />
 
       <div className="card" style={{ overflow: 'hidden' }}>
@@ -389,7 +445,7 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
 // switch (isFetching && isPlaceholderData), reusing the tile-dimming visual already built for
 // first-load/error — no shimmer skeleton on a switch, since keepPreviousData guarantees a
 // previous value to dim. isPlaceholderData excludes a same-range background refetch (WR-02).
-function SummaryStrip({ t, isLoading, isError, isFetching, isPlaceholderData, isEmptyState, summary, settledPeriod, lang }) {
+function SummaryStrip({ t, isLoading, isError, isFetching, isPlaceholderData, summary, settledPeriod, lang }) {
   const periodSub = periodLabel(settledPeriod, t, lang);
   const tiles = [
     { key: 'orders', label: t('h_orders'), value: String(summary.ordersCount), sub: periodSub, tint: 'sage', icon: 'receipt' },
@@ -397,7 +453,10 @@ function SummaryStrip({ t, isLoading, isError, isFetching, isPlaceholderData, is
     {
       key: 'avg',
       label: t('h_avg'),
-      value: summary.avg === null ? (isEmptyState ? formatRON(0) : '—') : formatRON(summary.avg),
+      // D-15: the em-dash keeps exactly one meaning on this screen — a true fetch error. A status
+      // filter (Canceled/Refunded-only) can now reduce completedCount to 0 while rows stay on
+      // screen (avg === null, isError false) — that case must render a computed 0, not '—'.
+      value: summary.avg === null ? (isError ? '—' : formatRON(0)) : formatRON(summary.avg),
       sub: t('h_avg_sub'),
       tint: 'slate',
       icon: 'percent',
