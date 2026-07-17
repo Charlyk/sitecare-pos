@@ -358,7 +358,18 @@ this as a rename, matching the pattern `08-UI-SPEC.md` used for its own new-key 
 dimmed-loading state · E4 period-switch error state · E5 period-dependent copy (tile sub-label +
 empty state).
 
-**Coverage: 33 applicable — 27 covered, 4 backstop, 2 dismissed, 0 unresolved.**
+**Coverage — probe engine run (authoritative):** `ui-consideration-probe.cjs` classified **31
+applicable** considerations across the five elements (E1: 2 — `overflow`, `long-text`; E2: 5 —
+`empty`, `loading`, `error`, `partial`, `long-text`; E3/E4/E5: all 8 each). Of those 31:
+**16 covered · 3 backstop · 12 dismissed · 0 unresolved.**
+
+The tables below deliberately probe all 8 categories for every element (40 rows: **21 covered ·
+3 backstop · 16 dismissed · 0 unresolved**) — a superset of the engine's applicable set. The 9
+extra rows are categories the engine's prose classifier did not raise (E1 is classified
+`interactive-control`, so it never raised `empty`/`populated`/`partial`/`zero-one-many`; E2 is
+classified `form`, so it never raised `populated`/`overflow`/`zero-one-many`). They are answered
+here anyway rather than left silent. Every one of the engine's 31 applicable considerations has a
+resolution below — none were dropped.
 
 ### E1 — Period pills (`interactive-control`)
 
