@@ -54,6 +54,13 @@ mobile screens, and a forgot-password flow — all deferred, not part of v1.1.
 collapsed-row items count, address subtitle, and table number are all cut — no API field backs them. Tracked
 in REQUIREMENTS.md under "Design Elements Cut".
 
+**Progress:** Phase 7 (History Screen Foundation) complete 2026-07-17 — the History sidebar item opens a
+screen that auto-loads the last 30 days via `listAdminOrders({from,to})`, grouped by Romanian calendar day
+with per-day count and revenue subtotals, plus loading/empty/error states and a read-only order detail.
+The period and status filter bar is present but inert; Phase 8 makes it live. Two open v1.1 questions were
+closed by live-API human verification: the API's `from`/`to` params behave correctly for Romanian local
+calendar days, and `AdminOrder.total` is denominated in RON (not cents), so no `normalizeOrder` change is needed.
+
 ---
 
 ## Requirements
@@ -84,10 +91,16 @@ in REQUIREMENTS.md under "Design Elements Cut".
 - ✓ GitHub Actions CI with macOS notarization and Windows MSI — v1.0 Phase 6
 - ✓ Silent in-app auto-updates via tauri-plugin-updater — v1.0 Phase 6
 
+### Validated (v1.1)
+
+- ✓ Orders History screen — new sidebar item, day-grouped scroll of past orders — Validated in Phase 7: History Screen Foundation (HIST-01, HIST-05)
+- ✓ History loads via `listAdminOrders({from,to})`; all filtering client-side on the returned array — Validated in Phase 7 (HIST-02)
+- ✓ History defaults to the last 30 days on first open — Validated in Phase 7 (HIST-03)
+- ✓ Clear empty state when no orders match — Validated in Phase 7 (HIST-13)
+
 ### Active (v1.1)
 
-- [ ] Orders History screen — new sidebar item, day-grouped scroll of past orders — v1.1 (HIST-01, HIST-05)
-- [ ] Period presets + custom range on History screen — v1.1 (HIST-03, HIST-04)
+- [ ] Period presets + custom range on History screen — v1.1 (HIST-04) — *the inert 30-day pill landed in Phase 7; Phase 8 makes it interactive*
 - [ ] Period summary strip via `getAdminDashboard` — v1.1 (HIST-06)
 - [ ] Search by order number or customer name on History screen — v1.1 (HIST-09)
 - [ ] Filter by status (completed / refunded / canceled) and order type — v1.1 (HIST-07, HIST-08)
@@ -165,4 +178,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-07-16 — v1.1 replanned against new design handoff + SDK v1.1.59; 13 requirements*
+*Last updated: 2026-07-17 — Phase 7 (History Screen Foundation) complete; HIST-01, HIST-02, HIST-03, HIST-05, HIST-13 validated*
