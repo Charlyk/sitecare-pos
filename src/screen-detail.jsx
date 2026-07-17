@@ -3,6 +3,7 @@ import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { formatRON, elapsedMinutes, orderTimeLabel, formatDuration } from './data.jsx';
 import { sourceMeta, typeMeta, stateMeta } from './screen-orders.jsx';
+import { deriveDuration } from './history-utils.js';
 
 function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = [], onBack, onAdvance, onPrint, onCancel, isOffline, readOnly = false }) {
   const t = useT(lang);
@@ -14,6 +15,7 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
   const typ = typeMeta(order.type, t);
   const st = stateMeta(order.state, t);
   const elapsed = elapsedMinutes(order.placedAt);
+  const duration = readOnly ? deriveDuration(order) : null;
 
   // API may not populate deliveryAreaName; fall back to passed-in delivery areas list
   const resolvedAreaName = order.address?.city
@@ -45,7 +47,13 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
           <div>
             <div style={{ fontWeight: 900, fontSize: 32, letterSpacing: '-0.02em', lineHeight: 1 }}>#{order.dailyOrderNumber}</div>
             <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', marginTop: 4 }}>
-              {orderTimeLabel(order.placedAt)} · {formatDuration(elapsed)} {t('elapsed').toLowerCase()}
+              {readOnly ? (
+                duration
+                  ? `${orderTimeLabel(order.placedAt)} · ${t(duration.kind === 'prep' ? 'h_prep_time' : 'h_canceled_after')}: ${formatDuration(duration.minutes)}`
+                  : orderTimeLabel(order.placedAt)
+              ) : (
+                `${orderTimeLabel(order.placedAt)} · ${formatDuration(elapsed)} ${t('elapsed').toLowerCase()}`
+              )}
             </div>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
