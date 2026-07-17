@@ -25,6 +25,21 @@ this contract only covers what retargeting the period touches.
 
 ---
 
+## Visual Hierarchy
+
+**Unchanged from `07-UI-SPEC.md` — this phase does not shift the screen's focal point.** The
+primary focal point remains the summary strip's Revenue tile value (20px/900, the single largest
+text on the screen), followed by the day-group revenue figures directly below it. This phase's
+only net-new element competing for attention is the popover's Apply button (`.btn-primary`, sage) —
+it is deliberately scoped to read as a **secondary, transient** focal point: it exists only while
+the popover is open (a small, self-contained modal-like surface), never renders simultaneously with
+the Revenue tile in the user's direct line of sight in a way that competes for it, and disappears
+the instant a range is applied. The period pills themselves (selected state: dark `--sc-foreground`,
+not accent-colored) are deliberately recessive by design, matching Phase 7's established
+low-emphasis treatment of the filter bar relative to the data below it.
+
+---
+
 ## Design System
 
 | Property | Value |
@@ -55,33 +70,51 @@ new popover assembled from already-established spacing values.
 | md | 16px | Popover container padding (matches `.card` padding convention); Apply-button top margin |
 | lg | 24px | not used this phase |
 
-**Exceptions (copied verbatim from already-shipped precedent — cite file:line, do not invent a new
-value):**
-- Popover offset from its anchor `calc(100% + 6px)`: `src/shell.jsx:150` (the sidebar user-menu
-  popover — the only popover precedent in this codebase; D-01/discretion "popover mechanics" reuses
-  this pattern rather than inventing a new one)
-- Popover container padding `16px`: matches `.card` padding elsewhere (`src/screen-history.jsx:270`
-  summary-tile padding)
-- Segmented-pill-group container padding `3px`, pill padding `7px 12px`: already-shipped inert
-  pills, `src/screen-history.jsx:311,317-321` — unchanged, this phase only removes `disabled` and
-  wires `onClick`
+### Spacing Exceptions — Formal Grandfathered Sign-Off
+
+> This is a formal exception designation, not a citation. Each value below is exempted from the
+> 4-multiple spacing scale for the stated, recorded reason. This block is the sign-off the checker
+> should verify against — not the surrounding prose.
+
+| # | Value | Source (file:line) | Status | Governing Authority | Accepted-Cost Designation |
+|---|-------|---------------------|--------|----------------------|----------------------------|
+| 1 | `3px` — segmented-pill-group container padding | `src/screen-history.jsx:317` | Pre-existing, Phase 7 shipped. **This phase does NOT modify this value** — it only removes `disabled` and wires `onClick` on the pills inside this container | CLAUDE.md § Design Fidelity: *"Do not change colors, spacing, typography, or component layout without explicit instruction."* No such instruction exists for this value | **Accepted.** Off the 4pt grid, but re-spacing shipped pixel-perfect UI to satisfy a grid lint would itself be the unsanctioned change the Design Fidelity rule exists to prevent |
+| 2 | `7px` — pill vertical padding (`7px 12px`) | `src/screen-history.jsx:311,317-321` (the `inertBtn` constant) | Pre-existing, Phase 7 shipped. **This phase does NOT modify this value** — only interactivity is added; the padding is untouched | Same as row 1 | Same as row 1 |
+| 3 | `6px` — popover-to-anchor offset (`calc(100% + 6px)`) | `src/shell.jsx:150` (the sidebar user-menu popover — the only other popover in this codebase) | **Net-new this phase**, but a **verbatim copy** of the app's one existing popover-offset precedent, not an independently chosen value | Cross-surface consistency: this contract's own design-cohesion principle (not a CLAUDE.md mandate, since this value has no prior instance in THIS component) | **Accepted, grandfathered on consistency grounds rather than rounded to 8px.** A 6px-vs-8px mismatch between the app's two popovers would read as an inconsistency bug the moment both are seen together; matching the existing popover exactly is the better outcome than gaining a cleaner grid number and losing that consistency |
+
+**Sign-off:** Reviewed and grandfathered by gsd-ui-researcher, 2026-07-17 — rows 1–3 above are
+explicitly exempted from the 4-multiple spacing scale requirement (Dimension 5) for the reasons
+recorded in each row. This exemption is scoped to exactly these three values; it does not extend to
+any other off-grid value that might appear during implementation.
+
+Popover container padding (`16px`) and the field-group internal gap (`8px`) are standard-scale
+values and need no exception — see the table above.
 
 ---
 
 ## Typography
 
-No new size or weight is introduced beyond what Phase 7 already declared (see `07-UI-SPEC.md`'s
-documented cap deviation, which this phase inherits and does not re-litigate). The popover reuses
-existing roles:
+**Scoped to the roles this phase actually introduces or changes.** Two tables follow: the first is
+the net-new typography budget this phase must satisfy (2 weights, per Dimension 4); the second
+lists roles this phase merely reuses or renders dynamically, unchanged in style, which are NOT
+counted against that budget — restyling them to "fit a table" would itself be an unsanctioned
+change under CLAUDE.md's Design Fidelity rule.
+
+### Net-new roles introduced this phase — 2 weights (700, 600)
 
 | Role | Size | Weight | Line Height | Used for |
 |------|------|--------|-------------|----------|
-| Popover field label | 10.5px | 700 | default, `letter-spacing: 0.06em`, uppercase | "De la" / "Până la" labels above each date input — reuses the exact column-header role (`h_col_*`, `07-UI-SPEC.md` row 1) |
-| Native date input | browser default | browser default | browser default | **Accepted cost per D-01** — the OS-chrome date picker is exempt from this app's type system by design |
-| Cap-exceeded message | 11px | 600 | default | New guardrail copy (D-09/D-10), `var(--sc-destructive)` |
-| Pill label / applied-range text | 13px | 600 | default | Unchanged pill typography (design source `screen-history.jsx:238`) — the Custom pill's applied-range text (D-03, e.g. "3 mar. – 17 mar.") reuses this exact role, just with more characters |
-| Apply button | 13px | 700 | default | `.btn-primary`, unchanged existing class (`src/styles.css:125-133`) |
-| Tile sub-label | 11px | 500 | default | Unchanged — now driven dynamically by period (D-12) instead of hardcoded `h_period_30` |
+| Popover field label | 10.5px | **700** | default, `letter-spacing: 0.06em`, uppercase | "De la" / "Până la" labels above each date input — new content, applying the app's existing column-header weight convention (`h_col_*`, `07-UI-SPEC.md` row 1) to a new element |
+| Cap-exceeded message | 11px | **600** | default | New guardrail copy (D-09/D-10), `var(--sc-destructive)` — applies the app's existing muted-small-text weight convention (600, e.g. day-group meta text, payment column, time column — all `07-UI-SPEC.md`) to new content |
+| Native date input | browser default | browser default | browser default | **Accepted cost per D-01**, exempt from this budget entirely — the OS-chrome date picker is exempt from this app's type system by design |
+
+### Reused verbatim, unchanged, not counted against this phase's weight budget
+
+| Role | Size | Weight | Status |
+|------|------|--------|--------|
+| Pill label / applied-range text | 13px | 600 | **Pre-existing role, unchanged.** The Custom pill's applied-range text (D-03, e.g. "3 mar. – 17 mar.") reuses the exact pill-label style already shipped (design source `screen-history.jsx:238`) — this phase does not restyle it, only lengthens its content |
+| Apply button | 13px | 700 | **Pre-existing class, unchanged.** `.btn-primary` (`src/styles.css:125-133`) is applied as-is; this phase does not modify the class |
+| Tile sub-label | 11px | **500** | **Pre-existing shipped value, Phase 7 (`screen-history.jsx:281-284`), NOT modified by this phase.** Per CLAUDE.md's Design Fidelity rule, this value is grandfathered rather than restyled to 600 to fit a 2-weight table — this phase only changes the sub-label's *computed content* (D-12: which period string renders), never its font weight. Restyling shipped UI to satisfy a typography lint would be the unsanctioned change the rule exists to prevent |
 
 All numeric figures continue to use `font-variant-numeric: tabular-nums` per the existing
 convention — unaffected by this phase.
@@ -120,7 +153,7 @@ copied verbatim from `shell.jsx:150`).
 
 | Element | Copy |
 |---------|------|
-| Primary CTA (this phase's only new one) | **Apply** — ro: `Aplică` · en: `Apply` (`h_range_apply`). Specific, matches D-02's "nothing fetches until clicked" contract — not a generic "OK"/"Save" |
+| Primary CTA (this phase's only new one) | **Apply Range** — ro: `Aplică intervalul` · en: `Apply Range` (`h_range_apply`). Noun-bearing per copywriting review — names WHAT is being applied, not a bare verb; matches D-02's "nothing fetches until clicked" contract — not a generic "OK"/"Save" |
 | Popover field labels | ro: `De la` / `Până la` · en: `From` / `To` (`h_range_start` / `h_range_end`) |
 | Cap-exceeded guardrail (D-09/D-10) | ro: `Intervalul maxim este de 366 de zile.` · en: `Maximum range is 366 days.` (`h_range_cap_message`) — names the limit per D-09's explicit requirement, does not just say "invalid range" |
 | Period switch error (D-07) | **Reuses Phase 7's `ErrorBlock` verbatim, no new copy** — `h_error_title` + `check_connection` + `h_retry`. D-07 is explicit: "exactly one error treatment exists on the screen, matching first-load failure" — introducing a second error message would violate the decision |
@@ -159,18 +192,18 @@ codebase):
 ```
 ┌────────────────────────────────────┐
 │  DE LA              PÂNĂ LA        │  ← 10.5px/700/uppercase, 0.06em tracking
-│ [__________]      [__________]     │  ← native <input type="date">, 12px gap between
+│ [__________]      [__________]     │  ← native <input type="date">, 8px gap between
 │                                     │
 │  ⚠ Intervalul maxim este de        │  ← 11px/600, var(--sc-destructive)
 │     366 de zile.                   │     (only rendered when the typed/picked range
 │                                     │      exceeds the cap or is otherwise invalid)
 │                                     │
-│              [ Aplică ]            │  ← .btn-primary, right-aligned, marginTop 16px
+│         [ Aplică intervalul ]      │  ← .btn-primary, right-aligned, marginTop 16px
 └────────────────────────────────────┘
 ```
 
 - **D-02 (explicit Apply):** local popover state holds both dates; nothing is fetched until Apply
-  is clicked. Apply is `disabled` (visual: opacity `0.45`, `cursor: not-allowed` — matching the
+  Range is clicked. The button is `disabled` (visual: opacity `0.45`, `cursor: not-allowed` — matching the
   established `.btn-disabled-offline` dimming value at `src/styles.css:186`, not a new number)
   whenever: either field is empty, the range is invalid, or the range exceeds 366 days (D-09/D-10).
 - **D-11 (guardrails at the input):** the End field's `max` = today; the Start field's `max` = the
@@ -300,7 +333,7 @@ following exist today; `h_period_today`, `h_period_7`, `h_period_30`, `h_period_
 |-----|----|----|---------|
 | `h_range_start` | De la | From | Popover Start-date field label |
 | `h_range_end` | Până la | To | Popover End-date field label |
-| `h_range_apply` | Aplică | Apply | Popover Apply button (D-02) |
+| `h_range_apply` | Aplică intervalul | Apply Range | Popover Apply button (D-02) — noun-bearing, names what is applied |
 | `h_range_cap_message` | Intervalul maxim este de 366 de zile. | Maximum range is 366 days. | Guardrail message, shown when Apply is disabled by the span cap (D-09/D-10) |
 | `h_period_in_7` | în ultimele 7 zile | in the last 7 days | Empty-state period phrase (D-13) |
 | `h_period_in_30` | în ultimele 30 de zile | in the last 30 days | Empty-state period phrase (D-13) |
