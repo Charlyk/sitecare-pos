@@ -42,6 +42,67 @@ export function deriveDisplayStatus(order) {
   return null
 }
 
+/**
+ * D-10, UI-SPEC E1: derives an order's actual measured duration from its raw `events[]` array —
+ * never from the lowercased `order.state`. `normalizeOrder` (src/data.jsx) spreads `...o` and
+ * never rewrites `events[]`, so only raw SDK casing ('COMPLETED'/'CANCELLED') exists on
+ * `e.toStatus`; reading `order.state`'s vocabulary here would silently match nothing.
+ *
+ * Returns `{ kind: 'prep'|'canceled', minutes }` measured from `order.placedAt` to the winning
+ * terminal event's `createdAt`, or `null` whenever a trustworthy number cannot be produced — no
+ * `order.placedAt`, no `order.events`, an empty `events[]`, or an `events[]` carrying neither
+ * terminal status. Never returns an estimated, defaulted, or partially-derived number — an
+ * absence of evidence is reported as `null`, not a guessed duration.
+ *
+ * COMPLETED wins outright over CANCELLED when both are present, regardless of which is later —
+ * an order that completed and later received a correction event still reads as completed.
+ *
+ * The winning event per status is the one with the MAXIMUM `createdAt`, selected via `filter` +
+ * `reduce` with a `>=` comparison (never `Array.prototype.find`, which returns the first array
+ * match and would produce a stale duration on a re-completed or corrected order — RESEARCH
+ * Pitfall 5). The `>=` comparison makes the later array element win an exact timestamp tie, so
+ * the same input is always deterministic (adjacency edge). Events whose `createdAt` fails to
+ * parse (`Number.isNaN`) are skipped rather than propagating a NaN into the result.
+ *
+ * `minutes` is clamped to a floor of 0 via `Math.max(0, ...)` — an event predating `placedAt`
+ * never produces a negative duration.
+ *
+ * Uses `Math.round`, not `Math.floor`. This deliberately diverges from `elapsedMinutes` in
+ * data.jsx, which floors because it is a live ticking counter where rounding up would show a
+ * minute that has not elapsed yet. `deriveDuration` is a fixed historical measurement, where
+ * rounding to the nearest minute is the more accurate report — do not "fix" this into
+ * consistency with `elapsedMinutes`.
+ *
+ * @param {object} order — an already-normalized order
+ * @returns {{kind: 'prep'|'canceled', minutes: number}|null}
+ */
+export function deriveDuration(order) {
+  if (!order.placedAt || !Array.isArray(order.events) || order.events.length === 0) return null
+
+  const placedMs = new Date(order.placedAt).getTime()
+  if (Number.isNaN(placedMs)) return null
+
+  // Returns the maximum parseable createdAt (ms) among events matching toStatus, or null.
+  const latestMsFor = (toStatus) =>
+    order.events
+      .filter((e) => e.toStatus === toStatus)
+      .reduce((bestMs, e) => {
+        const ms = new Date(e.createdAt).getTime()
+        if (Number.isNaN(ms)) return bestMs
+        if (bestMs === null || ms >= bestMs) return ms
+        return bestMs
+      }, null)
+
+  const completedMs = latestMsFor('COMPLETED')
+  const kind = completedMs !== null ? 'prep' : 'canceled'
+  const eventMs = completedMs !== null ? completedMs : latestMsFor('CANCELLED')
+
+  if (eventMs === null) return null
+
+  const minutes = Math.max(0, Math.round((eventMs - placedMs) / 60000))
+  return { kind, minutes }
+}
+
 const pad = (n) => String(n).padStart(2, '0')
 
 /**
