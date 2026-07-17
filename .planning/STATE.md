@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 10
-current_plan: 2
+current_plan: 3
 status: executing
 stopped_at: Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
-last_updated: "2026-07-17T21:45:44.330Z"
+last_updated: "2026-07-17T21:51:52.163Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 20
-  completed_plans: 17
+  completed_plans: 18
   percent: 60
 ---
 
@@ -37,7 +37,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-17)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 10
-**Current Plan:** 2
+**Current Plan:** 3
 **Total Plans in Phase:** 4
 **Overall Status:** Phase 9 (Period Control) COMPLETE — 5/5 plans, HIST-04 sealed. All four History
 periods (Today/7/30/Custom) are live: presets retarget the fetch, the custom-range popover applies
@@ -51,7 +51,7 @@ checkpoint (live API, native picker chrome, 366-day timing, D-05 dimming percept
 planned (`10-01`..`10-04-PLAN.md`) and ready to execute.
 
 ```
-Progress: [████████████████████] 11/11 plans ([█████████░] 85%)
+Progress: [████████████████████] 11/11 plans ([█████████░] 90%)
 Milestone v1.1 — Phases 7, 8, and 9 complete (3/5), Phase 10 planned and ready to execute
 ```
 
@@ -116,6 +116,7 @@ the plan-checker against source.
 | Phase 09 P04 | 13min | 3 tasks | 2 files |
 | Phase 09 P05 | 11min (+ human checkpoint) | 3 tasks | 2 files |
 | Phase 10 P01 | 12min | 3 tasks | 3 files |
+| Phase 10 P02 | 6min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -243,7 +244,7 @@ the plan-checker against source.
   derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 10-01-PLAN.md — filter predicates (foldDiacritics/matchesSearch/matchesStatus/matchesType) + 2 i18n keys landed, 100/100 history-utils tests passing
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 10-02-PLAN.md — normalizeOrder 'local'->'dinein' boundary fix (F-02/HIST-08), shared-path regression proven for Orders filter/KDS/detail chip
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -255,7 +256,7 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T21:45:44.322Z
+**Last session:** 2026-07-17T21:51:52.157Z
 **Stopped at:** Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
 **Next action:** `/gsd-execute-phase 10` — Filters + Search (HIST-07/08/09) is already planned (`10-01`..`10-04-PLAN.md`) and ready to execute
 
@@ -320,3 +321,4 @@ the plan-checker against source.
 - [Phase ?]: [Phase 10-01]: foldDiacritics targets the whole Unicode combining-marks block (not a hand-picked subset) so both modern comma-below and legacy cedilla ș/ț encodings fold identically
 - [Phase ?]: [Phase 10-01]: matchesSearch mirrors screen-history.jsx's orderNumberLabel exactly (dailyOrderNumber when numeric, else id.slice(0,8)) so no row is unreachable by the text it displays
 - [Phase ?]: [Phase 10-01]: matchesStatus delegates to deriveDisplayStatus with zero inline status literals; matchesType is mapping-free equality only — the 'local'->'dinein' translation stays at normalizeOrder (D-08, plan 10-02)
+- [Phase ?]: [Phase 10-02]: normalizeOrder boundary fix scoped to a single expression at src/data.jsx:222 translating raw orderType 'local' to 'dinein' — delivery/pickup/absent pass through the existing ?? 'dinein' fallback chain unchanged; screen-pos.jsx's outbound orderTypeMap (dinein->local) is the deliberate inverse and stays untouched
