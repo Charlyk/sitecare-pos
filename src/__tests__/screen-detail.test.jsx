@@ -229,7 +229,7 @@ describe('readOnly mode', () => {
       createElement(OrderDetailScreen, { order, lang: 'ro', readOnly: true, onBack: vi.fn() }),
       { wrapper: w }
     )
-    expect(screen.getByText('Rambursată')).toBeTruthy()
+    expect(screen.getAllByText('Rambursată').length).toBeGreaterThan(0)
     expect(screen.queryByText('Finalizată')).toBeNull()
   })
 
@@ -239,7 +239,7 @@ describe('readOnly mode', () => {
       createElement(OrderDetailScreen, { order, lang: 'ro', readOnly: true, onBack: vi.fn() }),
       { wrapper: w }
     )
-    expect(screen.getByText('Anulată')).toBeTruthy()
+    expect(screen.getAllByText('Anulată').length).toBeGreaterThan(0)
     expect(screen.queryByText('Nouă')).toBeNull()
     expect(screen.queryByText('New')).toBeNull()
   })

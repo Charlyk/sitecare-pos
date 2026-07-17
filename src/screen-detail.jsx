@@ -3,7 +3,8 @@ import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { formatRON, elapsedMinutes, orderTimeLabel, formatDuration } from './data.jsx';
 import { sourceMeta, typeMeta, stateMeta } from './screen-orders.jsx';
-import { deriveDuration } from './history-utils.js';
+import { deriveDuration, deriveDisplayStatus } from './history-utils.js';
+import { historyStatusMeta } from './screen-history.jsx';
 
 function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = [], onBack, onAdvance, onPrint, onCancel, isOffline, readOnly = false }) {
   const t = useT(lang);
@@ -13,7 +14,13 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
 
   const src = sourceMeta(order.source, t);
   const typ = typeMeta(order.type, t);
-  const st = stateMeta(order.state, t);
+  // D-05: readOnly routes the chip through the same derivation the History row uses
+  // (deriveDisplayStatus + historyStatusMeta) so the two can never disagree. A null display
+  // status (no status/paymentCaptureStatus recognised) deliberately falls back to stateMeta
+  // rather than entering historyStatusMeta, whose `map[status] || map.completed` default would
+  // otherwise silently label an unrecognised order "Completed" (T-08-08).
+  const displayStatus = readOnly ? deriveDisplayStatus(order) : null;
+  const st = readOnly && displayStatus ? historyStatusMeta(displayStatus, t) : stateMeta(order.state, t);
   const elapsed = elapsedMinutes(order.placedAt);
   const duration = readOnly ? deriveDuration(order) : null;
 
