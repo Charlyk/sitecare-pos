@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 8 — Read-Only Order Detail View (NEW — inserted by the 2026-07-17 restructure)
-current_plan: Not started
+current_phase: 08
+current_plan: 2
 status: ready_to_execute
-stopped_at: Phase 8 planned — 5 plans, checker passed
-last_updated: "2026-07-17T11:48:00.026Z"
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-07-17T12:17:09.537Z"
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 11
+  completed_plans: 7
   percent: 20
 ---
 
@@ -26,7 +26,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-16)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 07 — history-screen-foundation
+**Current focus:** Phase 08 — read-only-order-detail-view
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -36,8 +36,8 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
-**Current Phase:** 8 — Read-Only Order Detail View (NEW — inserted by the 2026-07-17 restructure)
-**Current Plan:** Not started
+**Current Phase:** 08
+**Current Plan:** 2
 **Total Plans in Phase:** 5
 **Overall Status:** Phase 8 planned — 5 plans across 4 waves, plan-checker passed on the first
 iteration, requirements and decision coverage gates green (HIST-10 covered; 10/10 CONTEXT decisions).
@@ -45,7 +45,7 @@ Phase 7 before it: 6/6 plans executed, verification passed, UAT 26/26 with zero 
 ready to execute.
 
 ```
-Progress: [██░░░░░░░░] 20% (1/5 phases, v1.1)
+Progress: [██████░░░░] 64% (1/5 phases, v1.1)
 Milestone v1.1 — Phase 7 complete, Phase 8 planned and ready to execute
 ```
 
@@ -99,6 +99,7 @@ the plan-checker against source.
 | Phase 07 P05 | 9min | 2 tasks | 2 files |
 | Phase 07 P04 | 20min | 3 tasks | 2 files |
 | Phase 07 P06 | ~7min + checkpoint | 3 tasks | 2 files |
+| Phase 08 P01 | ~5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -209,10 +210,10 @@ the plan-checker against source.
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/08-read-only-order-detail-view/08-UI-SPEC.md
+**Resume file:** None
 
-**Last session:** 2026-07-17T11:14:47.510Z
-**Stopped at:** Phase 8 UI-SPEC approved
+**Last session:** 2026-07-17T12:17:09.531Z
+**Stopped at:** Completed 08-01-PLAN.md
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
@@ -251,3 +252,6 @@ the plan-checker against source.
 - [Phase ?]: Phase 07: HistoryScreen's inert filter bar unrolls period-preset pills as explicit buttons (not mapped) so the D-14 30-day full-opacity exception is independently readable in source
 - [Phase ?]: [Phase 07]: Confirmed by human verification against the live API on 2026-07-17: AdminOrder.total is in RON, not cents (day-header revenue subtotal matched the SiteCare admin dashboard).
 - [Phase ?]: [Phase 07]: Confirmed by human verification against the live API on 2026-07-17: the API's from/to date params behave correctly for Romanian local calendar days.
+- [Phase ?]: [Phase 08-01]: Removed handled-by from ROADMAP SC1 and REQUIREMENTS HIST-10 per D-09 — Order has no such field, only events[].actor (string|null, undocumented semantics)
+- [Phase ?]: [Phase 08-01]: ROADMAP SC2 corrected 401/403 to 401/404 — GetOrderErrors documents only 401 and 404
+- [Phase ?]: [Phase 08-01]: F-01 recorded in REQUIREMENTS.md — normalizeOrder yields an empty items array (never null) for AdminOrder summaries

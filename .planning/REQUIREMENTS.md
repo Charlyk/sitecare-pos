@@ -105,7 +105,7 @@ Revisit if the API adds these fields.
 | HIST-07 | Phase 10 | TBD | Pending |
 | HIST-08 | Phase 10 | TBD | Pending |
 | HIST-09 | Phase 10 | TBD | Pending |
-| HIST-10 | Phase 8 | TBD | Pending |
+| HIST-10 | Phase 8 | 08-01..08-05 | In Progress (08-01 of 5 plans done) |
 | HIST-11 | Phase 11 | TBD | Pending |
 | HIST-12 | Phase 11 | TBD | Pending |
 | HIST-13 | Phase 7 | 07-04 | Complete |
