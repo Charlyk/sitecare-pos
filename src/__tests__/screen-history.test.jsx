@@ -503,6 +503,41 @@ describe('Custom range popover wiring — D-03/D-04 (09-05)', () => {
     expect(screen.queryByTestId('history-range-popover')).toBeNull()
   })
 
+  // WR-01 (09-REVIEW.md): fireEvent.click alone never dispatches a preceding mousedown, so it
+  // cannot exercise the real mousedown(close)->click(reopen) race a browser produces on a second
+  // click. realClick fires the actual mousedown->mouseup->click sequence against the same target.
+  function realClick(el) {
+    fireEvent.mouseDown(el)
+    fireEvent.mouseUp(el)
+    fireEvent.click(el)
+  }
+
+  test('WR-01: a real mousedown->click sequence on the Custom pill opens then closes the popover (no reopen race)', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const customPill = getCustomPill()
+    realClick(customPill)
+    expect(screen.getByTestId('history-range-popover')).toBeTruthy()
+
+    // Second real click on the same (still-mounted) toggle button: the outside-click mousedown
+    // handler must see this mousedown as INSIDE the boundary ref and not close the popover ahead
+    // of the click's own toggle, or the popover would reopen immediately (the WR-01 bug).
+    realClick(customPill)
+    expect(screen.queryByTestId('history-range-popover')).toBeNull()
+  })
+
+  test('WR-01: a genuine outside mousedown still closes the popover', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    fireEvent.click(getCustomPill())
+    expect(screen.getByTestId('history-range-popover')).toBeTruthy()
+
+    fireEvent.mouseDown(document.body)
+    expect(screen.queryByTestId('history-range-popover')).toBeNull()
+  })
+
   test('applying a valid range calls useHistoryOrders with customRangeToQuery(from,to) and closes the popover', () => {
     useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
     render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))

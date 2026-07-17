@@ -430,14 +430,22 @@ function SummaryStrip({ t, isLoading, isError, isFetching, isEmptyState, summary
 // ahead of 09-05 Task 2 wiring it into FilterBar — same reuse-precedent as historyStatusMeta.
 // Both dates live in local state per D-02: nothing here fetches; onApply fires only from the
 // Apply button's click handler, and only once validateCustomRange has passed.
-export function CustomRangePopover({ t, onApply, onClose }) {
+// WR-01 (09-REVIEW.md): containerRef is an OPTIONAL boundary ref supplied by the caller
+// (FilterBar passes a ref to the wrapper that contains BOTH the toggle button and this popover,
+// mirroring shell.jsx:148's userMenuRef precedent). When provided, it — not panelRef — decides
+// "inside" for the outside-click check, so a mousedown on the toggle button is correctly seen as
+// inside and never fires onClose. Falls back to panelRef (the popover's own root) when no
+// containerRef is supplied, preserving this component's standalone-render behavior for its own
+// direct unit tests.
+export function CustomRangePopover({ t, onApply, onClose, containerRef }) {
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
   const panelRef = useRef(null);
 
   useEffect(() => {
     function handleMouseDown(e) {
-      if (panelRef.current && !panelRef.current.contains(e.target)) onClose();
+      const boundaryRef = containerRef ?? panelRef;
+      if (boundaryRef.current && !boundaryRef.current.contains(e.target)) onClose();
     }
     function handleKeyDown(e) {
       if (e.key === 'Escape') onClose();
@@ -448,7 +456,7 @@ export function CustomRangePopover({ t, onApply, onClose }) {
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose]);
+  }, [onClose, containerRef]);
 
   // D-11: native min/max narrow what is pickable, recomputed as the other field changes. Future
   // dates are excluded because History is finished-only (P7 D-01), and a future range is
@@ -544,6 +552,12 @@ function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange
   // 09-05/D-04: the popover unmounts entirely when closed (rangeOpen false) so its blank local
   // state is genuinely fresh on each open — nothing is remembered across a close/reopen cycle.
   const [rangeOpen, setRangeOpen] = useState(false);
+  // WR-01: boundary ref for the outside-click check — attached below to the wrapper `<div>` that
+  // contains BOTH the Custom pill's toggle button and CustomRangePopover, matching shell.jsx:148's
+  // userMenuRef precedent exactly. Without this, a real mousedown->click on the toggle button
+  // while open registers as "outside" (closes) then "click" (reopens) — the popover can never be
+  // dismissed by re-clicking the pill.
+  const customWrapperRef = useRef(null);
 
   // D-12: preset labels go through the same periodLabel() the tile sub-label reads — one lookup
   // site, so pill and tile cannot drift. D-03/09-05: the Custom pill's own label is the applied
@@ -605,7 +619,7 @@ function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange
           // segmented-control group (UI-SPEC Custom Range Popover Contract). Clicking it toggles
           // the popover open/closed regardless of whether a range is currently applied.
           return (
-            <div key={p.id} style={{ position: 'relative' }}>
+            <div key={p.id} ref={customWrapperRef} style={{ position: 'relative' }}>
               <button
                 data-testid="history-period-pill"
                 onClick={() => setRangeOpen((open) => !open)}
@@ -619,6 +633,7 @@ function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange
                   t={t}
                   onApply={onApplyCustomRange}
                   onClose={() => setRangeOpen(false)}
+                  containerRef={customWrapperRef}
                 />
               )}
             </div>
