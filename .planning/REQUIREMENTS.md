@@ -31,7 +31,7 @@
 - [x] **HIST-01**: User can navigate to a History screen via a dedicated sidebar item (same level as Orders, KDS, POS)
 - [x] **HIST-02**: History screen loads orders via `listAdminOrders({ from, to })`; all status, type, and search filtering is applied client-side on the returned array
 - [x] **HIST-03**: History screen defaults to the last 30 days on first open
-- [ ] **HIST-04**: User can switch the period via presets — Today / 7 days / 30 days / custom range — and the list reloads for the new range
+- [x] **HIST-04**: User can switch the period via presets — Today / 7 days / 30 days / custom range — and the list reloads for the new range
 - [x] **HIST-05**: User can see orders grouped by calendar day, newest first, each day header showing that day's order count and revenue subtotal
 - [x] **HIST-06**: User can see a summary strip for the selected period — orders, revenue, and average order value computed client-side from the same fetched list that backs the rows (D-15 — `getAdminDashboard` is not used); the refunds tile shows count only
 - [ ] **HIST-07**: User can filter by status — All / Completed / Refunded / Canceled — each showing a live count

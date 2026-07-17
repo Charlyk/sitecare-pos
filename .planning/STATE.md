@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 9 — Period Control
-current_plan: Not started
+current_phase: 09
+current_plan: 2
 status: ready_to_execute
-stopped_at: Phase 9 planned — 5 plans, verification passed
-last_updated: "2026-07-17T18:30:00.000Z"
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-07-17T20:03:22.752Z"
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 16
-  completed_plans: 11
+  completed_plans: 12
   percent: 40
 ---
 
@@ -26,7 +26,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-17)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 9 — Period Control
+**Current focus:** Phase 09 — period-control
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -36,8 +36,8 @@ See: `.planning/PROJECT.md` (updated 2026-07-17)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
-**Current Phase:** 9 — Period Control
-**Current Plan:** Not started
+**Current Phase:** 09
+**Current Plan:** 2
 **Total Plans in Phase:** 5
 **Overall Status:** Phase 8 COMPLETE — 5/5 plans, verification passed 9/9 must-haves, UAT 20/20 with
 zero issues (16 auto-passed from coverage blocks, 4 human-confirmed), security verified with
@@ -47,7 +47,7 @@ controls reachable in readOnly mode. Phase 7 before it: 6/6 plans, UAT 26/26 wit
 Phase 9 (Period Control) is ready to plan.
 
 ```
-Progress: [████████████████████] 11/11 plans (100%)
+Progress: [████████████████████] 11/11 plans ([████████░░] 75%)
 Milestone v1.1 — Phases 7 and 8 complete (2/5), Phase 9 ready to plan
 ```
 
@@ -106,6 +106,7 @@ the plan-checker against source.
 | Phase 08 P03 | ~6min | 2 tasks | 2 files |
 | Phase 08 P04 | ~10min | 2 tasks | 2 files |
 | Phase 08 P05 | ~8min | 2 tasks | 2 files |
+| Phase 09 P01 | 12min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -216,10 +217,10 @@ the plan-checker against source.
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/10-filters-search/10-UI-SPEC.md
+**Resume file:** None
 
-**Last session:** 2026-07-17T14:49:13.800Z
-**Stopped at:** Phase 10 UI-SPEC approved
+**Last session:** 2026-07-17T20:03:22.745Z
+**Stopped at:** Completed 09-01-PLAN.md
 **Next action:** `/gsd-discuss-phase 9` — gather context for Period Control (HIST-04)
 
 **Phase 7 planning notes:**
@@ -269,3 +270,6 @@ the plan-checker against source.
 - [Phase ?]: Phase 08-04: readOnly items-card state machine keys on query state (detailError > detailLoading > items.length===0 > populated), not on the items value, per F-01 — items is [] both while loading and when genuinely empty
 - [Phase ?]: [Phase 08-05]: add-alongside confirmed terminal for this phase (D-01/D-04 locked) — two useOrderDetail call sites against the same ['order', id] cache key; promote deferred to a future third OrderDetailScreen caller, diverging data needs, or prop growth past readOnly + three
 - [Phase ?]: [Phase 08-05]: mergedHistoryOrder = {...historyOrder, ...(historyDetail ?? {})} computed near orderCount (not adjacent to the hooks) since it's a derived value, not a hook, with no ordering constraint
+- [Phase ?]: [Phase 09-01]: getPresetRange returns null for any unrecognized id (including 'custom', undefined, null) rather than defaulting to a range — a typo in a caller must never render a period label that does not describe the fetched data (D-06)
+- [Phase ?]: [Phase 09-01]: validateCustomRange evaluates incomplete -> end-before-start -> future -> too-long in that fixed order, first match wins, so a doubly-invalid range is always reported the same way
+- [Phase ?]: [Phase 09-01]: formatDateRange's showYear boolean is computed once from both inclusive endpoints and fed to both Intl.DateTimeFormat option objects, making a mixed one-endpoint-with-year rendering structurally unreachable
