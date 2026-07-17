@@ -39,10 +39,11 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 **Current Phase:** 08
 **Current Plan:** 5
 **Total Plans in Phase:** 5
-**Overall Status:** Phase 8 planned — 5 plans across 4 waves, plan-checker passed on the first
-iteration, requirements and decision coverage gates green (HIST-10 covered; 10/10 CONTEXT decisions).
+**Overall Status:** Phase 8 executed — 5/5 plans complete across 4 waves, verification passed 9/9
+must-haves. HIST-10 delivered: archived-order detail hydrates via `getOrder(id)` with derived prep
+time, status chip, and loading/error/empty states; no mutating controls reachable in readOnly mode.
 Phase 7 before it: 6/6 plans executed, verification passed, UAT 26/26 with zero issues. Phase 8 is
-ready to execute.
+ready for UAT.
 
 ```
 Progress: [██████████] 100% (1/5 phases, v1.1)
@@ -218,7 +219,7 @@ the plan-checker against source.
 
 **Last session:** 2026-07-17T12:47:18.048Z
 **Stopped at:** Completed 08-05-PLAN.md — Phase 8 complete (5/5 plans, HIST-10 delivered)
-**Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
+**Next action:** `/gsd-verify-work` — UAT Phase 8 (Read-Only Order Detail View)
 
 **Phase 7 planning notes:**
 
