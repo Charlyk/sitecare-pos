@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 08
-current_plan: 2
+current_plan: 3
 status: ready_to_execute
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-07-17T12:17:09.537Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-07-17T12:22:40.215Z"
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 11
-  completed_plans: 7
+  completed_plans: 8
   percent: 20
 ---
 
@@ -37,7 +37,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 08
-**Current Plan:** 2
+**Current Plan:** 3
 **Total Plans in Phase:** 5
 **Overall Status:** Phase 8 planned — 5 plans across 4 waves, plan-checker passed on the first
 iteration, requirements and decision coverage gates green (HIST-10 covered; 10/10 CONTEXT decisions).
@@ -45,7 +45,7 @@ Phase 7 before it: 6/6 plans executed, verification passed, UAT 26/26 with zero 
 ready to execute.
 
 ```
-Progress: [██████░░░░] 64% (1/5 phases, v1.1)
+Progress: [███████░░░] 73% (1/5 phases, v1.1)
 Milestone v1.1 — Phase 7 complete, Phase 8 planned and ready to execute
 ```
 
@@ -100,6 +100,7 @@ the plan-checker against source.
 | Phase 07 P04 | 20min | 3 tasks | 2 files |
 | Phase 07 P06 | ~7min + checkpoint | 3 tasks | 2 files |
 | Phase 08 P01 | ~5min | 2 tasks | 3 files |
+| Phase 08 P02 | ~3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -212,8 +213,8 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T12:17:09.531Z
-**Stopped at:** Completed 08-01-PLAN.md
+**Last session:** 2026-07-17T12:22:40.209Z
+**Stopped at:** Completed 08-02-PLAN.md
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
@@ -255,3 +256,5 @@ the plan-checker against source.
 - [Phase ?]: [Phase 08-01]: Removed handled-by from ROADMAP SC1 and REQUIREMENTS HIST-10 per D-09 — Order has no such field, only events[].actor (string|null, undocumented semantics)
 - [Phase ?]: [Phase 08-01]: ROADMAP SC2 corrected 401/403 to 401/404 — GetOrderErrors documents only 401 and 404
 - [Phase ?]: [Phase 08-01]: F-01 recorded in REQUIREMENTS.md — normalizeOrder yields an empty items array (never null) for AdminOrder summaries
+- [Phase ?]: [Phase 08-02]: deriveDuration lives in history-utils.js (not screen-detail.jsx) — pure function, direct unit tests for hard edge cases, matches deriveDisplayStatus's raw-SDK-casing convention
+- [Phase ?]: [Phase 08-02]: historyStatusMeta exported from screen-history.jsx (not duplicated, not extracted to a new module) — mirrors screen-orders.jsx's screen-to-screen meta-import precedent, makes D-05 row/detail agreement true by construction
