@@ -5,8 +5,8 @@ milestone_name: Orders History Screen
 current_phase: 9 — Period Control
 current_plan: Not started
 status: ready_to_plan
-stopped_at: Phase 8 complete — UAT 20/20, security verified (threats_open 0). Phase 9 needs discussion.
-last_updated: "2026-07-17T13:05:35.671Z"
+stopped_at: Phase 9 context gathered
+last_updated: "2026-07-17T13:45:19.252Z"
 progress:
   total_phases: 5
   completed_phases: 2
@@ -216,10 +216,10 @@ the plan-checker against source.
 
 ## Session Continuity
 
-**Resume file:** None
+**Resume file:** .planning/phases/09-period-control/09-CONTEXT.md
 
-**Last session:** 2026-07-17
-**Stopped at:** Phase 8 complete (UAT 20/20, security verified), ready to plan Phase 9
+**Last session:** 2026-07-17T13:45:19.246Z
+**Stopped at:** Phase 9 context gathered
 **Next action:** `/gsd-discuss-phase 9` — gather context for Period Control (HIST-04)
 
 **Phase 7 planning notes:**
