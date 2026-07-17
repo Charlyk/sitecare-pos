@@ -17,17 +17,21 @@ created: 2026-07-17
 > adds live-count badges, (2) specs the ONE genuinely net-new control group this phase adds — the
 > type filter, which the current bar never ported (F-03) — (3) restructures the bar into the
 > design's two-row shape (D-07) so the type group fits, (4) specs the debounced search box's
-> activation, and (5) specs the filtered-empty-state's second copy variant and its
-> clear-filters remedy (D-13, D-14). All decision IDs below (`D-01`…`D-15`, `F-02`, `F-03`) refer
-> to `10-CONTEXT.md`.
+> activation, (5) specs the filtered-empty-state's second copy variant and its clear-filters
+> remedy (D-13, D-14), and (6) specs the Avg-tile's zero-vs-error-glyph gating fix (D-15) that
+> this phase makes reachable for the first time. All decision IDs below (`D-01`…`D-15`, `F-02`,
+> `F-03`) refer to `10-CONTEXT.md`.
 
 **Scope note:** The period presets, the custom-range popover, and the period-switch
 loading/error/copy behaviors ship from Phase 9 (`09-UI-SPEC.md`) and are reused verbatim — this
 contract does not re-spec them. Reprint and CSV export stay inert (Phase 11); the Export button's
 inert visual is untouched. The day-grouped list's row/table rendering, the first-load skeleton,
-and the detail route shipped from Phase 7/8 and are reused verbatim — this contract only covers
-what filtering and search touch: the filtered *input* to `groupOrdersByDay`/`computeSummary`
-(D-04), never their output shape.
+and the detail route shipped from Phase 7/8 and are reused verbatim — this contract covers what
+filtering and search touch: the filtered *input* to `groupOrdersByDay`/`computeSummary` (D-04),
+**and the one tile-output change this phase itself introduces** — the Avg tile's zero-vs-error
+gating condition (D-15), which becomes reachable for the first time once a status filter can
+reduce `completedCount` to zero while other rows remain visible. See the Summary Strip / Avg-Tile
+Contract below — this is not covered by "reused verbatim."
 
 ---
 
@@ -173,6 +177,7 @@ search box chrome (unchanged neutral `.search` class).
 | Empty state — no filters active (D-13, unchanged) | **Reuses `09-UI-SPEC.md`'s period-aware composition verbatim**: `${t('h_empty_prefix')} ${periodPhrase}.` + unchanged `h_empty_sub` on its own line. No new copy from this phase |
 | Empty state — filters active (D-13, net-new) | ro: `Nicio comandă nu se potrivește cu filtrele active.` · en: `No orders match the active filters.` (`h_empty_filtered_title`) — names the real cause (filters, not the period) per D-13's explicit requirement. **No sub-line in this variant** — the Clear Filters button below it is the remedy, and pairing a sub-line explanation with a self-explanatory button would be redundant (this contract's own resolution of `10-CONTEXT.md`'s open "exact key naming" discretion item) |
 | Error state | **Unchanged from Phase 7 — no new copy.** Filtering is 100% client-side over an already-fetched array (`ListAdminOrdersData` has no filter/search params); a filter predicate cannot itself fail, so no new error source or copy is introduced by this phase |
+| Avg-tile zero vs. error glyph (D-15) | **No copy string — a glyph-gating rule, stated here for the executor's unambiguous reference.** `'—'` (em-dash) is reserved for `isError === true` only, on this and every prior History phase. Whenever `summary.avg === null` and `isError` is `false` — an empty period (Phase 7) **or** a filtered view with zero completed orders (this phase, newly reachable) — the tile renders the computed value `formatRON(0)`, never `'—'`. See Summary Strip / Avg-Tile Contract below for the full gating-condition fix |
 | Destructive confirmation | **None in Phase 10** — no destructive action exists; Clear Filters is a benign, instantly-reversible UI-state reset, not a data mutation, so no confirmation dialog is warranted |
 
 ---
@@ -337,6 +342,49 @@ Variant B — filters active (net-new this phase, D-13/D-14):
 
 ---
 
+## Summary Strip / Avg-Tile Contract (D-04, D-05, D-15)
+
+**The four tiles recompute from the FILTERED set, not the period (D-04)** — `computeSummary`
+already accepts any list, so this is a change of input only, reusing `SummaryStrip` verbatim.
+This is the one place in this phase where a filter's effect is not "which rows render" but
+"what number a tile shows" — and D-15 is a **gating-condition fix**, not just a number change,
+so it is specified here explicitly rather than left implicit in "tiles follow the data."
+
+**D-15 — the blocking fix.** Filtering to `Completed only` was always safe (the whole visible set
+is completed, `avg` is a real number). Filtering to **`Canceled only`** or **`Refunded only`**
+makes `completedCount === 0` while rows are still visible on screen — a state Phase 7 never had
+to handle, because before this phase the only way to reach `completedCount === 0` was an empty
+period (`isEmptyState === true`). Phase 10 makes a **second** route to `completedCount === 0`
+reachable: a non-empty, successfully-filtered screen with zero *completed* orders in view.
+
+- **The existing gate is wrong for this new route.** Today (`screen-history.jsx:251`):
+  `summary.avg === null ? (isEmptyState ? formatRON(0) : '—') : formatRON(summary.avg)`. Under a
+  Canceled-only filter, `avg === null` (true) but `isEmptyState` is `false` (canceled rows are on
+  screen) — the tile would render `'—'`, the em-dash **error** glyph, during a completely
+  successful filter. That is the exact bug this decision exists to prevent.
+- **The fix, stated as a visual directive:** the gating condition must change from
+  **`isEmptyState`** to **"not an error"** (`isError` being the only thing that should ever
+  produce the em-dash). Concretely: `summary.avg === null ? (isError ? '—' : formatRON(0)) :
+  formatRON(summary.avg)`. The Avg tile renders a computed **`0`** (via `formatRON(0)`, exactly
+  like every other RON figure on this screen — no special "zero" styling, no dimming, no asterisk)
+  in **every** `completedCount === 0` case that is not a true fetch error: an empty period (the
+  original Phase 7 case, unchanged in outcome) **and** a non-empty filtered view with zero
+  completed orders (this phase's new case).
+- **The em-dash (`'—'`) keeps exactly one meaning on this screen: a true fetch error
+  (`isError === true`).** This carries forward `07-UI-SPEC.md`'s and `09-UI-SPEC.md`'s "one error
+  treatment" rule and extends it from error *states* to the error *glyph* itself — the glyph must
+  never appear as a side effect of a successful filter, only as a side effect of `isError`.
+- **D-05 (accepted, unaffected by this fix):** under `status = Completed`, the Refunds tile still
+  reads `0 · 0 canceled` and can only ever read zero — this is a separate, already-accepted
+  consequence of D-04's "one rule, no carve-outs," not something this gating fix changes. The
+  Refunds tile has no null-average ambiguity to begin with (it is a plain count, never `null`), so
+  D-15's fix does not touch it.
+- **No new visual chrome.** No new color, no new size, no new icon — this is a gating-logic
+  correction to which of two already-existing renders (`formatRON(0)` vs `'—'`) a tile falls into,
+  not a new tile design.
+
+---
+
 ## UI Considerations
 
 > Populated by the ui-phase UI-consideration probe (`ui-consideration-probe.cjs`). Shape-rooted UI
@@ -348,12 +396,15 @@ Variant B — filters active (net-new this phase, D-13/D-14):
 
 **Elements probed (probe engine run, authoritative):** E1 status filter pills (activated, with
 counts) · E2 type filter pills (net-new) · E3 debounced search input · E4 filtered day-grouped
-rows + day-header counts/subtotals · E5 filtered-empty-state + clear-filters.
+rows + day-header counts/subtotals · E5 filtered-empty-state + clear-filters · E6 summary-strip
+tiles recomputed from the filtered set (D-04/D-05/D-15), including the Avg tile's zero-vs-error
+gating fix.
 
-**Coverage:** `ui-consideration-probe.cjs` classified **33 applicable** considerations across the
-five elements (E1: 8 — list-collection ∪ interactive-control · E2: 5 — media ∪ interactive-control
+**Coverage:** `ui-consideration-probe.cjs` classified **40 applicable** considerations across the
+six elements (E1: 8 — list-collection ∪ interactive-control · E2: 5 — media ∪ interactive-control
 · E3: 5 — form · E4: 7 — list-collection · E5: 8 — list-collection ∪ interactive-control ∪
-static-content). Of those 33: **24 covered · 3 backstop · 6 dismissed · 0 unresolved.**
+static-content · E6: 7 — list-collection). Of those 40: **25 covered · 3 backstop · 12 dismissed ·
+0 unresolved.**
 
 ### E1 — Status filter pills, activated + counts (`list-collection` ∪ `interactive-control`)
 
@@ -412,6 +463,18 @@ static-content). Of those 33: **24 covered · 3 backstop · 6 dismissed · 0 unr
 | overflow | ✅ covered | Both variants' copy is short, fixed-length, vetted in both `ro`/`en` — no overflow risk within the existing 48px-padded centered block |
 | zero-one-many | dismissed | This state exists only at exactly zero visible rows by definition — "one/many" is the populated case (E4) |
 | long-text | ✅ covered | `h_empty_filtered_title` authored short in both locales and fits the unchanged `EmptyBlock` container width |
+
+### E6 — Summary-strip tiles recomputed from the filtered set (`list-collection`)
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | dismissed | Always exactly 4 tiles, a static set rendered regardless of row count — not data-driven presence/absence; the zero-completed-orders case is the `populated` row below, not an `empty` one |
+| loading | dismissed | Unaffected by this phase — the skeleton-shimmer branch (`isLoading`, Phase 7) is untouched; filtering only ever applies to already-settled data |
+| error | dismissed | Unaffected by this phase — the `isError` branch (all 4 tiles show `'—'`, Phase 7) is untouched; this phase's fix narrows *when* the non-error branch applies, it does not touch the error branch itself |
+| populated | ✅ covered | **This is the D-15 fix.** See Summary Strip / Avg-Tile Contract above — the Avg tile renders computed `formatRON(0)`, never the `'—'` error glyph, whenever `completedCount === 0` and `isError` is `false`, including the newly-reachable case where a status filter (Canceled-only or Refunded-only) leaves visible rows on screen with zero of them completed |
+| partial | dismissed | Not applicable — each of the 4 tiles always renders its full label/value/sub-label triplet; D-05's "Refunds tile can only read zero under a status filter" is a computed value, not a partially-rendered tile |
+| overflow | dismissed | Unaffected by this phase — tile numeric formatting (`formatRON`, `tabular-nums` where already applied) is unchanged from Phase 7; this phase changes the gating condition and computed input only, never display formatting |
+| zero-one-many | dismissed | Not applicable — exactly 4 tiles always render regardless of the underlying filtered order count; "zero/one/many" describes row/day-group volume (E4), not the fixed tile set |
 
 ---
 
