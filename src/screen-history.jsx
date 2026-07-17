@@ -161,7 +161,24 @@ function ErrorBlock({ t, onRetry }) {
 // selectedPeriod — a stale period label above the wrong empty state would be the same false
 // financial claim D-06 exists to prevent. h_empty_sub is unchanged, on its own line (P7 D-13
 // reserves it for Phase 10's filter copy).
-function EmptyBlock({ t, settledPeriod, lang }) {
+//
+// Phase 10 (D-13/D-14): a second variant renders instead whenever filtersActive is true — the
+// filtered-empty copy (h_empty_filtered_title) on the SAME main-line role, no sub-line, and a
+// Clear Filters button below it (ErrorBlock's retry-button shape) whose onClick is onClearFilters.
+// Variant B never interpolates filter labels into the sentence (D-13's rejected ro/en
+// interpolation-trap alternative) — it is a single static i18n string per language.
+function EmptyBlock({ t, settledPeriod, lang, filtersActive, onClearFilters }) {
+  if (filtersActive) {
+    return (
+      <div style={{ textAlign: 'center', padding: 48, color: 'var(--sc-muted-foreground)' }}>
+        <div style={{ fontSize: 15, fontWeight: 600 }}>{t('h_empty_filtered_title')}</div>
+        <button className="btn-secondary" style={{ marginTop: 16 }} onClick={onClearFilters}>
+          <Icon name="x" size={14} /> {t('h_clear_filters')}
+        </button>
+      </div>
+    );
+  }
+
   // 09-05 Rule-1 fix: a trailing period is appended UNLESS the phrase already ends with one —
   // D-14's Romanian abbreviated month format ('mar.') already carries a trailing dot for a custom
   // range's end date, and naively appending a second one produced "17 mar.." (double-dot), first
@@ -380,6 +397,18 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
   const days = useMemo(() => groupOrdersByDay(visible), [visible]);
   const summary = useMemo(() => computeSummary(visible), [visible]);
 
+  // D-13/D-14: filtersActive selects EmptyBlock's Variant B (filtered-empty copy + Clear Filters)
+  // over Variant A (period copy) — a simple boolean, not a new derivation layer. handleClearFilters
+  // resets the three filter axes ONLY; it must never touch selectedPeriod/setSelectedPeriod
+  // (D-12 — period and filters are separate axes; clearing filters must not silently retarget the
+  // fetch).
+  const filtersActive = statusFilter !== 'all' || typeFilter !== 'all' || query !== '';
+  const handleClearFilters = () => {
+    setStatusFilter('all');
+    setTypeFilter('all');
+    setQuery('');
+  };
+
   const isEmpty = !isLoading && !isError && days.length === 0;
   // D-05/WR-02 (09-REVIEW.md): a switch is a fetch that is also showing placeholder data for a
   // NEW query key — isPlaceholderData is only true while keepPreviousData is standing in for a
@@ -424,7 +453,15 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
         <TableHeaderRow t={t} />
         {isLoading && Array.from({ length: 7 }).map((_, i) => <SkeletonRow key={i} />)}
         {!isLoading && isError && <ErrorBlock t={t} onRetry={() => refetch()} />}
-        {!isLoading && !isError && isEmpty && <EmptyBlock t={t} settledPeriod={settledPeriod} lang={lang} />}
+        {!isLoading && !isError && isEmpty && (
+          <EmptyBlock
+            t={t}
+            settledPeriod={settledPeriod}
+            lang={lang}
+            filtersActive={filtersActive}
+            onClearFilters={handleClearFilters}
+          />
+        )}
         {!isLoading && !isError && !isEmpty && (
           <div data-testid="history-rows" style={{ opacity: isSwitching ? 0.6 : 1, transition: 'opacity 150ms' }}>
             {days.map((day) => (
