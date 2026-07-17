@@ -400,11 +400,19 @@ rows + day-header counts/subtotals · E5 filtered-empty-state + clear-filters ·
 tiles recomputed from the filtered set (D-04/D-05/D-15), including the Avg tile's zero-vs-error
 gating fix.
 
-**Coverage:** `ui-consideration-probe.cjs` classified **40 applicable** considerations across the
-six elements (E1: 8 — list-collection ∪ interactive-control · E2: 5 — media ∪ interactive-control
-· E3: 5 — form · E4: 7 — list-collection · E5: 8 — list-collection ∪ interactive-control ∪
-static-content · E6: 7 — list-collection). Of those 40: **25 covered · 3 backstop · 12 dismissed ·
-0 unresolved.**
+**Coverage:** `ui-consideration-probe.cjs` classified **43 applicable** considerations across the
+six elements (E1: 8 — list-collection ∪ interactive-control · E2: 8 — media ∪ interactive-control ∪
+list-collection ∪ static-content · E3: 5 — form · E4: 7 — list-collection · E5: 8 —
+list-collection ∪ interactive-control ∪ static-content · E6: 7 — list-collection). Of those 43:
+**16 covered · 3 backstop · 24 dismissed · 0 unresolved** (counted from the tables below, not
+asserted — the authoring run's stated totals did not match its own rows and have been corrected).
+
+E2's kind set is the UNION of two independent probe runs (the researcher's authoring run and the
+orchestrator's post-verification re-run), per the propose-then-confirm rule — the prose classifier
+is heuristic and lossy, and a single tripped cue is a signal, not proof of an element's only kind.
+The 3 categories added by that union (`partial`, `overflow`, `zero-one-many`) are resolved in E2's
+table below. All other elements' kinds agreed across both runs, or the researcher's run was already
+the superset (E5).
 
 ### E1 — Status filter pills, activated + counts (`list-collection` ∪ `interactive-control`)
 
@@ -419,7 +427,15 @@ static-content · E6: 7 — list-collection). Of those 40: **25 covered · 3 bac
 | zero-one-many | dismissed | Exactly one pill is ever selected at a time — mutually exclusive by construction |
 | long-text | ✅ covered | Fixed short i18n labels in both locales (`h_status_completed`/`refunded`/`canceled`, already shipped); badge overflow is covered separately above |
 
-### E2 — Type filter pills, net-new (`media` ∪ `interactive-control`)
+### E2 — Type filter pills, net-new (`media` ∪ `interactive-control` ∪ `list-collection` ∪ `static-content`)
+
+Kind-confirmation note (orchestrator, post-verification probe): the researcher's authoring run
+classified this element as `media` ∪ `interactive-control` (5 applicable categories). A second,
+independently-worded probe run classified the same surface as `list-collection` ∪ `media` ∪
+`interactive-control` ∪ `static-content` (8 applicable). The union is authoritative — E2 is
+structurally identical to E1 (four mutually-exclusive pills in a segmented control), so E1's 8
+categories apply here too. The three categories the first run never surfaced are resolved below,
+mirroring E1's reasoning for the same shape.
 
 | Category | Status | Resolution / Reason |
 |----------|--------|---------------------|
@@ -427,6 +443,9 @@ static-content · E6: 7 — list-collection). Of those 40: **25 covered · 3 bac
 | loading | dismissed | Purely local UI-state toggle — no async state exists for a filter selection itself |
 | error | dismissed | Same reasoning as E1 — a predicate toggle cannot fail |
 | populated | ✅ covered | Type Filter Contract table — cream/sage selected vs. transparent/`#777` unselected, ported verbatim from the design source |
+| partial | dismissed | A pill is either selected or not; no partial-render state exists (same reasoning as E1) |
+| overflow | ✅ covered | Unlike E1, type pills carry NO count badge — the only overflow axis is the label itself, covered by `long-text` below. The 4-item segmented control's width is fixed by the design source and does not grow with data |
+| zero-one-many | dismissed | Exactly one pill is ever selected at a time — mutually exclusive by construction (same reasoning as E1) |
 | long-text | ✅ covered | Fixed short i18n labels already shipped (`all`/`delivery`/`pickup`/`dinein`) — no new strings, no overflow risk in a 4-item segmented control |
 
 ### E3 — Debounced search input (`form`)
