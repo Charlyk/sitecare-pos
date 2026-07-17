@@ -154,7 +154,7 @@ Plans:
   3. Staff can type an order number or customer name and the list narrows to matching orders, debounced so no filtering runs on every keystroke
   4. Filters, search, and period compose — day headers and their counts/subtotals reflect only the visible (filtered) orders, and the empty state appears when nothing matches
 
-**Plans**: 2/4 plans executed
+**Plans**: 3/4 plans executed
 
 Plans:
 
@@ -165,7 +165,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 10-03-PLAN.md — `HistoryScreen` filter state, debounce, two-derived-set faceted counts, D-04 recompute, D-15 Avg fix, two-row FilterBar restructure
+- [x] 10-03-PLAN.md — `HistoryScreen` filter state, debounce, two-derived-set faceted counts, D-04 recompute, D-15 Avg fix, two-row FilterBar restructure
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -201,7 +201,7 @@ Plans:
 | 7. History Screen Foundation | v1.1 | 6/6 | Complete    | 2026-07-17 |
 | 8. Read-Only Order Detail View | v1.1 | 5/5 | Complete    | 2026-07-17 |
 | 9. Period Control | v1.1 | 5/5 | Complete    | 2026-07-18 |
-| 10. Filters + Search | v1.1 | 2/4 | In Progress|  |
+| 10. Filters + Search | v1.1 | 3/4 | In Progress|  |
 | 11. Reprint + CSV Export | v1.1 | 0/? | Not started | - |
 
 ---
