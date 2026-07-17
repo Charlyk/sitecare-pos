@@ -5,14 +5,14 @@ milestone_name: Orders History Screen
 current_phase: 08
 current_plan: 5
 status: ready_to_execute
-stopped_at: Completed 08-04-PLAN.md
-last_updated: "2026-07-17T12:39:09.390Z"
+stopped_at: Completed 08-05-PLAN.md — Phase 8 complete (5/5 plans, HIST-10 delivered)
+last_updated: "2026-07-17T12:47:18.054Z"
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 11
-  completed_plans: 10
-  percent: 20
+  completed_plans: 11
+  percent: 40
 ---
 
 # State: SiteCare POS Desktop App
@@ -45,7 +45,7 @@ Phase 7 before it: 6/6 plans executed, verification passed, UAT 26/26 with zero 
 ready to execute.
 
 ```
-Progress: [█████████░] 91% (1/5 phases, v1.1)
+Progress: [██████████] 100% (1/5 phases, v1.1)
 Milestone v1.1 — Phase 7 complete, Phase 8 planned and ready to execute
 ```
 
@@ -103,6 +103,7 @@ the plan-checker against source.
 | Phase 08 P02 | ~3min | 2 tasks | 4 files |
 | Phase 08 P03 | ~6min | 2 tasks | 2 files |
 | Phase 08 P04 | ~10min | 2 tasks | 2 files |
+| Phase 08 P05 | ~8min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -215,8 +216,8 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T12:39:09.383Z
-**Stopped at:** Completed 08-04-PLAN.md
+**Last session:** 2026-07-17T12:47:18.048Z
+**Stopped at:** Completed 08-05-PLAN.md — Phase 8 complete (5/5 plans, HIST-10 delivered)
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
@@ -264,3 +265,5 @@ the plan-checker against source.
 - [Phase ?]: [Phase 08-03]: st chip binding: readOnly+non-null deriveDisplayStatus -> historyStatusMeta; readOnly+null -> stateMeta fallback (not historyStatusMeta's own completed default); not readOnly -> stateMeta unchanged (D-05)
 - [Phase ?]: Phase 08-04: Modify button gate landed inside Task 1's header restructuring commit rather than Task 2 as the plan's task split implied; Task 2's diff is test-only (standing allowlist regression test), verified by transiently un-gating Modify and confirming 5 assertions fail without it
 - [Phase ?]: Phase 08-04: readOnly items-card state machine keys on query state (detailError > detailLoading > items.length===0 > populated), not on the items value, per F-01 — items is [] both while loading and when genuinely empty
+- [Phase ?]: [Phase 08-05]: add-alongside confirmed terminal for this phase (D-01/D-04 locked) — two useOrderDetail call sites against the same ['order', id] cache key; promote deferred to a future third OrderDetailScreen caller, diverging data needs, or prop growth past readOnly + three
+- [Phase ?]: [Phase 08-05]: mergedHistoryOrder = {...historyOrder, ...(historyDetail ?? {})} computed near orderCount (not adjacent to the hooks) since it's a derived value, not a hook, with no ordering constraint
