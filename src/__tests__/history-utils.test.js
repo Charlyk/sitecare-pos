@@ -3,6 +3,9 @@
 
 import {
   getLast30DaysRange,
+  getTodayRange,
+  getLast7DaysRange,
+  getPresetRange,
   filterFinishedOrders,
   deriveDisplayStatus,
   groupOrdersByDay,
@@ -52,6 +55,99 @@ describe('getLast30DaysRange', () => {
     const { from, to } = getLast30DaysRange(fixedNow)
     const days = Math.round((new Date(to).getTime() - new Date(from).getTime()) / (24 * 60 * 60 * 1000))
     expect(days).toBe(30)
+  })
+})
+
+// ── getTodayRange — HIST-04, D-04 ─────────────────────────────────────────
+
+describe('getTodayRange', () => {
+  const fixedNow = new Date(2026, 6, 17, 14, 30, 0, 0) // 2026-07-17 14:30 local
+
+  test('from is local midnight of now\'s calendar day, to is local midnight the following day', () => {
+    const { from, to } = getTodayRange(fixedNow)
+    const fromD = new Date(from)
+    const toD = new Date(to)
+    expect(fromD.getFullYear()).toBe(2026)
+    expect(fromD.getMonth()).toBe(6)
+    expect(fromD.getDate()).toBe(17)
+    expect(fromD.getHours()).toBe(0)
+    expect(fromD.getMinutes()).toBe(0)
+    expect(toD.getFullYear()).toBe(2026)
+    expect(toD.getMonth()).toBe(6)
+    expect(toD.getDate()).toBe(18)
+    expect(toD.getHours()).toBe(0)
+  })
+
+  test('from and to are exactly one calendar day apart', () => {
+    const { from, to } = getTodayRange(fixedNow)
+    const days = Math.round((new Date(to).getTime() - new Date(from).getTime()) / (24 * 60 * 60 * 1000))
+    expect(days).toBe(1)
+  })
+
+  test('a clock late in the evening (23:59) produces the same range as one at 00:01 the same day', () => {
+    const lateNow = new Date(2026, 6, 17, 23, 59, 0, 0)
+    const earlyNow = new Date(2026, 6, 17, 0, 1, 0, 0)
+    expect(getTodayRange(lateNow)).toEqual(getTodayRange(earlyNow))
+  })
+})
+
+// ── getLast7DaysRange — HIST-04, D-04 ─────────────────────────────────────
+
+describe('getLast7DaysRange', () => {
+  const fixedNow = new Date(2026, 6, 17, 14, 30, 0, 0) // 2026-07-17 14:30 local
+
+  test('from is local midnight 6 days before now, to is local midnight the day after now', () => {
+    const { from, to } = getLast7DaysRange(fixedNow)
+    const fromD = new Date(from)
+    const toD = new Date(to)
+    expect(fromD.getFullYear()).toBe(2026)
+    expect(fromD.getMonth()).toBe(6)
+    expect(fromD.getDate()).toBe(11)
+    expect(toD.getFullYear()).toBe(2026)
+    expect(toD.getMonth()).toBe(6)
+    expect(toD.getDate()).toBe(18)
+  })
+
+  test('window spans exactly 7 calendar days', () => {
+    const { from, to } = getLast7DaysRange(fixedNow)
+    const days = Math.round((new Date(to).getTime() - new Date(from).getTime()) / (24 * 60 * 60 * 1000))
+    expect(days).toBe(7)
+  })
+
+  test('getLast30DaysRange still spans exactly 30 days for the same clock (shared exclusive upper bound)', () => {
+    const range30 = getLast30DaysRange(fixedNow)
+    const range7 = getLast7DaysRange(fixedNow)
+    const rangeToday = getTodayRange(fixedNow)
+    expect(range30.to).toBe(range7.to)
+    expect(range7.to).toBe(rangeToday.to)
+  })
+})
+
+// ── getPresetRange — HIST-04 dispatch ─────────────────────────────────────
+
+describe('getPresetRange', () => {
+  const fixedNow = new Date(2026, 6, 17, 14, 30, 0, 0)
+
+  test("'today' dispatches to getTodayRange", () => {
+    expect(getPresetRange('today', fixedNow)).toEqual(getTodayRange(fixedNow))
+  })
+
+  test("'7' dispatches to getLast7DaysRange", () => {
+    expect(getPresetRange('7', fixedNow)).toEqual(getLast7DaysRange(fixedNow))
+  })
+
+  test("'30' dispatches to getLast30DaysRange", () => {
+    expect(getPresetRange('30', fixedNow)).toEqual(getLast30DaysRange(fixedNow))
+  })
+
+  test("'custom' returns null, not a default range", () => {
+    expect(getPresetRange('custom', fixedNow)).toBe(null)
+  })
+
+  test('undefined and null return null without throwing', () => {
+    expect(() => getPresetRange(undefined, fixedNow)).not.toThrow()
+    expect(getPresetRange(undefined, fixedNow)).toBe(null)
+    expect(getPresetRange(null, fixedNow)).toBe(null)
   })
 })
 
