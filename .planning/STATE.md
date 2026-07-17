@@ -4,15 +4,15 @@ milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 10
 current_plan: 4
-status: executing
+status: verifying
 stopped_at: Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
-last_updated: "2026-07-17T22:01:28.325Z"
+last_updated: "2026-07-17T22:10:20.080Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 20
-  completed_plans: 19
-  percent: 60
+  completed_plans: 20
+  percent: 80
 ---
 
 # State: SiteCare POS Desktop App
@@ -51,7 +51,7 @@ checkpoint (live API, native picker chrome, 366-day timing, D-05 dimming percept
 planned (`10-01`..`10-04-PLAN.md`) and ready to execute.
 
 ```
-Progress: [████████████████████] 11/11 plans ([██████████] 95%)
+Progress: [████████████████████] 11/11 plans ([██████████] 100%)
 Milestone v1.1 — Phases 7, 8, and 9 complete (3/5), Phase 10 planned and ready to execute
 ```
 
@@ -118,6 +118,7 @@ the plan-checker against source.
 | Phase 10 P01 | 12min | 3 tasks | 3 files |
 | Phase 10 P02 | 6min | 2 tasks | 4 files |
 | Phase 10 P03 | ~10min | 2 tasks | 2 files |
+| Phase 10 P04 | 18min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -242,10 +243,10 @@ the plan-checker against source.
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Ready to execute
+  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 10-03-PLAN.md — History screen live filter wiring (D-01/D-02/D-04/D-15), FilterBar restructure (F-03/D-07)
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 10-04-PLAN.md
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -257,7 +258,7 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T22:01:28.318Z
+**Last session:** 2026-07-17T22:10:20.073Z
 **Stopped at:** Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
 **Next action:** `/gsd-execute-phase 10` — Filters + Search (HIST-07/08/09) is already planned (`10-01`..`10-04-PLAN.md`) and ready to execute
 
@@ -326,3 +327,6 @@ the plan-checker against source.
 - [Phase ?]: [Phase 10-03]: byTypeAndSearch computed once and reused by both the statusCounts tally and the visible/rows filter — one traversal of the type+search predicate, not two
 - [Phase ?]: [Phase 10-03]: SummaryStrip's isEmptyState prop removed entirely (not left threaded-but-unused) once D-15's isError gate made it fully dead
 - [Phase ?]: [Phase 10-03]: Export's inert opacity/pointerEvents styling moved from the shared marginLeft:auto wrapper onto the Export button itself, since that wrapper now also holds the activated search input
+- [Phase ?]: EmptyBlock Variant B (filtersActive) is an early-return branch, keeping Variant A's period-composition logic completely unreachable/untouched when filters are active
+- [Phase ?]: handleClearFilters composes exactly setStatusFilter/setTypeFilter/setQuery and never setSelectedPeriod — auditable at one call site (D-12/D-14)
+- [Phase ?]: D-12 compose-with-period backstop written as a full automated test (not deferred) since Phase 9's period-pill plumbing was confirmed wired at execution time
