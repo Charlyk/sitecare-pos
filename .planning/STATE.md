@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 09
-current_plan: 3
+current_plan: 4
 status: ready_to_execute
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-07-17T20:08:45.916Z"
+stopped_at: Completed 09-03-PLAN.md
+last_updated: "2026-07-17T20:14:51.613Z"
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 16
-  completed_plans: 13
+  total_plans: 19
+  completed_plans: 14
   percent: 40
 ---
 
@@ -37,7 +37,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-17)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 09
-**Current Plan:** 3
+**Current Plan:** 4
 **Total Plans in Phase:** 5
 **Overall Status:** Phase 8 COMPLETE — 5/5 plans, verification passed 9/9 must-haves, UAT 20/20 with
 zero issues (16 auto-passed from coverage blocks, 4 human-confirmed), security verified with
@@ -47,7 +47,7 @@ controls reachable in readOnly mode. Phase 7 before it: 6/6 plans, UAT 26/26 wit
 Phase 9 (Period Control) is ready to plan.
 
 ```
-Progress: [████████████████████] 11/11 plans ([████████░░] 81%)
+Progress: [████████████████████] 11/11 plans ([███████░░░] 74%)
 Milestone v1.1 — Phases 7 and 8 complete (2/5), Phase 9 ready to plan
 ```
 
@@ -108,6 +108,7 @@ the plan-checker against source.
 | Phase 08 P05 | ~8min | 2 tasks | 2 files |
 | Phase 09 P01 | 12min | 3 tasks | 2 files |
 | Phase 09 P02 | 5min | 2 tasks | 2 files |
+| Phase 09 P3 | 10min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -221,8 +222,8 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T20:08:41.502Z
-**Stopped at:** Completed 09-02-PLAN.md
+**Last session:** 2026-07-17T20:14:51.607Z
+**Stopped at:** Completed 09-03-PLAN.md
 **Next action:** `/gsd-discuss-phase 9` — gather context for Period Control (HIST-04)
 
 **Phase 7 planning notes:**
@@ -277,3 +278,4 @@ the plan-checker against source.
 - [Phase ?]: [Phase 09-01]: formatDateRange's showYear boolean is computed once from both inclusive endpoints and fed to both Intl.DateTimeFormat option objects, making a mixed one-endpoint-with-year rendering structurally unreachable
 - [Phase ?]: [Phase 09-02]: h_empty renamed (not duplicated) to h_empty_prefix carrying no trailing period or period name — sentence composition deferred to 09-04's component code (D-13)
 - [Phase ?]: [Phase 09-02]: npx vitest run does not fully pass after this plan (4 pre-existing screen-history.jsx/app-history-route.jsx test assertions on the removed h_empty string) — reported per the plan's own instruction, not patched; 09-04 must update those 4 assertions when it updates the consumer
+- [Phase ?]: 09-03: promoted the range from a mount-frozen constant to a caller-supplied parameter (assumption-delta chosen); add-alongside rejected to avoid a second, label-blind way to fetch history data
