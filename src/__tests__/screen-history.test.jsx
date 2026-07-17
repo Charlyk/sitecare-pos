@@ -10,6 +10,7 @@ vi.mock('../use-history-orders.js', () => ({ useHistoryOrders: vi.fn() }))
 
 import { useHistoryOrders } from '../use-history-orders.js'
 import { HistoryScreen, historyStatusMeta } from '../screen-history.jsx'
+import { getPresetRange } from '../history-utils.js'
 
 // Helper — build a POST-normalizeOrder-shaped fixture (RON totals, resolved dailyOrderNumber,
 // nested customer object) — never a raw SDK/cents shape.
@@ -195,6 +196,279 @@ describe('HistoryScreen', () => {
       const exportBtn = screen.getByText('Exportă CSV').closest('button')
       expect(exportBtn.disabled).toBe(true)
     })
+  })
+})
+
+describe('period pills — live (HIST-04)', () => {
+  test('on mount, useHistoryOrders is called with a range deep-equal to getPresetRange("30")', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const expected = getPresetRange('30')
+    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    // The clock in getPresetRange('30') and the one HistoryScreen resolved with are both "now" —
+    // assert same-day `to` boundary rather than exact string equality across two separate Date()
+    // constructions (avoids test flakiness at a midnight boundary).
+    expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
+    expect(callArg.from.slice(0, 10)).toBe(expected.from.slice(0, 10))
+  })
+
+  test('exactly 4 period pills render, none disabled; the 30-days pill is selected on mount', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const pills = screen.getAllByTestId('history-period-pill')
+    expect(pills.length).toBe(4)
+    pills.forEach((p) => expect(p).not.toHaveAttribute('disabled'))
+
+    const thirtyPill = pills.find((p) => p.textContent === '30 zile')
+    expect(thirtyPill.style.background).toBe('var(--sc-foreground)')
+    const otherPills = pills.filter((p) => p !== thirtyPill)
+    otherPills.forEach((p) => expect(p.style.background).toBe('transparent'))
+  })
+
+  test('clicking the "7 zile" pill resolves the fetched range to getPresetRange("7") and flips selection', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
+    fireEvent.click(sevenPill)
+
+    const expected = getPresetRange('7')
+    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
+    expect(callArg.from.slice(0, 10)).toBe(expected.from.slice(0, 10))
+
+    expect(sevenPill.style.background).toBe('var(--sc-foreground)')
+    const thirtyPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '30 zile')
+    expect(thirtyPill.style.background).toBe('transparent')
+  })
+
+  test('clicking "Azi" resolves to getPresetRange("today")', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const todayPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === 'Azi')
+    fireEvent.click(todayPill)
+
+    const expected = getPresetRange('today')
+    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
+    expect(callArg.from.slice(0, 10)).toBe(expected.from.slice(0, 10))
+  })
+
+  test('re-rendering without a click keeps the fetched range unchanged (memoized, not recomputed inline)', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    const { rerender } = render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const firstArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    rerender(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+    const secondArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+
+    expect(secondArg.from).toBe(firstArg.from)
+    expect(secondArg.to).toBe(firstArg.to)
+  })
+
+  test('the status pills, search input, and Export button all still carry disabled', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.getByPlaceholderText('Caută după # sau client').disabled).toBe(true)
+    expect(screen.getByText('Exportă CSV').closest('button').disabled).toBe(true)
+    expect(screen.getByText('Toate').closest('button').disabled).toBe(true)
+    expect(screen.getByText('Finalizate').closest('button').disabled).toBe(true)
+  })
+
+  test('clicking a status pill or the Export button changes nothing about the fetched range', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const callsBefore = useHistoryOrders.mock.calls.length
+    fireEvent.click(screen.getByText('Toate').closest('button'))
+    fireEvent.click(screen.getByText('Exportă CSV').closest('button'))
+    expect(useHistoryOrders.mock.calls.length).toBe(callsBefore)
+  })
+})
+
+describe('D-05 — dimmed-in-place loading treatment + spinner (period switch)', () => {
+  test('isFetching true (isLoading false) dims the rows region to 0.6, keeps rows present, shows the spinner, no skeleton', () => {
+    const order = makeOrder({ id: 'switch-1' })
+    useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: true, isPlaceholderData: true, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.getAllByTestId('history-row').length).toBe(1)
+    expect(screen.getByTestId('history-rows').style.opacity).toBe('0.6')
+    expect(screen.getByTestId('history-switch-spinner')).toBeTruthy()
+    expect(screen.queryAllByTestId('history-skeleton-row').length).toBe(0)
+  })
+
+  test('the dimmed rows region does not set pointer-events: none, and a row click still fires', () => {
+    const order = makeOrder({ id: 'switch-2' })
+    const onOpenOrder = vi.fn()
+    useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: true, isPlaceholderData: true, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder, isOffline: false }))
+
+    const wrapper = screen.getByTestId('history-rows')
+    expect(wrapper.style.pointerEvents).toBe('')
+
+    const row = screen.getByTestId('history-row')
+    fireEvent.click(row)
+    expect(onOpenOrder).toHaveBeenCalledWith(order)
+  })
+
+  test('isLoading true renders the skeleton, not the spinner (first load, unchanged from Phase 7)', () => {
+    useHistoryOrders.mockReturnValue({ data: undefined, isLoading: true, isError: false, isFetching: true, isPlaceholderData: false, isSuccess: false, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.getAllByTestId('history-skeleton-row').length).toBeGreaterThan(0)
+    expect(screen.queryByTestId('history-switch-spinner')).toBeNull()
+  })
+
+  test('isFetching false renders rows at full opacity and no spinner', () => {
+    const order = makeOrder({ id: 'settled-1' })
+    useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.getByTestId('history-rows').style.opacity).toBe('1')
+    expect(screen.queryByTestId('history-switch-spinner')).toBeNull()
+  })
+
+  test('with isFetching true, the summary tiles render dimmed (not shimmer skeletons) — value text still present', () => {
+    const order = makeOrder({ id: 'switch-3', total: 40 })
+    useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: true, isPlaceholderData: true, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.getByText('1')).toBeTruthy() // ordersCount tile value, rendered as real text, not a shimmer bar
+    expect(screen.queryAllByTestId('history-skeleton-row').length).toBe(0)
+  })
+
+  test('isError true with non-empty placeholder data still renders ErrorBlock and zero history-row elements (D-07)', () => {
+    useHistoryOrders.mockReturnValue({ data: [makeOrder({ id: 'stale-1' })], isLoading: false, isError: true, isFetching: false, isPlaceholderData: true, isSuccess: false, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.getByText('Nu am putut încărca istoricul')).toBeTruthy()
+    expect(screen.queryAllByTestId('history-row').length).toBe(0)
+  })
+
+  test('D-08: the clicked pill stays selected through a failed switch, and Retry does not change the selection', () => {
+    useHistoryOrders.mockReturnValue({ data: [makeOrder()], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const refetch = vi.fn()
+    useHistoryOrders.mockReturnValue({ data: undefined, isLoading: false, isError: true, isFetching: false, isPlaceholderData: false, isSuccess: false, refetch })
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
+    fireEvent.click(sevenPill)
+
+    expect(sevenPill.style.background).toBe('var(--sc-foreground)')
+
+    fireEvent.click(screen.getByText('Reîncearcă'))
+    expect(refetch).toHaveBeenCalledTimes(1)
+    expect(sevenPill.style.background).toBe('var(--sc-foreground)')
+  })
+
+  test('the inert status pills (0.5) and the dimmed rows (0.6) render simultaneously with different opacity values', () => {
+    const order = makeOrder({ id: 'switch-4' })
+    useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: true, isPlaceholderData: true, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const statusGroup = screen.getByText('Toate').closest('div[style*="opacity"]')
+    expect(statusGroup.style.opacity).toBe('0.5')
+    expect(screen.getByTestId('history-rows').style.opacity).toBe('0.6')
+  })
+})
+
+describe('D-12/D-13 — period-dependent copy (tile sub-labels + empty state)', () => {
+  test('settled 30 days: Orders/Revenue tiles read "30 zile" (ro); Avg/Refunds subs are unaffected', () => {
+    const orders = [makeOrder({ id: 'p30-1', total: 10 })]
+    useHistoryOrders.mockReturnValue({ data: orders, isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const ordersCard = screen.getByText('Comenzi').closest('.card')
+    const revenueCard = screen.getByText('Încasări').closest('.card')
+    expect(ordersCard.textContent).toContain('30 zile')
+    expect(revenueCard.textContent).toContain('30 zile')
+
+    const avgCard = screen.getByText('Valoare medie').closest('.card')
+    expect(avgCard.textContent).toContain('pe comandă')
+    const refundsCard = screen.getByText('Rambursări').closest('.card')
+    expect(refundsCard.textContent).toContain('anulate')
+  })
+
+  test('D-06: during an in-flight switch, the selected pill flips immediately but the tile sub-label stays pinned to the settled (30-day) period', () => {
+    const thirtyDayOrder = makeOrder({ id: 'd06-1', total: 100 })
+    useHistoryOrders.mockReturnValue({
+      data: [thirtyDayOrder], isLoading: false, isError: false, isFetching: false,
+      isPlaceholderData: false, isSuccess: true, refetch: vi.fn(),
+    })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    // settledPeriod is now {id:'30'} — sanity check before the switch.
+    expect(screen.getByText('Comenzi').closest('.card').textContent).toContain('30 zile')
+
+    // In-flight switch to 7 days: still the 30-day placeholder data, isFetching+isPlaceholderData true.
+    useHistoryOrders.mockReturnValue({
+      data: [thirtyDayOrder], isLoading: false, isError: false, isFetching: true,
+      isPlaceholderData: true, isSuccess: true, refetch: vi.fn(),
+    })
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
+    fireEvent.click(sevenPill)
+
+    // The pill is the intent signal — it updates immediately.
+    expect(sevenPill.style.background).toBe('var(--sc-foreground)')
+    // The tile sub-label is the truth signal — it still reads the settled 30-day period.
+    const ordersCard = screen.getByText('Comenzi').closest('.card')
+    expect(ordersCard.textContent).toContain('30 zile')
+    expect(ordersCard.textContent).not.toContain('7 zile')
+
+    // The fetch settles on the 7-day data: isPlaceholderData flips false.
+    const sevenDayOrder = makeOrder({ id: 'd06-2', total: 20 })
+    useHistoryOrders.mockReturnValue({
+      data: [sevenDayOrder], isLoading: false, isError: false, isFetching: false,
+      isPlaceholderData: false, isSuccess: true, refetch: vi.fn(),
+    })
+    // Re-render to let the settle effect run against the new mock return value.
+    fireEvent.click(sevenPill)
+    const ordersCardAfter = screen.getByText('Comenzi').closest('.card')
+    expect(ordersCardAfter.textContent).toContain('7 zile')
+  })
+
+  test('empty state, settled today (ro): main line reads "Nicio comandă azi." with h_empty_sub on its own line', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const todayPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === 'Azi')
+    fireEvent.click(todayPill)
+
+    expect(screen.getByText('Nicio comandă azi.')).toBeTruthy()
+    expect(screen.getByText('Comenzile finalizate vor apărea aici.')).toBeTruthy()
+  })
+
+  test('empty state, settled 7 days (ro): "Nicio comandă în ultimele 7 zile."', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
+    fireEvent.click(sevenPill)
+
+    expect(screen.getByText('Nicio comandă în ultimele 7 zile.')).toBeTruthy()
+  })
+
+  test('empty state, settled 7 days (en): "No orders in the last 7 days."', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'en', onOpenOrder: noop, isOffline: false }))
+
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 days')
+    fireEvent.click(sevenPill)
+
+    expect(screen.getByText('No orders in the last 7 days.')).toBeTruthy()
+  })
+
+  test('empty period: Orders/Revenue tiles show computed zeroes, Avg shows a formatted zero (not an em-dash)', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0)
+    expect(screen.getByText('Valoare medie').closest('.card').textContent).not.toContain('—')
   })
 })
 

@@ -2,13 +2,15 @@
 // Screen-owns-its-hook: calls its own data hook and does zero derivation inline — every
 // filter/group/summary computation is delegated to history-utils.js (Plan 01).
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useHistoryOrders } from './use-history-orders.js';
 import {
   filterFinishedOrders,
   deriveDisplayStatus,
   groupOrdersByDay,
   computeSummary,
+  getPresetRange,
+  formatDateRange,
 } from './history-utils.js';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
@@ -67,6 +69,35 @@ function dayGroupLabel(day, lang, t) {
   return nice.charAt(0).toUpperCase() + nice.slice(1);
 }
 
+// D-13: module-private prepositional-copy helper for the empty-state sentence — the pill/tile
+// labels (periodLabel, below) do NOT survive interpolation in Romanian ("Nicio comandă în Azi"
+// is broken), so this is a second, parallel label family worded to sit inside a sentence.
+function periodPhrase(period, t, lang) {
+  if (period.id === 'today') return t('h_period_today').toLowerCase(); // 'azi' — bare adverb, no preposition needed
+  if (period.id === '7') return t('h_period_in_7');
+  if (period.id === '30') return t('h_period_in_30');
+  if (period.id === 'custom') {
+    const locale = lang === 'ro' ? 'ro-RO' : 'en-GB';
+    return `${t('h_period_in_range_prefix')} ${formatDateRange(period.from, period.to, locale)}`;
+  }
+  return '';
+}
+
+// D-12: module-private pill/tile label helper — the ONE lookup site both the pill's .map() and
+// the tile's sub-label go through, so they cannot drift. Presets reuse the existing h_period_*
+// keys verbatim; custom uses D-14's formatted range (not reachable until 09-05, written now so
+// that plan doesn't have to reopen this function).
+function periodLabel(period, t, lang) {
+  if (period.id === 'today') return t('h_period_today');
+  if (period.id === '7') return t('h_period_7');
+  if (period.id === '30') return t('h_period_30');
+  if (period.id === 'custom') {
+    const locale = lang === 'ro' ? 'ro-RO' : 'en-GB';
+    return formatDateRange(period.from, period.to, locale);
+  }
+  return '';
+}
+
 function SkeletonRow() {
   const bar = (w, h = 12, extra = {}) => ({ width: w, height: h, borderRadius: 4, background: 'hsl(210 15% 92%)', ...extra });
   return (
@@ -101,10 +132,15 @@ function ErrorBlock({ t, onRetry }) {
   );
 }
 
-function EmptyBlock({ t }) {
+// D-13: main line is h_empty_prefix + the settled period's prepositional phrase + a trailing
+// full stop appended HERE (h_empty_prefix deliberately carries none). settledPeriod, never
+// selectedPeriod — a stale period label above the wrong empty state would be the same false
+// financial claim D-06 exists to prevent. h_empty_sub is unchanged, on its own line (P7 D-13
+// reserves it for Phase 10's filter copy).
+function EmptyBlock({ t, settledPeriod, lang }) {
   return (
     <div style={{ textAlign: 'center', padding: 48, color: 'var(--sc-muted-foreground)' }}>
-      <div style={{ fontSize: 15, fontWeight: 600 }}>{t('h_empty')}</div>
+      <div style={{ fontSize: 15, fontWeight: 600 }}>{`${t('h_empty_prefix')} ${periodPhrase(settledPeriod, t, lang)}.`}</div>
       <div style={{ fontSize: 13, marginTop: 4 }}>{t('h_empty_sub')}</div>
     </div>
   );
@@ -213,38 +249,92 @@ function DayGroup({ day, lang, t, onOpenOrder }) {
 
 export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
   const t = useT(lang);
-  const { data, isLoading, isError, refetch } = useHistoryOrders();
+
+  // HIST-04: the active period is resolved to a { from, to } range exactly once per state
+  // transition, memoized on the selected period — never recomputed inline in the render body
+  // (RESEARCH Pitfall 1). getPresetRange returns null for 'custom' (09-05 territory) and any
+  // unrecognized id; the hook's enabled guard turns that into "no request" rather than a request
+  // with undefined params.
+  const [selectedPeriod, setSelectedPeriod] = useState({ id: '30' });
+  const range = useMemo(() => getPresetRange(selectedPeriod.id), [selectedPeriod]);
+  const { data, isLoading, isError, isFetching, isPlaceholderData, isSuccess, refetch } = useHistoryOrders(range ?? {});
+
+  // D-06: settledPeriod tracks the range that actually PRODUCED the visible data — advances only
+  // once the query succeeds with real (non-placeholder) data. Every period-dependent render (tile
+  // sub-labels, empty-state copy) reads settledPeriod; ONLY the pill styling reads selectedPeriod.
+  const [settledPeriod, setSettledPeriod] = useState(selectedPeriod);
+  useEffect(() => {
+    if (isSuccess && !isPlaceholderData) {
+      setSettledPeriod(selectedPeriod);
+    }
+  }, [isSuccess, isPlaceholderData, selectedPeriod]);
+
+  // 'custom' resolves to a null range (09-05 wires the popover); until then the pill click is a
+  // deliberate one-wave no-op so the screen never lights a pill above data from another period.
+  const handleSelectPeriod = (id) => {
+    if (id === 'custom') return;
+    setSelectedPeriod({ id });
+  };
 
   const finished = useMemo(() => filterFinishedOrders(data ?? []), [data]);
   const days = useMemo(() => groupOrdersByDay(finished), [finished]);
   const summary = useMemo(() => computeSummary(finished), [finished]);
 
   const isEmpty = !isLoading && !isError && days.length === 0;
+  // D-05: a switch is any fetch after the first successful load — isLoading is false for the
+  // remainder of the component's life once data has landed once (RESEARCH Pitfall 2).
+  const isSwitching = isFetching && !isLoading;
 
   return (
     <div className="content-pad">
-      <SummaryStrip t={t} isLoading={isLoading} isError={isError} isEmptyState={isEmpty} summary={summary} />
-      <FilterBar t={t} />
+      <SummaryStrip
+        t={t}
+        isLoading={isLoading}
+        isError={isError}
+        isFetching={isFetching}
+        isEmptyState={isEmpty}
+        summary={summary}
+        settledPeriod={settledPeriod}
+        lang={lang}
+      />
+      <FilterBar
+        t={t}
+        lang={lang}
+        selectedPeriod={selectedPeriod}
+        onSelectPeriod={handleSelectPeriod}
+        isFetching={isFetching}
+        isLoading={isLoading}
+      />
 
       <div className="card" style={{ overflow: 'hidden' }}>
         <TableHeaderRow t={t} />
         {isLoading && Array.from({ length: 7 }).map((_, i) => <SkeletonRow key={i} />)}
         {!isLoading && isError && <ErrorBlock t={t} onRetry={() => refetch()} />}
-        {!isLoading && !isError && isEmpty && <EmptyBlock t={t} />}
-        {!isLoading && !isError && !isEmpty && days.map((day) => (
-          <DayGroup key={day.dayKey} day={day} lang={lang} t={t} onOpenOrder={onOpenOrder} />
-        ))}
+        {!isLoading && !isError && isEmpty && <EmptyBlock t={t} settledPeriod={settledPeriod} lang={lang} />}
+        {!isLoading && !isError && !isEmpty && (
+          <div data-testid="history-rows" style={{ opacity: isSwitching ? 0.6 : 1, transition: 'opacity 150ms' }}>
+            {days.map((day) => (
+              <DayGroup key={day.dayKey} day={day} lang={lang} t={t} onOpenOrder={onOpenOrder} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ─── Summary strip (D-15) — Task 3 adds the period/status filter pills to FilterBar below ───
+// ─── Summary strip (D-15) — client-computed from the same fetched list groupOrdersByDay uses ───
 
-function SummaryStrip({ t, isLoading, isError, isEmptyState, summary }) {
+// D-12: Orders/Revenue sub-labels read the SETTLED period's label (periodLabel — the same source
+// the pill reads, D-12) so pill and tile can never drift. Avg's sub and Refunds' canceled-count
+// suffix are NOT period-dependent (untouched). D-05: dimmed now also covers isFetching (a period
+// switch), reusing the tile-dimming visual already built for first-load/error — no shimmer
+// skeleton on a switch, since keepPreviousData guarantees a previous value to dim.
+function SummaryStrip({ t, isLoading, isError, isFetching, isEmptyState, summary, settledPeriod, lang }) {
+  const periodSub = periodLabel(settledPeriod, t, lang);
   const tiles = [
-    { key: 'orders', label: t('h_orders'), value: String(summary.ordersCount), sub: t('h_period_30'), tint: 'sage', icon: 'receipt' },
-    { key: 'revenue', label: t('h_revenue'), value: formatRON(summary.revenue), sub: t('h_period_30'), tint: 'sage', icon: 'ron' },
+    { key: 'orders', label: t('h_orders'), value: String(summary.ordersCount), sub: periodSub, tint: 'sage', icon: 'receipt' },
+    { key: 'revenue', label: t('h_revenue'), value: formatRON(summary.revenue), sub: periodSub, tint: 'sage', icon: 'ron' },
     {
       key: 'avg',
       label: t('h_avg'),
@@ -259,7 +349,7 @@ function SummaryStrip({ t, isLoading, isError, isEmptyState, summary }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
       {tiles.map((tile) => {
-        const dimmed = isLoading || isError;
+        const dimmed = isLoading || isError || isFetching;
         const bg = dimmed
           ? 'hsl(210 15% 92%)'
           : tile.tint === 'sage' ? 'hsl(120 14% 49% / 0.1)'
@@ -291,15 +381,18 @@ function SummaryStrip({ t, isLoading, isError, isEmptyState, summary }) {
   );
 }
 
-// Full inert filter bar (D-14): period presets, status pills, search, and export all render at
-// final visual position/size — visible, dimmed, not clickable — so later phases (Filters +
-// Search) can wire them up with zero layout shift. The "30 days" period pill is the sole
-// exception: it renders at full opacity/selected styling because it reflects real current state.
-function FilterBar({ t }) {
+// Filter bar (D-14/HIST-04): period presets are now LIVE — clicking a pill retargets the fetch.
+// Status pills, search, and export stay inert this phase (Phase 10/11) so those later phases can
+// wire them up with zero layout shift.
+function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, isFetching, isLoading }) {
+  // D-12: preset labels go through the same periodLabel() the tile sub-label reads — one lookup
+  // site, so pill and tile cannot drift. 'custom' is not reachable this wave (09-05 wires the
+  // applied-range label onto this pill per D-03) — it stays the static t('h_period_custom')
+  // label, never fed a bogus from/to.
   const periods = [
-    { id: 'today', label: t('h_period_today') },
-    { id: '7', label: t('h_period_7') },
-    { id: '30', label: t('h_period_30') },
+    { id: 'today', label: periodLabel({ id: 'today' }, t, lang) },
+    { id: '7', label: periodLabel({ id: '7' }, t, lang) },
+    { id: '30', label: periodLabel({ id: '30' }, t, lang) },
     { id: 'custom', label: t('h_period_custom') },
   ];
   const statusFilters = [
@@ -309,17 +402,46 @@ function FilterBar({ t }) {
     { id: 'refunded', label: t('h_status_refunded') },
   ];
   const inertBtn = { border: 0, padding: '7px 12px', borderRadius: 8, fontWeight: 600, fontSize: 13, fontFamily: 'inherit', cursor: 'not-allowed', pointerEvents: 'none' };
+  // Live pills get their own style constant (not inertBtn): same border/padding/radius/weight,
+  // but cursor: pointer and no pointerEvents override — no opacity override either, since 0.5 was
+  // the inert marker and these pills are no longer inert (UI-SPEC Period Pills Contract).
+  const periodBtn = { border: 0, padding: '7px 12px', borderRadius: 8, fontWeight: 600, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' };
+  // D-05: a switch is any fetch after the first successful load (RESEARCH Pitfall 2).
+  const isSwitching = isFetching && !isLoading;
 
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-      {/* Period presets — the h_period_30 pill is the single exception rendered at full opacity.
-          Unrolled (not mapped) so each pill's disabled attribute is independently readable. */}
+      {/* Period presets — live (HIST-04). Mapped (not unrolled) so styling is state-driven per
+          UI-SPEC's Period Pills Contract: selected -> var(--sc-foreground)/#fff, unselected ->
+          transparent/#555. Container chrome (bg/border/radius/padding) is untouched. */}
       <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3 }}>
-        <button disabled style={{ ...inertBtn, background: 'transparent', color: '#555', opacity: 0.5 }}>{periods[0].label}</button>
-        <button disabled style={{ ...inertBtn, background: 'transparent', color: '#555', opacity: 0.5 }}>{periods[1].label}</button>
-        <button disabled style={{ ...inertBtn, background: 'var(--sc-foreground)', color: '#fff', opacity: 1 }}>{periods[2].label}</button>
-        <button disabled style={{ ...inertBtn, background: 'transparent', color: '#555', opacity: 0.5 }}>{periods[3].label}</button>
+        {periods.map((p) => {
+          const selected = selectedPeriod.id === p.id;
+          return (
+            <button
+              key={p.id}
+              data-testid="history-period-pill"
+              onClick={() => onSelectPeriod(p.id)}
+              style={{
+                ...periodBtn,
+                background: selected ? 'var(--sc-foreground)' : 'transparent',
+                color: selected ? '#fff' : '#555',
+              }}
+            >
+              {p.label}
+            </button>
+          );
+        })}
       </div>
+
+      {/* D-05 loading affordance — 16px spinning refresh icon, present only during a period
+          switch (isFetching with data already on screen), muted-foreground per UI-SPEC (not the
+          sage accent, which is reserved for the popover's Apply button). */}
+      {isSwitching && (
+        <span data-testid="history-switch-spinner" style={{ display: 'inline-flex', color: 'var(--sc-muted-foreground)' }}>
+          <Icon name="refresh" size={16} className="spin" />
+        </span>
+      )}
 
       {/* Status pills — dimmed as a group, no live counts yet (Phase 10 wires those up) */}
       <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3, opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }}>
