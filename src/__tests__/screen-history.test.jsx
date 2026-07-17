@@ -366,6 +366,18 @@ describe('D-05 — dimmed-in-place loading treatment + spinner (period switch)',
     expect(sevenPill.style.background).toBe('var(--sc-foreground)')
   })
 
+  test('WR-02: a same-range background refetch (isFetching true, isPlaceholderData false) does not dim rows or show the spinner', () => {
+    // Mirrors a window-refocus revalidation of the UNCHANGED range (TanStack Query's default
+    // refetchOnWindowFocus): isFetching is true but isPlaceholderData stays false since the query
+    // key never changed — this must read as "quietly refreshing", not a period switch.
+    const order = makeOrder({ id: 'bg-refetch-1' })
+    useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: true, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.getByTestId('history-rows').style.opacity).toBe('1')
+    expect(screen.queryByTestId('history-switch-spinner')).toBeNull()
+  })
+
   test('the inert status pills (0.5) and the dimmed rows (0.6) render simultaneously with different opacity values', () => {
     const order = makeOrder({ id: 'switch-4' })
     useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: true, isPlaceholderData: true, isSuccess: true, refetch: vi.fn() })

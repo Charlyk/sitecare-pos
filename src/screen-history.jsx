@@ -322,9 +322,14 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
   const summary = useMemo(() => computeSummary(finished), [finished]);
 
   const isEmpty = !isLoading && !isError && days.length === 0;
-  // D-05: a switch is any fetch after the first successful load — isLoading is false for the
-  // remainder of the component's life once data has landed once (RESEARCH Pitfall 2).
-  const isSwitching = isFetching && !isLoading;
+  // D-05/WR-02 (09-REVIEW.md): a switch is a fetch that is also showing placeholder data for a
+  // NEW query key — isPlaceholderData is only true while keepPreviousData is standing in for a
+  // range that changed, never for a background revalidation of the SAME range (TanStack Query's
+  // default refetchOnWindowFocus fires one of those every window-refocus past staleTime, with
+  // isFetching true but isPlaceholderData false since the key didn't change). Gating on
+  // isPlaceholderData too means a passive background refetch no longer dims rows/tiles or shows
+  // the switch spinner — only a genuine user-initiated period change does.
+  const isSwitching = isFetching && isPlaceholderData;
 
   return (
     <div className="content-pad">
@@ -333,6 +338,7 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
         isLoading={isLoading}
         isError={isError}
         isFetching={isFetching}
+        isPlaceholderData={isPlaceholderData}
         isEmptyState={isEmpty}
         summary={summary}
         settledPeriod={settledPeriod}
@@ -345,6 +351,7 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
         onSelectPeriod={handleSelectPeriod}
         onApplyCustomRange={handleApplyCustomRange}
         isFetching={isFetching}
+        isPlaceholderData={isPlaceholderData}
         isLoading={isLoading}
       />
 
@@ -369,10 +376,11 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
 
 // D-12: Orders/Revenue sub-labels read the SETTLED period's label (periodLabel — the same source
 // the pill reads, D-12) so pill and tile can never drift. Avg's sub and Refunds' canceled-count
-// suffix are NOT period-dependent (untouched). D-05: dimmed now also covers isFetching (a period
-// switch), reusing the tile-dimming visual already built for first-load/error — no shimmer
-// skeleton on a switch, since keepPreviousData guarantees a previous value to dim.
-function SummaryStrip({ t, isLoading, isError, isFetching, isEmptyState, summary, settledPeriod, lang }) {
+// suffix are NOT period-dependent (untouched). D-05/WR-02: dimmed also covers a genuine period
+// switch (isFetching && isPlaceholderData), reusing the tile-dimming visual already built for
+// first-load/error — no shimmer skeleton on a switch, since keepPreviousData guarantees a
+// previous value to dim. isPlaceholderData excludes a same-range background refetch (WR-02).
+function SummaryStrip({ t, isLoading, isError, isFetching, isPlaceholderData, isEmptyState, summary, settledPeriod, lang }) {
   const periodSub = periodLabel(settledPeriod, t, lang);
   const tiles = [
     { key: 'orders', label: t('h_orders'), value: String(summary.ordersCount), sub: periodSub, tint: 'sage', icon: 'receipt' },
@@ -391,7 +399,7 @@ function SummaryStrip({ t, isLoading, isError, isFetching, isEmptyState, summary
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
       {tiles.map((tile) => {
-        const dimmed = isLoading || isError || isFetching;
+        const dimmed = isLoading || isError || (isFetching && isPlaceholderData);
         const bg = dimmed
           ? 'hsl(210 15% 92%)'
           : tile.tint === 'sage' ? 'hsl(120 14% 49% / 0.1)'
@@ -548,7 +556,7 @@ export function CustomRangePopover({ t, onApply, onClose, containerRef }) {
 // Filter bar (D-14/HIST-04): period presets are now LIVE — clicking a pill retargets the fetch.
 // Status pills, search, and export stay inert this phase (Phase 10/11) so those later phases can
 // wire them up with zero layout shift.
-function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange, isFetching, isLoading }) {
+function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange, isFetching, isPlaceholderData, isLoading }) {
   // 09-05/D-04: the popover unmounts entirely when closed (rangeOpen false) so its blank local
   // state is genuinely fresh on each open — nothing is remembered across a close/reopen cycle.
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -585,8 +593,9 @@ function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange
   // but cursor: pointer and no pointerEvents override — no opacity override either, since 0.5 was
   // the inert marker and these pills are no longer inert (UI-SPEC Period Pills Contract).
   const periodBtn = { border: 0, padding: '7px 12px', borderRadius: 8, fontWeight: 600, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' };
-  // D-05: a switch is any fetch after the first successful load (RESEARCH Pitfall 2).
-  const isSwitching = isFetching && !isLoading;
+  // D-05/WR-02: a switch is a fetch that is also showing placeholder data for a NEW range — see
+  // the matching comment on HistoryScreen's isSwitching for the full background-refetch rationale.
+  const isSwitching = isFetching && isPlaceholderData;
 
   return (
     <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
