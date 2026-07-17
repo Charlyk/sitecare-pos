@@ -22,10 +22,12 @@ const HIST_GRID = '150px minmax(200px, 1.8fr) 118px 78px 116px 132px 116px 34px'
 
 const pad2 = (n) => String(n).padStart(2, '0');
 
-// Module-private: chip class + icon-tile colors for a row's derived display status.
-// Precedence itself is history-utils.js's job (deriveDisplayStatus, D-02) — this only maps
-// whichever status comes back to its chip class and icon-tile colors.
-function historyStatusMeta(status, t) {
+// Exported (was module-private): chip class + icon-tile colors for a row's derived display
+// status. Precedence itself is history-utils.js's job (deriveDisplayStatus, D-02) — this only
+// maps whichever status comes back to its chip class and icon-tile colors. screen-detail.jsx
+// now imports this under readOnly (D-05) so the detail view's status chip agrees with the
+// History row by construction — do not narrow this back to module-private.
+export function historyStatusMeta(status, t) {
   const map = {
     completed: { chip: 'chip-sage', tile: 'hsl(120 14% 49% / 0.12)', ink: 'var(--sc-primary)', icon: 'check', label: t('status_completed') },
     canceled: { chip: 'chip-red', tile: 'hsl(0 84% 60% / 0.1)', ink: 'hsl(0 72% 45%)', icon: 'x', label: t('status_canceled') },

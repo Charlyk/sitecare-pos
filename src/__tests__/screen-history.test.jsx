@@ -9,7 +9,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 vi.mock('../use-history-orders.js', () => ({ useHistoryOrders: vi.fn() }))
 
 import { useHistoryOrders } from '../use-history-orders.js'
-import { HistoryScreen } from '../screen-history.jsx'
+import { HistoryScreen, historyStatusMeta } from '../screen-history.jsx'
 
 // Helper — build a POST-normalizeOrder-shaped fixture (RON totals, resolved dailyOrderNumber,
 // nested customer object) — never a raw SDK/cents shape.
@@ -195,5 +195,21 @@ describe('HistoryScreen', () => {
       const exportBtn = screen.getByText('Exportă CSV').closest('button')
       expect(exportBtn.disabled).toBe(true)
     })
+  })
+})
+
+// ── historyStatusMeta — exported for reuse by screen-detail.jsx (D-05) ─────
+
+describe('historyStatusMeta', () => {
+  const t = (key) => key
+
+  test('is importable by name and maps each status to its chip class', () => {
+    expect(historyStatusMeta('refunded', t).chip).toBe('chip-amber')
+    expect(historyStatusMeta('canceled', t).chip).toBe('chip-red')
+    expect(historyStatusMeta('completed', t).chip).toBe('chip-sage')
+  })
+
+  test('falls back to the completed mapping for an unrecognized status', () => {
+    expect(historyStatusMeta('unknown', t)).toEqual(historyStatusMeta('completed', t))
   })
 })
