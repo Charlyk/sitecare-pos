@@ -64,6 +64,77 @@ export function getPresetRange(periodId, now = new Date()) {
   return null
 }
 
+// D-10: 366 (a full year) over the recommended 92 days, so a year-end reconciliation and Phase
+// 11's CSV export complete in one pass. This is the ONLY place this number lives — both the
+// validator below and screen-history.jsx's native-input min computation (09-05) import it.
+export const MAX_RANGE_DAYS = 366
+
+const DATE_INPUT_RE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * Module-private: builds a local-midnight Date from a `<input type="date">` `.value` string.
+ * Never `new Date(value)` — that parses as UTC midnight, the wrong building block per this
+ * module's component-constructor convention (RESEARCH: string-parse gotcha).
+ * @param {string} value — a 'YYYY-MM-DD' string
+ * @returns {Date}
+ */
+function localDateFromInputValue(value) {
+  const [y, m, d] = value.split('-').map(Number)
+  return new Date(y, m - 1, d, 0, 0, 0, 0)
+}
+
+/**
+ * Validates a pair of raw `<input type="date">` `.value` strings for the custom-range popover.
+ * Returns `null` when the range is submittable, otherwise a reason string — never throws, never
+ * returns a corrected range (D-11 rejects silent auto-correct outright). Checked in order, first
+ * match wins:
+ *   1. either value empty/nullish/not `YYYY-MM-DD`, or either parses to NaN → 'incomplete'
+ *   2. end < start (local-midnight timestamps) → 'end-before-start'
+ *   3. either endpoint after now's local calendar day → 'future' (History is finished-only, P7 D-01)
+ *   4. inclusive span > MAX_RANGE_DAYS → 'too-long'
+ * @param {string} startValue
+ * @param {string} endValue
+ * @param {Date} [now] — injectable clock for deterministic tests.
+ * @returns {string|null}
+ */
+export function validateCustomRange(startValue, endValue, now = new Date()) {
+  if (!startValue || !endValue || !DATE_INPUT_RE.test(startValue) || !DATE_INPUT_RE.test(endValue)) {
+    return 'incomplete'
+  }
+
+  const start = localDateFromInputValue(startValue)
+  const end = localDateFromInputValue(endValue)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'incomplete'
+
+  if (end.getTime() < start.getTime()) return 'end-before-start'
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+  if (start.getTime() > today.getTime() || end.getTime() > today.getTime()) return 'future'
+
+  // Math.round absorbs the ±1h a DST transition puts into the raw millisecond difference;
+  // + 1 makes start-equals-end a span of 1 day, not 0.
+  const spanDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
+  if (spanDays > MAX_RANGE_DAYS) return 'too-long'
+
+  return null
+}
+
+/**
+ * Converts an already-validated pair of `<input type="date">` `.value` strings into `{ from, to }`
+ * ISO instants. Assumes `validateCustomRange` has already passed — this function does not
+ * re-validate. `to` is local midnight of the day AFTER `endValue`, preserving the exclusive
+ * upper bound every other builder in this module uses.
+ * @param {string} startValue
+ * @param {string} endValue
+ * @returns {{from: string, to: string}}
+ */
+export function customRangeToQuery(startValue, endValue) {
+  const start = localDateFromInputValue(startValue)
+  const [ey, em, ed] = endValue.split('-').map(Number)
+  const end = new Date(ey, em - 1, ed + 1, 0, 0, 0, 0)
+  return { from: start.toISOString(), to: end.toISOString() }
+}
+
 /**
  * D-01: keeps only finished orders (COMPLETED or CANCELLED). Every in-flight status
  * (NEW/ACCEPTED/PREPARING/READY/OUT_FOR_DELIVERY) is dropped. Never mutates the input.
