@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 09
-current_plan: 5
-status: ready_to_execute
+current_phase: 10 — Filters + Search
+current_plan: Not started
+status: planning
 stopped_at: Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
-last_updated: "2026-07-17T20:53:29.181Z"
+last_updated: "2026-07-17T21:19:29.986Z"
 progress:
   total_phases: 5
   completed_phases: 3
@@ -36,8 +36,8 @@ See: `.planning/PROJECT.md` (updated 2026-07-17)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
-**Current Phase:** 09
-**Current Plan:** 5
+**Current Phase:** 10 — Filters + Search
+**Current Plan:** Not started
 **Total Plans in Phase:** 5
 **Overall Status:** Phase 9 (Period Control) COMPLETE — 5/5 plans, HIST-04 sealed. All four History
 periods (Today/7/30/Custom) are live: presets retarget the fetch, the custom-range popover applies
@@ -239,7 +239,7 @@ the plan-checker against source.
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**` field, which this file's template does
+  derives that key from a body-level `Status:`/`**Status:**Ready to plan
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
   sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**` in `## Session`,
