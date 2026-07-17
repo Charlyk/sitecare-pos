@@ -154,7 +154,23 @@ Plans:
   3. Staff can type an order number or customer name and the list narrows to matching orders, debounced so no filtering runs on every keystroke
   4. Filters, search, and period compose — day headers and their counts/subtotals reflect only the visible (filtered) orders, and the empty state appears when nothing matches
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+
+**Wave 1**
+
+- [ ] 10-01-PLAN.md — pure filter predicates (`matchesStatus`/`matchesType`/`foldDiacritics`/`matchesSearch`) + filtered-empty-state i18n keys
+- [ ] 10-02-PLAN.md — `normalizeOrder` `'local'`→`'dinein'` boundary fix (D-08) + F-02 live-path regression
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 10-03-PLAN.md — `HistoryScreen` filter state, debounce, two-derived-set faceted counts, D-04 recompute, D-15 Avg fix, two-row FilterBar restructure
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 10-04-PLAN.md — filtered empty-state variants + Clear Filters (D-13/D-14) + integration test suite
+
 **UI hint**: yes
 
 ### Phase 11: Reprint + CSV Export
