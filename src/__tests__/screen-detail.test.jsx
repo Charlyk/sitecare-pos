@@ -577,3 +577,105 @@ describe('readOnly items-card states', () => {
     expect(row.style.gap).toBe('12px')
   })
 })
+
+// T-08-01 / SC3: no mutating control reachable on the read-only route. HYDRATED_ORDER carries
+// a real items array (per F-01), which is the shape that makes the items card — and its
+// Modify button — actually render on the shipped history-detail route today.
+const READONLY_SWEEP_ALLOWLIST = ['Back to history', 'Print kitchen', 'Print customer', 'Retry']
+
+describe('readOnly mutating-control gate (T-08-01, T-08-09)', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  test('readOnly + settled + hydrated items array: the Modify button is absent from the DOM', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATED_ORDER,
+        lang: 'ro',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.queryByText('Modifică')).toBeNull()
+  })
+
+  test('readOnly + settled + hydrated items array (en): the Modify button is absent', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATED_ORDER,
+        lang: 'en',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.queryByText('Modify')).toBeNull()
+  })
+
+  test('readOnly + settled + hydrated items array: exhaustive button sweep against the non-mutating allowlist', () => {
+    const { container } = render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATED_ORDER,
+        lang: 'en',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    const buttons = Array.from(container.querySelectorAll('button'))
+    expect(buttons.length).toBeGreaterThan(0)
+    for (const btn of buttons) {
+      expect(READONLY_SWEEP_ALLOWLIST).toContain(btn.textContent.trim())
+    }
+  })
+
+  test('readOnly + detailLoading: true: the Modify button is absent (does not reappear via the skeletal header slot)', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATING_ORDER,
+        lang: 'ro',
+        readOnly: true,
+        detailLoading: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    expect(screen.queryByText('Modifică')).toBeNull()
+  })
+
+  test('readOnly + detailError: true: the button sweep allowlist includes Retry and nothing else unexpected', () => {
+    const { container } = render(
+      createElement(OrderDetailScreen, {
+        order: HYDRATING_ORDER,
+        lang: 'en',
+        readOnly: true,
+        detailError: true,
+        onBack: vi.fn(),
+        onRetryDetail: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    const buttons = Array.from(container.querySelectorAll('button'))
+    const texts = buttons.map(b => b.textContent.trim())
+    expect(texts).toContain('Retry')
+    for (const text of texts) {
+      expect(READONLY_SWEEP_ALLOWLIST).toContain(text)
+    }
+  })
+
+  test('NOT readOnly + MINIMAL_ORDER: the Modify button IS present — the live route keeps its control', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: MINIMAL_ORDER,
+        lang: 'ro',
+        onBack: vi.fn(),
+        onAdvance: vi.fn(),
+        onPrint: vi.fn(),
+        onCancel: vi.fn(),
+        isOffline: false,
+      }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Modifică')).toBeTruthy()
+  })
+})
