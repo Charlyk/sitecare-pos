@@ -1,7 +1,7 @@
 ---
 phase: 8
 slug: read-only-order-detail-view
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-17
@@ -92,6 +92,12 @@ Accent is not used for any new interactive element in this phase — `readOnly` 
 would normally carry it (Advance, Cancel, Modify). The only accent use left standing is informational
 (total figure, qty tile, completed chip).
 
+**Focal point:** the **total-amount figure** is the visual anchor of the detail view — it is the only
+sage-accented text on an otherwise cream/white/muted page, and it is the single number staff open a
+historical receipt to read. Nothing net-new in this phase may out-weight it: the duration row is 12px
+muted, the skeleton bars are low-contrast grey, and the error block's 15px/600 title is `--sc-foreground`
+(not accent) and only ever renders when the total's own card is already on screen above it.
+
 ---
 
 ## Copywriting Contract
@@ -99,7 +105,7 @@ would normally carry it (Advance, Cancel, Modify). The only accent use left stan
 | Element | Copy |
 |---------|------|
 | Primary CTA | **None.** This is a read-only receipt view; the only actionable elements are Back (existing `h_back_to_history` — "Înapoi la istoric" / "Back to history") and Retry-on-error (existing `h_retry` — "Reîncearcă" / "Retry") |
-| Empty state | **Not applicable.** D-03's merge (`{...historyOrder, ...detail}`) guarantees the screen is never empty — the `AdminOrder` summary is already in the store before this route renders |
+| Empty state | **Screen-level: not applicable.** D-03's merge (`{...historyOrder, ...detail}`) guarantees the screen is never empty — the `AdminOrder` summary is already in the store before this route renders. **Card-level: one case exists** — `getOrder` succeeds but returns `items: []` (a data anomaly, not a fetch failure). New key **`h_detail_no_items`** — ro: "Nicio poziție pe această comandă" / en: "No items on this order", rendered inside the items-card shell. Do **not** route this to the error block: Retry cannot fix a genuinely empty order and would loop (resolved by the UI-consideration probe, E4/empty) |
 | Error state | New key **`h_detail_error_title`** — ro: "Nu am putut încărca bonul" / en: "Couldn't load this receipt". Body reuses existing **`check_connection`** — ro: "Verifică conexiunea și încearcă din nou." / en: "Check connection and try again." Button reuses existing **`h_retry`**. One generic message for 401/404/network alike (D-08) — do not branch copy on status code |
 | Destructive confirmation | **None reachable.** Advance and Cancel are hidden under `readOnly` (SC3); the newly-gated Modify button (folded fix) is likewise hidden, not shown-then-confirmed |
 
@@ -110,11 +116,13 @@ would normally carry it (Advance, Cancel, Modify). The only accent use left stan
 | `h_detail_error_title` | "Nu am putut încărca bonul" | "Couldn't load this receipt" | Items-card inline error (D-07/D-08) |
 | `h_prep_time` | "Timp de pregătire" | "Prep time" | Duration row label when a COMPLETED event exists (D-10) |
 | `h_canceled_after` | "Anulată după" | "Canceled after" | Duration row label when a CANCELLED event exists, no COMPLETED event (D-10) |
+| `h_detail_no_items` | "Nicio poziție pe această comandă" | "No items on this order" | Items-card empty state when `getOrder` returns `items: []` (UI-consideration probe, E4/empty) |
 
 **Before adding:** grep `src/i18n.jsx` for these exact strings first — this project hit duplicate-key
-issues twice in v1.0 (per `08-CONTEXT.md`'s canonical refs). None of the three exist today (verified
-during this research pass); `h_retry`, `h_back_to_history`, `check_connection` already exist and must
-be reused, not duplicated.
+issues twice in v1.0 (per `08-CONTEXT.md`'s canonical refs). None of the four exist today (the first
+three verified during this research pass; `h_detail_no_items` was added by the post-verification probe
+and **must be grepped before it is added**). `h_retry`, `h_back_to_history`, `check_connection` already
+exist and must be reused, not duplicated.
 
 ---
 
@@ -213,20 +221,86 @@ a new visual element — no new token is needed:
 
 ## UI Considerations
 
-> Populated by the ui-phase UI-consideration probe. Shape-rooted UI *state* coverage for this phase's
-> net-new surface only — the reused render surface (header, chips, customer card, thermal ticket) was
-> already probed in Phase 7's UI-SPEC and is not re-litigated here.
+> Populated by the ui-phase UI-consideration probe (post-verification, run over the compiled
+> `ui-consideration-probe.cjs`). Shape-rooted UI *state* coverage for this phase's net-new surface only
+> — the reused render surface (header, chips, customer card, thermal ticket) was already probed in
+> Phase 7's UI-SPEC and is not re-litigated here. Empty- and error-state **copy** lives in
+> `## Copywriting Contract`; the rows below reference it rather than restating it.
 
-Applicable state considerations resolved: 6 covered, 0 backstop, 0 unresolved.
+**Elements probed:** E1 duration row · E2 items-card skeleton · E3 items-card error · E4 items list ·
+E5 merged read-only detail view. Detected kinds were surfaced and confirmed with no kind missed.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| loading | Items card | ✅ covered | Skeleton rows (3, matching real-row dimensions exactly) swap to real content with zero layout jump — see "Items-Card Loading State" |
-| error | Items card | ✅ covered | Inline message + Retry replaces items-card content only; header/customer/totals region above stays visible — see "Items-Card Error State" and Copywriting Contract's Error state row |
-| partial | Whole detail view during fetch | ✅ covered | D-03 merge (`{...historyOrder, ...detail}`) means the `AdminOrder`-summary fields (header, chips, customer, minimal totals) render immediately; nothing blanks while `getOrder` is in flight |
-| zero-one-many | Duration row (events array) | ✅ covered | COMPLETED event → prep-time label; CANCELLED event (no COMPLETED) → canceled-after label; neither exists → row omitted entirely, no placeholder dash — see "Duration Row — Placement & Format" |
-| overflow | Items list length (skeleton vs real) | ✅ covered | Skeleton shows a fixed 3-row placeholder regardless of the eventual real count (unknown until `getOrder` resolves — `AdminOrder` carries no `items[]`); real rows already scroll via the existing `overflow: auto` left-column container (Phase 4/7, unchanged) |
-| long-text | Address / notes wrapping in the merged detail | ✅ covered | Unchanged — the customer-card address block already wraps via block-level `div`s (no `white-space: nowrap`, no truncation), reused verbatim from Phase 7's render; no new long-text surface is introduced by this phase |
+**Coverage: 39 applicable — 39 covered, 0 backstop, 0 unresolved.**
+
+### E1 — Duration row
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | ✅ covered | No `COMPLETED` and no `CANCELLED` event → the segment is dropped entirely; render only `orderTimeLabel(placedAt)` with **no dangling `·` separator** and no placeholder dash |
+| loading | ✅ covered | **Pop-in on resolve** (user-resolved): while `getOrder` is in flight `events[]` doesn't exist, so only the placed-at label renders; the duration segment appears when the detail resolves. No reserved slot, no skeleton bar — consistent with D-03's progressive enrichment, and the shift is one short segment on a 12px line |
+| error | ✅ covered | `getOrder` failed → no `events[]` → same as `empty`: segment dropped, placed-at label stays. The duration row never renders an error of its own; E3's items-card error block is the only error surface |
+| populated | ✅ covered | `COMPLETED` → `{placedAt} · Prep time: 25 min`; `CANCELLED` (no `COMPLETED`) → `{placedAt} · Canceled after: 1h 5m`. 12px/400 `var(--sc-muted-foreground)`, no icon — see "Duration Row — Placement & Format" |
+| partial | ✅ covered | `events[]` present but carrying neither terminal event (e.g. only `ACCEPTED`) → segment dropped, same as `empty`. Never derive from `estimatedMinutes` as a stand-in |
+| overflow | ✅ covered | Not reachable — `formatDuration` output is bounded (`"25 min"` / `"1h 5m"`), and the meta line has the full card width for two short segments |
+| zero-one-many | ✅ covered | **Last matching event wins** (user-resolved): if `events[]` holds more than one `COMPLETED`/`CANCELLED` (re-completion, status correction), use the **most recent** matching `createdAt` — it reflects the order's final resolution, which is the truth a receipt should show. `COMPLETED` still takes precedence over `CANCELLED` when both exist |
+| long-text | ✅ covered | Not reachable — `formatDuration` is the only variable text and its output is bounded; the labels are fixed i18n strings |
+
+### E2 — Items-card loading skeleton
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | ✅ covered | Not applicable by construction — the skeleton renders a fixed 3 rows and never reflects real data volume |
+| loading | ✅ covered | This element **is** the loading state: 3 skeleton rows + a skeletal 100px/15px card-header bar — see "Items-Card Loading State" |
+| error | ✅ covered | On fetch failure the skeleton is replaced wholesale by E3's error block; the two states are mutually exclusive and never co-render |
+| populated | ✅ covered | Terminal state — skeleton is replaced by E4's real item rows. Row padding (`12px 18px`), `gap: 12`, and `borderBottom` are identical between the two, so the swap causes **zero layout jump** (D-06) |
+| partial | ✅ covered | No partial skeleton — it's all-or-nothing per card. The card above it (header/customer/totals) is already populated from the `AdminOrder` summary and is never skeletal |
+| overflow | ✅ covered | 3 rows is a fixed, deliberately small count that fits the card without scrolling; the real count is unknowable until `getOrder` resolves (`AdminOrder` carries no `items[]`) |
+| zero-one-many | ✅ covered | Fixed at 3 regardless of the eventual real count — a representative placeholder, not a prediction. It does not attempt to match the real row count |
+
+### E3 — Items-card inline error
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | ✅ covered | Not applicable — the error block always carries title + body + Retry; there is no dataless variant |
+| loading | ✅ covered | Retry re-triggers `useOrderDetail(id)` via TanStack Query v5 `refetch`, which returns the card to E2's skeleton state. Reuses `isPending` — not `isLoading` (v5 semantics) |
+| error | ✅ covered | This element **is** the error state — see "Items-Card Error State". One generic message for 401/403/404/network alike (D-08); **no status-code branching** |
+| populated | ✅ covered | Title `h_detail_error_title`, body `check_connection`, `btn-secondary` Retry with `refresh` icon — reuses `screen-history.jsx`'s `ErrorBlock` pattern verbatim, at `32px 18px` padding |
+| partial | ✅ covered | Scoped to the items card only — header, chips, customer card, and minimal totals above stay visible and never blank (D-07's explicit "summary stays on screen" requirement) |
+| overflow | ✅ covered | Centered block inside the existing card shell at fixed copy length; the card shell's own dimensions are unchanged, so no reflow of the region above |
+| zero-one-many | ✅ covered | Exactly one error block ever renders per card — no stacking, no per-item errors |
+| long-text | ✅ covered | Copy is two fixed i18n strings (ro is the longer locale, ~30 chars); both wrap naturally in the centered block. No truncation |
+
+### E4 — Items list (hydrated receipt)
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | ✅ covered | **Empty-state message in the card** (user-resolved): `getOrder` succeeds but returns `items: []` → render a short "No items on this order" line inside the items-card shell. Requires **one new i18n key** (`h_detail_no_items`, ro/en — added to the Copywriting Contract's new-keys table). Deliberately **not** routed to E3's error block: Retry cannot fix a genuinely empty order and would loop |
+| loading | ✅ covered | Deferred to E2's skeleton — the list does not render its own loading affordance |
+| error | ✅ covered | Deferred to E3's error block — the list does not render its own error affordance |
+| populated | ✅ covered | Existing render, unchanged: name, modifiers, qty tile, unit price, line total per row, then subtotal / delivery fee / discount / total. Accent (`var(--sc-primary)`) on the total figure and qty-tile ink only; discount figure in `hsl(0 53% 42%)` |
+| partial | ✅ covered | An item missing modifiers renders name-only (existing behavior); a missing `deliveryFee` or `discount` omits that line rather than rendering a zero — reused verbatim from Phase 7, unchanged by this phase |
+| overflow | ✅ covered | Real rows scroll inside the existing `overflow: auto` left-column container (Phase 4/7, unchanged). No cap, no virtualization — consistent with D-03's standing "render every row" decision |
+| zero-one-many | ✅ covered | Zero → the `h_detail_no_items` line above; one → a single row (the "N items" header count is already pluralization-free by design, rendering "1 items" is pre-existing app-wide behavior and out of scope for this phase); many → scrolls per `overflow` |
+| long-text | ✅ covered | Item names, modifier text, address, and notes wrap in block-level `div`s with no `white-space: nowrap` and no truncation — reused verbatim from Phase 7's render. No new long-text surface is introduced |
+
+### E5 — Merged read-only detail view
+
+| Category | Status | Resolution / Reason |
+|----------|--------|---------------------|
+| empty | ✅ covered | Not reachable — D-03's merge (`{...historyOrder, ...detail}`) guarantees the `AdminOrder` summary is in the store before this route renders. The screen is never empty |
+| loading | ✅ covered | No full-screen loader. Summary fields paint immediately; only the items card is skeletal (E2). The screen is interactive (Back works) throughout the fetch |
+| error | ✅ covered | Scoped to the items card (E3). A `getOrder` failure never blanks the screen or bounces the user back to History |
+| populated | ✅ covered | Fully hydrated receipt: header + chips + customer card + items + totals + duration row. Satisfies SC1's field list (items w/ modifiers, subtotal, delivery fee, total, phone, address, handled-by, prep time) |
+| partial | ✅ covered | The defining state of this phase — summary fields render first and are progressively enriched when `getOrder` resolves. Fields present only on the detail response (address, notes, handled-by) are simply absent until then, never rendered as empty placeholders |
+| overflow | ✅ covered | Existing two-column layout: left column scrolls (`overflow: auto`), the thermal-ticket rail is fixed-width. Unchanged from Phase 7 |
+| zero-one-many | ✅ covered | One order per route by construction (`openHistoryOrder(id)` → `screen: 'history-detail'`). No multi-order state exists on this surface |
+| long-text | ✅ covered | Delegated to E4 — the customer-card address/notes blocks are the only unbounded text and already wrap without truncation |
+
+**Mutation safety (SC3), cross-cutting:** no category above introduces a reachable mutating control.
+Advance, Cancel, the timeline, and the newly-gated Modify button are all hidden under `readOnly` — the
+error state's Retry is a **read** re-fetch, not a mutation. Per `08-CONTEXT.md`'s sweep instruction, the
+Modify finding is one finding, not necessarily the only one: re-check the whole file for interactive
+controls outside the existing `readOnly` gates before considering SC3 satisfied.
 
 ---
 
@@ -243,11 +317,19 @@ Not applicable — no shadcn/component registry is in use for this project (see 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+Verified by gsd-ui-checker, 2026-07-17.
 
-**Approval:** pending
+- [x] Dimension 1 Copywriting: **PASS** — specific CTAs (Back, Retry), actionable error copy with a real solution path, no destructive action reachable
+- [x] Dimension 2 Visuals: **PASS** — was FLAG (no focal point declared); resolved by adding the focal-point statement to the Color section
+- [x] Dimension 3 Color: **PASS** — accent reserved for 3 named elements, destructive scoped to display-only, 60/30/10 explicit
+- [x] Dimension 4 Typography: **FLAG (accepted)** — 5 sizes / 3 weights exceeds the generic 4/2 cap, but every value is inherited verbatim from shipped code. CLAUDE.md's Design Fidelity rule is a project-level override; this phase introduces no new size or weight
+- [x] Dimension 5 Spacing: **FLAG (accepted)** — `12px`/`18px` are off the 4pt grid, but rounding them would desync the skeleton rows from the real rows they must match pixel-for-pixel (D-06's zero-layout-jump requirement), creating the exact inconsistency the dimension exists to prevent
+- [x] Dimension 6 Registry Safety: **PASS** — no shadcn/third-party registry in this project; the skipped init gate is a deliberate, documented call consistent with standing project instruction
+
+**Approval:** APPROVED (6/6 dimensions; 2 accepted FLAGs, both inherited codebase-wide conditions
+rather than debt created by this phase).
+
+**Carried to backlog (not phase-8 work):** a future dedicated pass should reconcile the app-wide type
+scale (5 sizes / 3 weights) and spacing scale (off-grid `12px`/`18px`) into a stricter system. A narrow
+hydration phase cannot fix a 7-phase-old scale, and patching it piecemeal per-phase would fragment it
+further.
