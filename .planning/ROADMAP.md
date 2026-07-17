@@ -100,8 +100,15 @@ Plans:
   3. No control that mutates order state is reachable — Advance, Cancel, and the timeline stay hidden, as the `readOnly` mode shipped in Phase 7 already enforces
   4. Back returns to History with the list and period intact, not to Orders
 
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
+
+Plans:
+- [ ] 08-01-PLAN.md — Amend ROADMAP/REQUIREMENTS per D-09 (handled-by cut, 401/404) + add 4 i18n keys
+- [ ] 08-02-PLAN.md — deriveDuration() in history-utils.js + export historyStatusMeta (pure derivation layer)
+- [ ] 08-03-PLAN.md — screen-detail: derived duration row (D-10) + readOnly status chip (D-05)
+- [ ] 08-04-PLAN.md — screen-detail: items-card loading/error/empty states + gate the Modify button (SC3)
+- [ ] 08-05-PLAN.md — app.jsx: sibling useOrderDetail + merge over summary + route wiring (SC1/SC2/SC4)
 
 ### Phase 9: Period Control
 
