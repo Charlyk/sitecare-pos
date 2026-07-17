@@ -159,9 +159,16 @@ function ErrorBlock({ t, onRetry }) {
 // financial claim D-06 exists to prevent. h_empty_sub is unchanged, on its own line (P7 D-13
 // reserves it for Phase 10's filter copy).
 function EmptyBlock({ t, settledPeriod, lang }) {
+  // 09-05 Rule-1 fix: a trailing period is appended UNLESS the phrase already ends with one —
+  // D-14's Romanian abbreviated month format ('mar.') already carries a trailing dot for a custom
+  // range's end date, and naively appending a second one produced "17 mar.." (double-dot), first
+  // exposed now that the custom branch (this plan) exercises EmptyBlock's sentence composition
+  // for the first time with a phrase that can itself end in punctuation.
+  const phrase = periodPhrase(settledPeriod, t, lang);
+  const mainLine = phrase.endsWith('.') ? `${t('h_empty_prefix')} ${phrase}` : `${t('h_empty_prefix')} ${phrase}.`;
   return (
     <div style={{ textAlign: 'center', padding: 48, color: 'var(--sc-muted-foreground)' }}>
-      <div style={{ fontSize: 15, fontWeight: 600 }}>{`${t('h_empty_prefix')} ${periodPhrase(settledPeriod, t, lang)}.`}</div>
+      <div style={{ fontSize: 15, fontWeight: 600 }}>{mainLine}</div>
       <div style={{ fontSize: 13, marginTop: 4 }}>{t('h_empty_sub')}</div>
     </div>
   );
@@ -276,8 +283,13 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
   // (RESEARCH Pitfall 1). getPresetRange returns null for 'custom' (09-05 territory) and any
   // unrecognized id; the hook's enabled guard turns that into "no request" rather than a request
   // with undefined params.
+  // 09-05: selectedPeriod is { id } for a preset, or { id: 'custom', customRange: {from,to} }
+  // once a custom range has been applied — customRange is absent until Apply fires (D-02).
   const [selectedPeriod, setSelectedPeriod] = useState({ id: '30' });
-  const range = useMemo(() => getPresetRange(selectedPeriod.id), [selectedPeriod]);
+  const range = useMemo(() => {
+    if (selectedPeriod.id === 'custom') return selectedPeriod.customRange ?? null;
+    return getPresetRange(selectedPeriod.id);
+  }, [selectedPeriod]);
   const { data, isLoading, isError, isFetching, isPlaceholderData, isSuccess, refetch } = useHistoryOrders(range ?? {});
 
   // D-06: settledPeriod tracks the range that actually PRODUCED the visible data — advances only
@@ -290,11 +302,19 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
     }
   }, [isSuccess, isPlaceholderData, selectedPeriod]);
 
-  // 'custom' resolves to a null range (09-05 wires the popover); until then the pill click is a
-  // deliberate one-wave no-op so the screen never lights a pill above data from another period.
+  // 09-05/D-04: a preset click always clears any applied custom range — setSelectedPeriod({id})
+  // carries no customRange field, so the Custom pill reverts and a reopened popover starts blank.
+  // FilterBar owns the Custom pill's own click (it toggles the popover locally); this handler is
+  // only ever invoked with a preset id.
   const handleSelectPeriod = (id) => {
-    if (id === 'custom') return;
     setSelectedPeriod({ id });
+  };
+
+  // 09-05/D-03: fired by the popover's Apply button. This is the ONLY place selectedPeriod gets a
+  // customRange — the pill's dates and the fetched range therefore cannot diverge by construction
+  // (T-09-19).
+  const handleApplyCustomRange = (customRange) => {
+    setSelectedPeriod({ id: 'custom', customRange });
   };
 
   const finished = useMemo(() => filterFinishedOrders(data ?? []), [data]);
@@ -323,6 +343,7 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
         lang={lang}
         selectedPeriod={selectedPeriod}
         onSelectPeriod={handleSelectPeriod}
+        onApplyCustomRange={handleApplyCustomRange}
         isFetching={isFetching}
         isLoading={isLoading}
       />
@@ -519,16 +540,25 @@ export function CustomRangePopover({ t, onApply, onClose }) {
 // Filter bar (D-14/HIST-04): period presets are now LIVE — clicking a pill retargets the fetch.
 // Status pills, search, and export stay inert this phase (Phase 10/11) so those later phases can
 // wire them up with zero layout shift.
-function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, isFetching, isLoading }) {
+function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange, isFetching, isLoading }) {
+  // 09-05/D-04: the popover unmounts entirely when closed (rangeOpen false) so its blank local
+  // state is genuinely fresh on each open — nothing is remembered across a close/reopen cycle.
+  const [rangeOpen, setRangeOpen] = useState(false);
+
   // D-12: preset labels go through the same periodLabel() the tile sub-label reads — one lookup
-  // site, so pill and tile cannot drift. 'custom' is not reachable this wave (09-05 wires the
-  // applied-range label onto this pill per D-03) — it stays the static t('h_period_custom')
-  // label, never fed a bogus from/to.
+  // site, so pill and tile cannot drift. D-03/09-05: the Custom pill's own label is the applied
+  // range (via the same periodLabel helper) ONLY while selectedPeriod.id === 'custom' carries a
+  // customRange; otherwise it is the static t('h_period_custom') label, never fed a bogus
+  // from/to — this is the invariant that keeps the pill from ever advertising a range that is
+  // not live (T-09-19).
+  const customPillLabel = selectedPeriod.id === 'custom' && selectedPeriod.customRange
+    ? periodLabel(selectedPeriod, t, lang)
+    : t('h_period_custom');
   const periods = [
     { id: 'today', label: periodLabel({ id: 'today' }, t, lang) },
     { id: '7', label: periodLabel({ id: '7' }, t, lang) },
     { id: '30', label: periodLabel({ id: '30' }, t, lang) },
-    { id: 'custom', label: t('h_period_custom') },
+    { id: 'custom', label: customPillLabel },
   ];
   const statusFilters = [
     { id: 'all', label: t('all') },
@@ -552,19 +582,46 @@ function FilterBar({ t, lang, selectedPeriod, onSelectPeriod, isFetching, isLoad
       <div style={{ display: 'inline-flex', background: '#fff', border: '1px solid hsl(120 10% 90%)', borderRadius: 10, padding: 3 }}>
         {periods.map((p) => {
           const selected = selectedPeriod.id === p.id;
+          const pillStyle = {
+            ...periodBtn,
+            background: selected ? 'var(--sc-foreground)' : 'transparent',
+            color: selected ? '#fff' : '#555',
+          };
+
+          if (p.id !== 'custom') {
+            return (
+              <button
+                key={p.id}
+                data-testid="history-period-pill"
+                onClick={() => { setRangeOpen(false); onSelectPeriod(p.id); }}
+                style={pillStyle}
+              >
+                {p.label}
+              </button>
+            );
+          }
+
+          // D-01/09-05: position:relative wraps the Custom pill button ONLY — not the whole
+          // segmented-control group (UI-SPEC Custom Range Popover Contract). Clicking it toggles
+          // the popover open/closed regardless of whether a range is currently applied.
           return (
-            <button
-              key={p.id}
-              data-testid="history-period-pill"
-              onClick={() => onSelectPeriod(p.id)}
-              style={{
-                ...periodBtn,
-                background: selected ? 'var(--sc-foreground)' : 'transparent',
-                color: selected ? '#fff' : '#555',
-              }}
-            >
-              {p.label}
-            </button>
+            <div key={p.id} style={{ position: 'relative' }}>
+              <button
+                data-testid="history-period-pill"
+                onClick={() => setRangeOpen((open) => !open)}
+                style={{ ...pillStyle, display: 'inline-flex', alignItems: 'center', gap: 4 }}
+              >
+                {p.label}
+                <Icon name="chevDown" size={14} />
+              </button>
+              {rangeOpen && (
+                <CustomRangePopover
+                  t={t}
+                  onApply={onApplyCustomRange}
+                  onClose={() => setRangeOpen(false)}
+                />
+              )}
+            </div>
           );
         })}
       </div>

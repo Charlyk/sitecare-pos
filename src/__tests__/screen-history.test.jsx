@@ -472,6 +472,189 @@ describe('D-12/D-13 — period-dependent copy (tile sub-labels + empty state)', 
   })
 })
 
+// ── Custom range popover wiring — D-03/D-04, the custom-range fetch seam (09-05 Task 2) ─────
+
+describe('Custom range popover wiring — D-03/D-04 (09-05)', () => {
+  // The Custom pill is whichever period pill is NOT one of the three static preset labels — its
+  // own text is dynamic (either the static 'Interval'/'Custom' label or an applied formatted
+  // range), so it cannot be found by a fixed textContent match the way the preset pills can.
+  const PRESET_LABELS = ['Azi', '7 zile', '30 zile', 'Today', '7 days', '30 days']
+  function getCustomPill() {
+    return screen.getAllByTestId('history-period-pill').find((p) => !PRESET_LABELS.includes(p.textContent))
+  }
+  function applyRange(start, end) {
+    fireEvent.click(getCustomPill())
+    fireEvent.change(screen.getByTestId('history-range-start'), { target: { value: start } })
+    fireEvent.change(screen.getByTestId('history-range-end'), { target: { value: end } })
+    fireEvent.click(screen.getByTestId('history-range-apply'))
+  }
+
+  test('the popover is absent on mount; clicking the Custom pill opens it, clicking it again closes it', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    expect(screen.queryByTestId('history-range-popover')).toBeNull()
+
+    const customPill = getCustomPill()
+    fireEvent.click(customPill)
+    expect(screen.getByTestId('history-range-popover')).toBeTruthy()
+
+    fireEvent.click(customPill)
+    expect(screen.queryByTestId('history-range-popover')).toBeNull()
+  })
+
+  test('applying a valid range calls useHistoryOrders with customRangeToQuery(from,to) and closes the popover', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    applyRange('2026-03-03', '2026-03-17')
+
+    const expected = customRangeToQuery('2026-03-03', '2026-03-17')
+    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    expect(callArg).toEqual(expected)
+    expect(screen.queryByTestId('history-range-popover')).toBeNull()
+  })
+
+  test('after applying 2026-03-03..2026-03-17 (ro), the Custom pill reads "3 mar. – 17 mar." and no longer "Interval"', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    applyRange('2026-03-03', '2026-03-17')
+
+    const customPill = getCustomPill()
+    expect(customPill.textContent).toContain('3 mar. – 17 mar.')
+    expect(customPill.textContent).not.toContain('Interval')
+  })
+
+  test('after applying, the Custom pill shows selected styling and the other three pills are unselected', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    applyRange('2026-03-03', '2026-03-17')
+
+    const pills = screen.getAllByTestId('history-period-pill')
+    const customPill = getCustomPill()
+    expect(customPill.style.background).toBe('var(--sc-foreground)')
+    pills.filter((p) => p !== customPill).forEach((p) => expect(p.style.background).toBe('transparent'))
+  })
+
+  test('after applying, the chevDown icon is still rendered within the Custom pill', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    applyRange('2026-03-03', '2026-03-17')
+
+    const customPill = getCustomPill()
+    expect(customPill.querySelector('svg path[d="M6 9l6 6 6-6"]')).toBeTruthy()
+  })
+
+  test('after applying, the tile sub-label reads the same formatted range once settled (D-12)', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    applyRange('2026-03-03', '2026-03-17')
+
+    const ordersCard = screen.getByText('Comenzi').closest('.card')
+    expect(ordersCard.textContent).toContain('3 mar. – 17 mar.')
+  })
+
+  test('after applying, the empty-state phrase reads the composed custom-range sentence (D-13)', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    applyRange('2026-03-03', '2026-03-17')
+
+    expect(screen.getByText('Nicio comandă în intervalul 3 mar. – 17 mar.')).toBeTruthy()
+  })
+
+  test('applying a single-day range fetches a from/to exactly 24h apart and the pill reads the same date on both sides', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    applyRange('2026-03-10', '2026-03-10')
+
+    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    expect(new Date(callArg.to).getTime() - new Date(callArg.from).getTime()).toBe(24 * 60 * 60 * 1000)
+
+    const customPill = getCustomPill()
+    const [left, right] = customPill.textContent.split(' – ')
+    expect(left).toBe(right)
+  })
+
+  test('after applying, clicking "7 zile" reverts the Custom pill, selects the 7-day pill, and fetches getPresetRange("7")', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    applyRange('2026-03-03', '2026-03-17')
+
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
+    fireEvent.click(sevenPill)
+
+    const expected = getPresetRange('7')
+    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
+    expect(callArg.from.slice(0, 10)).toBe(expected.from.slice(0, 10))
+    expect(sevenPill.style.background).toBe('var(--sc-foreground)')
+
+    const customPill = getCustomPill()
+    expect(customPill.textContent).toBe('Interval')
+    expect(customPill.textContent).not.toMatch(/\d/)
+  })
+
+  test('after clearing via a preset click, reopening the popover shows both fields blank (D-04)', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    applyRange('2026-03-03', '2026-03-17')
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
+    fireEvent.click(sevenPill)
+
+    fireEvent.click(getCustomPill())
+    expect(screen.getByTestId('history-range-start').value).toBe('')
+    expect(screen.getByTestId('history-range-end').value).toBe('')
+  })
+
+  test('dismissing the popover with Escape after typing a range leaves the pill reading "Interval" and the fetched range unchanged', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    fireEvent.click(getCustomPill())
+    fireEvent.change(screen.getByTestId('history-range-start'), { target: { value: '2026-03-03' } })
+    fireEvent.change(screen.getByTestId('history-range-end'), { target: { value: '2026-03-17' } })
+    fireEvent.keyDown(document, { key: 'Escape' })
+
+    expect(screen.queryByTestId('history-range-popover')).toBeNull()
+    const customPill = getCustomPill()
+    expect(customPill.textContent).toBe('Interval')
+
+    const expected = getPresetRange('30')
+    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
+    expect(callArg.from.slice(0, 10)).toBe(expected.from.slice(0, 10))
+  })
+
+  test('there is no rendered state where the Custom pill shows a date range while the resolved range is a preset range', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    // Mount: preset '30' is live, Custom pill shows the static label.
+    expect(getCustomPill().textContent).toBe('Interval')
+
+    // Apply a custom range: Custom pill now shows dates, matching the live fetched range.
+    applyRange('2026-03-03', '2026-03-17')
+    expect(getCustomPill().textContent).toContain('–')
+    let callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    expect(callArg).toEqual(customRangeToQuery('2026-03-03', '2026-03-17'))
+
+    // Switch to a preset: Custom pill reverts to the static label, matching the (now preset) live range.
+    fireEvent.click(screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile'))
+    expect(getCustomPill().textContent).toBe('Interval')
+    callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const expected = getPresetRange('7')
+    expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
+  })
+})
+
 // ── historyStatusMeta — exported for reuse by screen-detail.jsx (D-05) ─────
 
 describe('historyStatusMeta', () => {
