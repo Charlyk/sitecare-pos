@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 9 — Period Control
 current_plan: Not started
-status: ready_to_execute
-stopped_at: Completed 08-05-PLAN.md — Phase 8 complete (5/5 plans, HIST-10 delivered)
+status: ready_to_plan
+stopped_at: Phase 8 complete — UAT 20/20, security verified (threats_open 0). Phase 9 needs discussion.
 last_updated: "2026-07-17T13:05:35.671Z"
 progress:
   total_phases: 5
