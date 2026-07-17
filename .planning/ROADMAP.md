@@ -132,13 +132,13 @@ Plans:
   2. Staff can pick a custom start and end date and the list reloads for exactly that range
   3. The summary strip retargets with the period automatically — it is computed from the same fetched list (D-15), so tiles and day headers continue to agree by construction with no second data source and no independent loading or error state
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans executed
 
 - [x] 09-01-PLAN.md — pure derivation layer: preset range builders, 366-day span validator, input→query converter, locale-aware range formatter (history-utils.js)
 - [x] 09-02-PLAN.md — 8 new i18n keys (ro+en) + h_empty rename to h_empty_prefix; spin keyframe
 - [x] 09-03-PLAN.md — parameterize useHistoryOrders({from,to}) + keepPreviousData; rewrite frozen-at-mount tests
 - [x] 09-04-PLAN.md — live preset pills, dimmed-loading + spinner (D-05), settled-label tracking (D-06), period copy fix (D-12/D-13)
-- [ ] 09-05-PLAN.md — custom-range popover: native date inputs, guardrails, Apply, pill label (D-01/02/03/04/09/10/11) + blocking human checkpoint
+- [x] 09-05-PLAN.md — custom-range popover: native date inputs, guardrails, Apply, pill label (D-01/02/03/04/09/10/11) + blocking human checkpoint
 
 **UI hint**: yes
 
@@ -200,7 +200,7 @@ Plans:
 | 6. Build Pipeline | v1.0 | 4/4 | Complete | 2026-05-02 |
 | 7. History Screen Foundation | v1.1 | 6/6 | Complete    | 2026-07-17 |
 | 8. Read-Only Order Detail View | v1.1 | 5/5 | Complete    | 2026-07-17 |
-| 9. Period Control | v1.1 | 4/5 | In Progress|  |
+| 9. Period Control | v1.1 | 5/5 | In Progress|  |
 | 10. Filters + Search | v1.1 | 0/? | Not started | - |
 | 11. Reprint + CSV Export | v1.1 | 0/? | Not started | - |
 

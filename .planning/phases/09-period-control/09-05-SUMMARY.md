@@ -35,9 +35,7 @@ key-decisions:
   - "periodLabel()/periodPhrase()'s pre-existing 'custom' branches (written but unreachable in 09-04) now read period.customRange instead of flat period.from/period.to, matching the { id, customRange } shape this plan introduces; periodLabel falls back to t('h_period_custom') when customRange is absent"
   - "Rule-1 fix: EmptyBlock previously appended a trailing '.' unconditionally; the Romanian abbreviated month format ('mar.') already ends in a period for a custom range's end date, so the naive concatenation produced a double-dot ('17 mar..') the first time this plan's custom branch exercised EmptyBlock's sentence composition. Fixed to skip the extra period when the phrase already ends with one."
 
-requirements-completed: []
-# NOT marking HIST-04 complete — Task 3 (blocking human-verify checkpoint) is PENDING. See
-# "## Human Checkpoint — PENDING" below. This plan's coverage claims Tasks 1-2 only.
+requirements-completed: [HIST-04]
 
 coverage:
   - id: D1
@@ -57,32 +55,32 @@ coverage:
         status: pass
     human_judgment: false
   - id: D3
-    description: "Live-API/live-platform verification: the native date picker's real calendar chrome on this machine's macOS (RESEARCH Pitfall 3, pre-Big-Sur WebKit degradation risk), the 366-day worst-case fetch timing (P7 D-03's deferred 'measure against real data' trigger for virtualization), and whether the D-05 dimmed-loading state reads as loading vs. disabled — none of these are answerable by a mocked unit test"
+    description: "Live-API/live-platform verification: the native date picker's real calendar chrome on this machine's macOS (RESEARCH Pitfall 3, pre-Big-Sur WebKit degradation risk), the 366-day worst-case fetch timing (P7 D-03's deferred 'measure against real data' trigger for virtualization), and whether the D-05 dimmed-loading state reads as loading vs. disabled"
     requirement: "HIST-04"
-    verification: []
+    verification:
+      - kind: manual_procedural
+        ref: "09-05-PLAN.md Task 3 <how-to-verify> — human ran the full script against the live API and replied \"approved\""
+        status: pass
     human_judgment: true
-    rationale: "Task 3 is a blocking human-verify checkpoint (gate=\"blocking\") requiring the live SiteCare API, a real macOS calendar picker, and a human timing/perception judgment. This is PENDING — see the Human Checkpoint section below. HIST-04 cannot be marked complete until this returns."
+    rationale: "Blocking human-verify checkpoint (gate=\"blocking\"). The human ran the verification and replied \"approved\" with no itemized answers to the three specific questions (calendar chrome, 366-day timing, dimming perception) — see the Human Checkpoint section below for the honest, unpadded record. Recorded as human_judgment: true regardless of the blanket approval, since this deliverable is inherently a judgment call, not something a passing verification entry alone should silently auto-pass."
 
-duration: ~11min (Tasks 1-2 only; Task 3 checkpoint pending)
+duration: ~11min implementation (Tasks 1-2) + human checkpoint (Task 3, approved, duration not tracked)
 completed: 2026-07-17
-status: pending-human-checkpoint
+status: complete
 ---
 
-# Phase 9 Plan 5: Custom-Range Popover Summary (DRAFT — Task 3 checkpoint pending)
+# Phase 9 Plan 5: Custom-Range Popover Summary
 
-**CustomRangePopover — two native date inputs, D-11 min/max guardrails sourced from `MAX_RANGE_DAYS`, an Apply button gated by `validateCustomRange` at both render and click time — wired to the Custom pill so an applied range fetches through the same seam as the Today/7/30 presets and clears on any preset click (D-03/D-04). Tasks 1-2 are implemented, tested, and committed; Task 3's blocking human-verify checkpoint (live API, native picker chrome, 366-day timing) has NOT yet run.**
-
-> **This is a DRAFT summary.** HIST-04 and the phase are NOT complete. Do not treat this document
-> as phase-closing until the "Human Checkpoint" section below is filled in and the plan/phase are
-> re-finalized in a follow-up pass.
+**CustomRangePopover — two native date inputs, D-11 min/max guardrails sourced from `MAX_RANGE_DAYS`, an Apply button gated by `validateCustomRange` at both render and click time — wired to the Custom pill so an applied range fetches through the same seam as the Today/7/30 presets and clears on any preset click (D-03/D-04). Human-verified against the live API ("approved"); HIST-04 is now complete — all four History periods are live.**
 
 ## Performance
 
-- **Duration:** ~11 min (Tasks 1-2 only)
+- **Duration:** ~11 min implementation (Tasks 1-2); Task 3 (human checkpoint) duration not tracked
 - **Started:** ~2026-07-17T23:31:49+03:00 (immediately after 09-04's completion commit)
 - **Completed (Tasks 1-2):** 2026-07-17T23:42:56+03:00
-- **Tasks:** 2 of 3 (Task 3 — blocking human-verify checkpoint — is PENDING, not executed)
-- **Files modified:** 2 (`src/screen-history.jsx`, `src/__tests__/screen-history.test.jsx`)
+- **Checkpoint approved:** 2026-07-17 (human replied "approved")
+- **Tasks:** 3 of 3 (Task 3 — blocking human-verify checkpoint — approved)
+- **Files modified:** 2 code files (`src/screen-history.jsx`, `src/__tests__/screen-history.test.jsx`) + tracking files (this SUMMARY, `REQUIREMENTS.md`, `ROADMAP.md`, `STATE.md`)
 
 ## Accomplishments
 
@@ -126,12 +124,13 @@ status: pending-human-checkpoint
 1. **Task 1: CustomRangePopover — fields, guardrails, Apply** - `1268334` (feat)
 2. **Task 2: Wire the popover to the Custom pill — D-03 label, D-04 clearing, custom range fetch** - `9cbdd2b` (feat)
 
-**Task 3 (checkpoint:human-verify, gate="blocking"): NOT YET RUN.** No commit exists for it — it
-requires the live SiteCare API and a human observing real macOS calendar-picker chrome, 366-day
-fetch timing, and D-05 dimming perception. See "Human Checkpoint — PENDING" below.
+**Task 3 (checkpoint:human-verify, gate="blocking"): APPROVED.** No code commit is associated with
+it — it is a live-API/live-platform verification, not a code change. The human ran the plan's
+verification script and replied "approved". See "Human Checkpoint — APPROVED" below for the
+honest, unpadded record of what was and wasn't itemized in that reply.
 
-**Plan metadata commit:** deferred until the checkpoint returns (this SUMMARY is committed on its
-own, as a draft, per the orchestrator's explicit instruction not to seal the plan/phase yet).
+**Plan metadata commit:** this finalized SUMMARY plus the deferred tracking-file updates
+(`REQUIREMENTS.md`, `ROADMAP.md`, `STATE.md`) are committed together, following.
 
 ## Files Created/Modified
 
@@ -191,47 +190,59 @@ None beyond the Rule-1 fix documented above.
 None — no external service configuration required for Tasks 1-2. Task 3's checkpoint requires the
 live SiteCare API, which is an existing, already-configured connection (no new setup).
 
-## Human Checkpoint — PENDING
+## Human Checkpoint — APPROVED
 
-**Status: NOT YET RUN.** Task 3 is a `checkpoint:human-verify` gate with `gate="blocking"` per
-`09-05-PLAN.md`. It requires a human to run `npm run tauri dev` against the live SiteCare API and
-report on three items that cannot be verified by a mocked unit test:
+**Resume signal received: the human replied exactly "approved", with no additional observations.**
+Task 3 is a `checkpoint:human-verify` gate with `gate="blocking"` per `09-05-PLAN.md`, requiring a
+human to run `npm run tauri dev` against the live SiteCare API and walk the verification script at
+`09-05-PLAN.md`'s Task 3 `<how-to-verify>` block (steps A–E: preset switching, D-05 dimming
+perception, the custom-range Apply flow, the 366-day worst case, and scope confirmation that
+Phase 10/11 controls remain inert).
+
+**Recorded honestly, not fabricated:** the reply was a blanket "approved" — it did not separately
+answer the plan's three specific questions. Recording each as-received rather than inventing a
+plausible-sounding answer:
 
 1. **Native date picker chrome** — does a real OS calendar open when clicking a date field on this
    machine's macOS, or does it degrade to a bare text box (RESEARCH Pitfall 3: WebKit renders no
    calendar affordance pre-Safari 14.1 / macOS 11 Big Sur, and `tauri.conf.json` pins no
    `minimumSystemVersion`)?
-   **Answer:** _(pending)_
+   **Answer:** Not itemized in the reply. The blanket "approved" implies no defect was seen worth
+   flagging (a bare text box on a modern Mac was explicitly called out in the script as reportable),
+   but no specific chrome/no-chrome confirmation was recorded.
 
 2. **The 366-day worst-case fetch timing** — `P7 D-03` deferred virtualization pending a real
    measurement against live data; a 366-day range is ~12x the 30-day default against an unpaginated,
-   unvirtualized list. Roughly how long did rows take to appear, did the spinner keep animating
-   throughout, and did the app feel frozen at any point?
-   **Answer:** _(pending)_
+   unvirtualized list.
+   **Answer:** Not captured this session. **Open follow-up:** if virtualization scheduling ever needs
+   a concrete number to act on, this measurement must be re-run and captured explicitly — a blanket
+   "approved" does not substitute for the timing figure `P7 D-03` and this plan's script both call
+   for. Not a blocker for sealing HIST-04 (the guardrail — the 366-day cap itself — is enforced and
+   unit-tested regardless of the measured timing), but it remains unmeasured.
 
-3. **Does the D-05 dimmed-loading state read as "loading" or as "disabled"?** — a perception
-   judgment on a screen that renders both conventions simultaneously (0.5-opacity inert controls vs.
-   0.6-opacity in-flight rows).
-   **Answer:** _(pending)_
+3. **Does the D-05 dimmed-loading state read as "loading" or as "disabled"?**
+   **Answer:** Not itemized in the reply. No negative perception issue was reported, which is
+   consistent with (but not an explicit confirmation of) the dimming reading correctly as loading.
 
-The full verification script (steps A-E, covering preset switching, dimming perception, custom-range
-Apply flow, the 366-day worst case, and scope confirmation that Phase 10/11 controls remain inert)
-is recorded verbatim in `09-05-PLAN.md`'s Task 3 `<how-to-verify>` block. This SUMMARY will be
-updated with the three answers, and the plan/phase finalized (SUMMARY frontmatter `status`,
-`requirements-completed`, STATE.md, ROADMAP.md, REQUIREMENTS.md) in a follow-up pass once the human
-checkpoint returns a resume signal.
+**Disposition:** Per the coordinator's explicit instruction, the blanket "approved" is accepted as
+the checkpoint's resume signal and HIST-04 is sealed on that basis. The unanswered 366-day timing
+question is carried forward as an open item (see `Next Phase Readiness` below), not blocked on.
 
 ## Next Phase Readiness
 
-**NOT READY.** HIST-04 remains open pending Task 3. Do not begin Phase 10 planning/execution or
-mark Phase 9 complete until this checkpoint returns and the plan is finalized.
+**HIST-04 is complete. All four History periods (Today/7/30/Custom) are live and human-verified.**
+Phase 9 (Period Control) is done — `09-01` through `09-05` all shipped.
 
 - Tasks 1-2's code, tests, and commits are complete and green (`npx vitest run` — 397 passed / 3
   pre-existing unrelated failures, documented in `deferred-items.md`).
-- `HIST-04` is functionally complete in code (all four periods live, custom-range Apply flow fully
-  wired) but not yet human-verified against the live API per this plan's blocking checkpoint.
+- Task 3's blocking human-verify checkpoint returned "approved".
+- **Open follow-up (non-blocking):** the 366-day worst-case fetch timing (`P7 D-03`'s deferred
+  "measure against real data before adding [virtualization] machinery" trigger) was not captured
+  in this checkpoint's reply. If a future phase needs to decide on virtualization, this measurement
+  should be taken explicitly rather than assumed from the blanket approval.
+- Phase 10 (Filters + Search, HIST-07/08/09) can now begin planning.
 
 ---
 *Phase: 09-period-control*
-*Status: DRAFT — Tasks 1-2 complete, Task 3 (blocking human-verify) PENDING*
+*Status: COMPLETE — all 3 tasks done, human checkpoint approved 2026-07-17*
 </content>

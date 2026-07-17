@@ -5,14 +5,14 @@ milestone_name: Orders History Screen
 current_phase: 09
 current_plan: 5
 status: ready_to_execute
-stopped_at: Completed 09-04-PLAN.md
-last_updated: "2026-07-17T20:30:43.280Z"
+stopped_at: Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
+last_updated: "2026-07-17T20:53:29.181Z"
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 20
-  completed_plans: 15
-  percent: 40
+  completed_plans: 16
+  percent: 60
 ---
 
 # State: SiteCare POS Desktop App
@@ -39,16 +39,20 @@ See: `.planning/PROJECT.md` (updated 2026-07-17)
 **Current Phase:** 09
 **Current Plan:** 5
 **Total Plans in Phase:** 5
-**Overall Status:** Phase 8 COMPLETE — 5/5 plans, verification passed 9/9 must-haves, UAT 20/20 with
-zero issues (16 auto-passed from coverage blocks, 4 human-confirmed), security verified with
-`threats_open: 0` across 13 threats. HIST-10 delivered: archived-order detail hydrates via
-`getOrder(id)` with derived prep time, status chip, and loading/error/empty states; no mutating
-controls reachable in readOnly mode. Phase 7 before it: 6/6 plans, UAT 26/26 with zero issues.
-Phase 9 (Period Control) is ready to plan.
+**Overall Status:** Phase 9 (Period Control) COMPLETE — 5/5 plans, HIST-04 sealed. All four History
+periods (Today/7/30/Custom) are live: presets retarget the fetch, the custom-range popover applies
+an explicit start/end with a 366-day cap (D-09/D-10/D-11), and the applied range renders on the
+Custom pill while never advertising a range that isn't live (D-03/D-04). 09-05's blocking human
+checkpoint (live API, native picker chrome, 366-day timing, D-05 dimming perception) returned
+"approved" — the three specific observations were not individually itemized in that reply; the
+366-day worst-case timing measurement remains an open, non-blocking follow-up (see `09-05-SUMMARY.md`
+§ Human Checkpoint). Phase 8 before it: 5/5 plans, UAT 20/20, HIST-10 delivered. Phase 7 before that:
+6/6 plans, UAT 26/26 with zero issues. Phase 10 (Filters + Search — HIST-07/08/09) is already
+planned (`10-01`..`10-04-PLAN.md`) and ready to execute.
 
 ```
-Progress: [████████████████████] 11/11 plans ([████████░░] 75%)
-Milestone v1.1 — Phases 7 and 8 complete (2/5), Phase 9 ready to plan
+Progress: [████████████████████] 11/11 plans ([████████░░] 80%)
+Milestone v1.1 — Phases 7, 8, and 9 complete (3/5), Phase 10 planned and ready to execute
 ```
 
 **Phase 8 planning note (F-01):** The planner disproved a premise carried by both `08-RESEARCH.md`
@@ -74,8 +78,8 @@ the plan-checker against source.
 | 6 | Build Pipeline | Complete — all 4 plans done, human-approved 2026-05-02 |
 | 7 | History Screen Foundation | Complete — 6/6 plans, UAT 26/26, human-verified 2026-07-17 — HIST-01, HIST-02, HIST-03, HIST-05, HIST-06, HIST-13 |
 | 8 | Read-Only Order Detail View | Complete — 5/5 plans, UAT 20/20, security verified, human-verified 2026-07-17 — HIST-10 |
-| 9 | Period Control | Not started — HIST-04 (was Phase 8; summary strip removed per D-15) |
-| 10 | Filters + Search | Not started — HIST-07, HIST-08, HIST-09 (was Phase 9) |
+| 9 | Period Control | Complete — 5/5 plans, human checkpoint approved 2026-07-17 — HIST-04 (all four periods live: Today/7/30/Custom) |
+| 10 | Filters + Search | Planned — 4 plans ready to execute — HIST-07, HIST-08, HIST-09 (was Phase 9) |
 | 11 | Reprint + CSV Export | Not started — HIST-11, HIST-12 (was Phase 10) |
 
 ---
@@ -87,7 +91,7 @@ the plan-checker against source.
 | Phases completed (v1.0) | 6 / 6 |
 | Phases completed (v1.1) | 2 / 5 |
 | Requirements done (v1.0) | 41 / 41 |
-| Requirements done (v1.1) | 7 / 13 |
+| Requirements done (v1.1) | 8 / 13 |
 | Sessions | 14 |
 
 ---
@@ -110,6 +114,7 @@ the plan-checker against source.
 | Phase 09 P02 | 5min | 2 tasks | 2 files |
 | Phase 09 P3 | 10min | 2 tasks | 2 files |
 | Phase 09 P04 | 13min | 3 tasks | 2 files |
+| Phase 09 P05 | 11min (+ human checkpoint) | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -229,6 +234,19 @@ the plan-checker against source.
   Flagging for awareness in case parallel phase-planning and phase-execution sessions need
   additional write coordination on `STATE.md`.
 
+- **2026-07-17, 09-05 finalization:** No conflicting concurrent write was observed while finalizing
+  this plan (checked `git status`/`git diff` on `STATE.md` before each write; only this session's
+  own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
+  than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
+  `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
+  derives that key from a body-level `Status:`/`**Status:**` field, which this file's template does
+  not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
+  body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**` in `## Session`,
+  disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
+  `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
+  Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
+
 ---
 - 09-04 must update src/__tests__/screen-history.test.jsx (2 assertions) and src/__tests__/app-history-route.test.jsx (2 assertions) that still expect the removed 'Nicio comandă în ultimele 30 de zile.' literal — h_empty_prefix (09-02) was renamed but the consumer's tests were not in 09-02's scope. Full suite is 7 failed/342 passed until this lands.
 
@@ -236,9 +254,9 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T20:30:43.273Z
-**Stopped at:** Completed 09-04-PLAN.md
-**Next action:** `/gsd-discuss-phase 9` — gather context for Period Control (HIST-04)
+**Last session:** 2026-07-17T20:53:25.930Z
+**Stopped at:** Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
+**Next action:** `/gsd-execute-phase 10` — Filters + Search (HIST-07/08/09) is already planned (`10-01`..`10-04-PLAN.md`) and ready to execute
 
 **Phase 7 planning notes:**
 
@@ -295,3 +313,6 @@ the plan-checker against source.
 - [Phase ?]: 09-03: promoted the range from a mount-frozen constant to a caller-supplied parameter (assumption-delta chosen); add-alongside rejected to avoid a second, label-blind way to fetch history data
 - [Phase ?]: [Phase 09-04]: settledPeriod effect gates on isSuccess && !isPlaceholderData (not isLoading/isError) — matches D-06's mechanism exactly and avoids advancing on stale flags during errors
 - [Phase ?]: [Phase 09-04]: periodLabel()/periodPhrase() are the single lookup site for pill text, tile sub-labels, and empty-state copy (D-12) — FilterBar's own periods array now calls periodLabel() instead of a direct t() call so the pill's label and the tile's sub-label cannot drift
+- [Phase ?]: [Phase 09-05]: CustomRangePopover exported (not module-private) so its fields/guardrails/Apply can be unit-tested in isolation ahead of FilterBar wiring — same testability precedent as historyStatusMeta's export
+- [Phase ?]: [Phase 09-05]: periodLabel()/periodPhrase()'s 'custom' branches read period.customRange (not flat period.from/to), matching the { id, customRange } selectedPeriod shape; periodLabel falls back to t('h_period_custom') when customRange is absent
+- [Phase ?]: [Phase 09-05]: Rule-1 fix — EmptyBlock's D-13 sentence composition now skips the trailing period when the phrase already ends with one, avoiding a double-dot with Romanian abbreviated month names (mar..) on custom-range empty states

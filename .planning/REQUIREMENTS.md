@@ -99,7 +99,7 @@ Revisit if the API adds these fields.
 | HIST-01 | Phase 7 | 07-02 | Complete |
 | HIST-02 | Phase 7 | 07-03 | Complete |
 | HIST-03 | Phase 7 | 07-03 | Complete |
-| HIST-04 | Phase 9 | 09-01 – 09-05 | Planned |
+| HIST-04 | Phase 9 | 09-01 – 09-05 | Complete (09-01..09-05) |
 | HIST-05 | Phase 7 | 07-01, 07-04 | Complete |
 | HIST-06 | Phase 7 | 07-04 | Complete |
 | HIST-07 | Phase 10 | TBD | Pending |
