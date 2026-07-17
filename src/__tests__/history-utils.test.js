@@ -9,6 +9,7 @@ import {
   MAX_RANGE_DAYS,
   validateCustomRange,
   customRangeToQuery,
+  formatDateRange,
   filterFinishedOrders,
   deriveDisplayStatus,
   groupOrdersByDay,
@@ -256,6 +257,56 @@ describe('customRangeToQuery', () => {
     expect(fromD.getMonth()).toBe(2)
     expect(toD.getDate()).toBe(18)
     expect(toD.getMonth()).toBe(2)
+  })
+})
+
+// ── formatDateRange — HIST-04, D-14 ────────────────────────────────────────
+
+describe('formatDateRange', () => {
+  const fixedNow = new Date(2026, 6, 17, 14, 30, 0, 0) // 2026-07-17 local — same calendar year as fixtures below
+
+  test('ro-RO: exclusive `to` renders as an inclusive end (3 mar. – 17 mar.)', () => {
+    const { from, to } = customRangeToQuery('2026-03-03', '2026-03-17')
+    expect(formatDateRange(from, to, 'ro-RO', fixedNow)).toBe('3 mar. – 17 mar.')
+  })
+
+  test('en-GB: same range renders 3 Mar – 17 Mar', () => {
+    const { from, to } = customRangeToQuery('2026-03-03', '2026-03-17')
+    expect(formatDateRange(from, to, 'en-GB', fixedNow)).toBe('3 Mar – 17 Mar')
+  })
+
+  test('single-day range renders the same date on both sides (adjacency)', () => {
+    const { from, to } = customRangeToQuery('2026-03-17', '2026-03-17')
+    expect(formatDateRange(from, to, 'ro-RO', fixedNow)).toBe('17 mar. – 17 mar.')
+  })
+
+  test('a range inside now\'s calendar year omits the year on both sides', () => {
+    const { from, to } = customRangeToQuery('2026-03-03', '2026-03-17')
+    const result = formatDateRange(from, to, 'ro-RO', fixedNow)
+    expect(result).not.toMatch(/2026/)
+  })
+
+  test('a range crossing into the previous calendar year shows the year on BOTH endpoints', () => {
+    const { from, to } = customRangeToQuery('2025-12-20', '2026-01-10')
+    expect(formatDateRange(from, to, 'ro-RO', fixedNow)).toBe('20 dec. 2025 – 10 ian. 2026')
+  })
+
+  test('a range entirely inside a past calendar year shows the year on both endpoints', () => {
+    const { from, to } = customRangeToQuery('2025-01-05', '2025-01-20')
+    const result = formatDateRange(from, to, 'ro-RO', fixedNow)
+    expect(result).toBe('5 ian. 2025 – 20 ian. 2025')
+  })
+
+  test('output contains exactly one en dash (U+2013) and no hyphen-minus separator', () => {
+    const { from, to } = customRangeToQuery('2026-03-03', '2026-03-17')
+    const result = formatDateRange(from, to, 'ro-RO', fixedNow)
+    expect((result.match(/–/g) || []).length).toBe(1)
+    expect(result).not.toMatch(/ - /)
+  })
+
+  test('round-trip: customRangeToQuery -> formatDateRange agree on the exclusive upper bound', () => {
+    const { from, to } = customRangeToQuery('2026-03-03', '2026-03-17')
+    expect(formatDateRange(from, to, 'ro-RO', fixedNow)).toBe('3 mar. – 17 mar.')
   })
 })
 
