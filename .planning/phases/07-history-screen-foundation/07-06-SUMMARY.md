@@ -147,6 +147,17 @@ None - no external service configuration required.
 - Both v1.1 open questions blocking downstream phases are resolved: `AdminOrder.total` unit handling needs no correction, and day-grouping timezone logic is confirmed correct against live data.
 - Phases 8-10 in ROADMAP.md remain stale per STATE.md's existing note (D-07/D-15 reversals) and still require a `/gsd-phase` insert/rewrite pass before Phase 8 is planned — unrelated to this plan's scope.
 
+## Self-Check: PASSED
+
+- FOUND: `src/app.jsx`
+- FOUND: `src/__tests__/app-history-route.test.jsx`
+- FOUND: `.planning/phases/07-history-screen-foundation/07-06-SUMMARY.md`
+- FOUND commit: `939c79e` (Task 1)
+- FOUND commit: `c7e9d23` (Task 2)
+- FOUND commit: `ce534c8` (checkpoint result doc)
+- FOUND commit: `81af7e9` (plan-completion metadata commit)
+- Full suite: 257 passing / 3 failing (unchanged pre-existing baseline, see deferred-items.md)
+
 ---
 *Phase: 07-history-screen-foundation*
 *Completed: 2026-07-17*
