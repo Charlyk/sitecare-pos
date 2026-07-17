@@ -222,6 +222,75 @@ describe('readOnly mode', () => {
     expect(screen.getByText('Total')).toBeTruthy()
     expect(screen.getByText('128,50 lei')).toBeTruthy()
   })
+
+  test('readOnly + refunded order renders the refunded label, not the completed label', () => {
+    const order = { ...HISTORY_ORDER, status: 'COMPLETED', paymentCaptureStatus: 'refunded' }
+    render(
+      createElement(OrderDetailScreen, { order, lang: 'ro', readOnly: true, onBack: vi.fn() }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Rambursată')).toBeTruthy()
+    expect(screen.queryByText('Finalizată')).toBeNull()
+  })
+
+  test('readOnly + cancelled order renders the canceled label, not New (RESEARCH Pitfall 2)', () => {
+    const order = { ...HISTORY_ORDER, status: 'CANCELLED', state: 'cancelled' }
+    render(
+      createElement(OrderDetailScreen, { order, lang: 'ro', readOnly: true, onBack: vi.fn() }),
+      { wrapper: w }
+    )
+    expect(screen.getByText('Anulată')).toBeTruthy()
+    expect(screen.queryByText('Nouă')).toBeNull()
+    expect(screen.queryByText('New')).toBeNull()
+  })
+
+  test('readOnly + completed order renders the completed label via historyStatusMeta (chip-sage)', () => {
+    const order = { ...HISTORY_ORDER, status: 'COMPLETED', state: 'done' }
+    render(
+      createElement(OrderDetailScreen, { order, lang: 'ro', readOnly: true, onBack: vi.fn() }),
+      { wrapper: w }
+    )
+    const chips = screen.getAllByText('Finalizată').filter(el => el.closest('span.chip'))
+    expect(chips.length).toBeGreaterThan(0)
+    expect(chips[0].className).toContain('chip-sage')
+  })
+
+  test('readOnly + no status and no paymentCaptureStatus falls back to stateMeta, not historyStatusMeta', () => {
+    // HISTORY_ORDER carries state: 'done', whose stateMeta label ('Finalizată') happens to
+    // coincide with historyStatusMeta's 'completed' label — same word, different derivation and
+    // different chip class. Assert on the class to distinguish which map actually produced the
+    // chip: stateMeta.done -> chip-slate; historyStatusMeta's map.completed default -> chip-sage.
+    // The defect this guards against is historyStatusMeta's own `map[status] || map.completed`
+    // default silently activating when deriveDisplayStatus returns null.
+    const order = { ...HISTORY_ORDER }
+    render(
+      createElement(OrderDetailScreen, { order, lang: 'ro', readOnly: true, onBack: vi.fn() }),
+      { wrapper: w }
+    )
+    const chips = screen.getAllByText('Finalizată').filter(el => el.closest('span.chip'))
+    expect(chips.length).toBeGreaterThan(0)
+    for (const chip of chips) {
+      expect(chip.className).toContain('chip-slate')
+      expect(chip.className).not.toContain('chip-sage')
+    }
+  })
+
+  test('NOT readOnly + MINIMAL_ORDER still renders stateMeta accepted chip, unchanged', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: MINIMAL_ORDER,
+        lang: 'ro',
+        onBack: vi.fn(),
+        onAdvance: vi.fn(),
+        onPrint: vi.fn(),
+        onCancel: vi.fn(),
+        isOffline: false,
+      }),
+      { wrapper: w }
+    )
+    const chip = screen.getAllByText('Acceptată').find(el => el.closest('span.chip'))
+    expect(chip).toBeTruthy()
+  })
 })
 
 describe('readOnly duration row', () => {
