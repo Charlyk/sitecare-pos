@@ -219,7 +219,7 @@ export function normalizeOrder(o) {
     ...o,
     dailyOrderNumber: o.dailyOrderNumber ?? o.dailyNumber ?? o.id,
     state,
-    type: o.type ?? o.orderType ?? 'dinein',
+    type: ((raw) => (raw === 'local' ? 'dinein' : raw ?? 'dinein'))(o.type ?? o.orderType),
     source: o.source ?? 'counter',
     payment: o.payment ?? o.paymentType ?? 'cash',
     placedAt: o.placedAt ?? o.createdAt ?? o.orderDate,
