@@ -239,6 +239,10 @@ export const I18N = {
     h_error_title: 'Nu am putut încărca istoricul',
     h_retry: 'Reîncearcă',
     h_back_to_history: 'Înapoi la istoric',
+    h_detail_error_title: 'Nu am putut încărca bonul',
+    h_prep_time: 'Timp de pregătire',
+    h_canceled_after: 'Anulată după',
+    h_detail_no_items: 'Nicio poziție pe această comandă',
   },
   en: {
     nav_orders: 'Live orders',
@@ -466,6 +470,10 @@ export const I18N = {
     h_error_title: "Couldn't load history",
     h_retry: 'Retry',
     h_back_to_history: 'Back to history',
+    h_detail_error_title: "Couldn't load this receipt",
+    h_prep_time: 'Prep time',
+    h_canceled_after: 'Canceled after',
+    h_detail_no_items: 'No items on this order',
   },
 };
 
