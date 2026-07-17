@@ -35,7 +35,7 @@ Full phase details → `.planning/milestones/v1.0-ROADMAP.md`
 > and SDK v1.1.59. The prior Phase 7–9 breakdown (paginated list + side detail panel, no summary strip)
 > is superseded and was never executed.
 
-- [ ] **Phase 7: History Screen Foundation** — sidebar entry, `listAdminOrders` hook, 30-day default, day-grouped list, empty state
+- [x] **Phase 7: History Screen Foundation** — sidebar entry, `listAdminOrders` hook, 30-day default, day-grouped list, empty state (completed 2026-07-17)
 - [ ] **Phase 8: Period Control + Summary Strip** — Today/7/30/custom presets driving both data sources; `getAdminDashboard` summary tiles
 - [ ] **Phase 9: Filters + Search** — client-side status (incl. Refunded), order type, and debounced search with live counts
 - [ ] **Phase 10: Receipt Detail + Output** — inline expandable receipt via `getOrder(id)`, reprint, CSV export
@@ -142,7 +142,7 @@ Plans:
 | 4. Core Screens | v1.0 | 11/11 | Complete | 2026-04-27 |
 | 5. Native Integration | v1.0 | 4/4 | Complete | 2026-04-29 |
 | 6. Build Pipeline | v1.0 | 4/4 | Complete | 2026-05-02 |
-| 7. History Screen Foundation | v1.1 | 6/6 | In Progress|  |
+| 7. History Screen Foundation | v1.1 | 6/6 | Complete    | 2026-07-17 |
 | 8. Period Control + Summary Strip | v1.1 | 0/? | Not started | - |
 | 9. Filters + Search | v1.1 | 0/? | Not started | - |
 | 10. Receipt Detail + Output | v1.1 | 0/? | Not started | - |

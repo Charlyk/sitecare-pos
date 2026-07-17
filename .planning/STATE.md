@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 07
-current_plan: 6
+current_phase: 8 — Period Control + Summary Strip
+current_plan: Not started
 status: ready_to_execute
 stopped_at: Completed 07-06-PLAN.md (app.jsx router wiring + human-verified checkpoint; Phase 7 complete)
-last_updated: "2026-07-17T09:19:31.596Z"
+last_updated: "2026-07-17T09:25:32.297Z"
 progress:
   total_phases: 4
   completed_phases: 1
@@ -36,8 +36,8 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16
-**Current Phase:** 07
-**Current Plan:** 6
+**Current Phase:** 8 — Period Control + Summary Strip
+**Current Plan:** Not started
 **Total Plans in Phase:** 6
 **Overall Status:** Phase 7 executing. Plan 07-01 (history-utils + normalizeOrder dailyNumber fix)
 complete — 3 tasks committed, 27+6 new unit tests green. Ready for the remaining Wave 1 plan
