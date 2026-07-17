@@ -95,8 +95,8 @@ Plans:
 **Requirements**: HIST-10
 **Success Criteria** (what must be TRUE):
 
-  1. Opening a historical order hydrates the detail view via `getOrder(id)` and shows items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, handled-by, and prep time — none of which exist on the `AdminOrder` summary already in hand
-  2. The detail view shows a loading state while fetching and a readable fallback if `getOrder(id)` fails or returns 401/403; the `AdminOrder` fields already fetched stay visible rather than blanking
+  1. Opening a historical order hydrates the detail view via `getOrder(id)` and shows items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, and prep time (the derived actual duration, not the accept-time estimate) — none of which exist on the `AdminOrder` summary already in hand
+  2. The detail view shows a loading state while fetching and a readable fallback if `getOrder(id)` fails or returns 401/404; the `AdminOrder` fields already fetched stay visible rather than blanking
   3. No control that mutates order state is reachable — Advance, Cancel, and the timeline stay hidden, as the `readOnly` mode shipped in Phase 7 already enforces
   4. Back returns to History with the list and period intact, not to Orders
 
@@ -106,7 +106,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 08-01-PLAN.md — Amend ROADMAP/REQUIREMENTS per D-09 (handled-by cut, 401/404) + add 4 i18n keys
+- [ ] 08-01-PLAN.md — Amend ROADMAP/REQUIREMENTS per D-09 (drop staff-attribution field, 401/404) + add 4 i18n keys
 - [ ] 08-02-PLAN.md — deriveDuration() in history-utils.js + export historyStatusMeta (pure derivation layer)
 
 **Wave 2** *(blocked on Wave 1 completion)*

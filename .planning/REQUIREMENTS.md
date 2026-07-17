@@ -37,7 +37,8 @@
 - [ ] **HIST-07**: User can filter by status — All / Completed / Refunded / Canceled — each showing a live count
 - [ ] **HIST-08**: User can filter by order type — All / Delivery / Pickup / Dine-in (`orderType: 'local'` maps to Dine-in)
 - [ ] **HIST-09**: User can search by order number or customer name — debounced text input, filtered client-side
-- [ ] **HIST-10**: User can click any row to open a read-only detail view (reusing `screen-detail.jsx` in `readOnly` mode — D-07, D-09) showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, handled-by, and prep time — hydrated on demand via `getOrder(id)`
+- [ ] **HIST-10**: User can click any row to open a read-only detail view (reusing `screen-detail.jsx` in `readOnly` mode — D-07, D-09) showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, and prep time — hydrated on demand via `getOrder(id)`
+  - **F-01 (planner finding):** `08-RESEARCH.md` and `08-CONTEXT.md` both assert the `AdminOrder` summary reaches `screen-detail.jsx` with a null `items` value. This is false and was verified false by executing `normalizeOrder` against an `AdminOrder`-shaped object: `normalizeOrder` maps `items: (o.items ?? []).map(...)`, which returns an empty array, never null, and `use-history-orders.js` runs every summary through `normalizeOrder`. Consequences: (1) the ungated Modify control is reachable on the `history-detail` route in production today — a live defect, not one this phase introduces; (2) the minimal-totals-card fallback at `screen-detail.jsx:191-204` is unreachable on both routes; (3) the pre-hydration state is an empty receipt, not an absent one, so loading must be distinguished from a genuinely empty order by query state rather than by the items value.
 - [ ] **HIST-11**: User can reprint a receipt from the read-only detail view (greyed-out when no printer is configured)
 - [ ] **HIST-12**: User can export the current filtered results as a CSV file via a native Save dialog — generated client-side
 - [x] **HIST-13**: User sees a clear empty state when no orders match the active filters
@@ -60,6 +61,7 @@ Revisit if the API adds these fields.
 | Table number | No table field in the SDK |
 | Refund total in summary tile | No refund aggregate is available; count is derived client-side (D-15 drops `getAdminDashboard` entirely) |
 | `HistoryReceiptRow` (inline expandable receipt) + `screenshots/history-expanded.png` | **User-instructed divergence, not an API gap (D-07).** Rows navigate to a read-only detail view instead; the inline expandable receipt is dropped permanently. The design-fidelity rule in CLAUDE.md requires explicit instruction to break — this is it. Confirmed while looking directly at the tradeoffs and accepted. |
+| Handled-by field on the detail view | `Order` has no such field; it exists only as `events[].actor`, typed `string \| null` with undocumented semantics. Deriving it risks misattributing an order to the wrong staff member (D-09). |
 
 ---
 
