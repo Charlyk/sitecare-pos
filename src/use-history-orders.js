@@ -1,4 +1,4 @@
-// useHistoryOrders — TanStack Query v5 wrapper for admin.orders.list (HIST-02, HIST-03).
+// useHistoryOrders — TanStack Query v5 wrapper for admin.orders.list (HIST-02, HIST-03, HIST-04).
 // Cache key: ['history-orders', from, to] — a root DISTINCT from ['orders']. `use-sse.js` writes
 // live order data directly into ['orders'] via setQueryData, and `use-order-actions.js`
 // invalidates that same root; sharing a root here would let live SSE writes corrupt History's
@@ -6,20 +6,22 @@
 // past-orders archive with no live feed, so a stable window with a modest staleTime is sufficient;
 // no SSE wiring here by design.
 // SDK responseStyle:'fields' — always unwrap result.data (RESEARCH.md Pitfall 1); never try/catch.
+//
+// The caller owns the range (HIST-04): this hook computes none of its own and imports no range
+// helper. The same stability discipline that used to live in this file's lazy initializer now
+// applies one level up — the caller must resolve { from, to } once per state transition (e.g. a
+// pill click or an Apply click), never by calling a range builder inline in its render body,
+// because a fresh clock reading every render would produce fresh key strings and refetch in a
+// loop (RESEARCH Anti-Patterns). The `keepPreviousData` placeholder option (D-05) means the raw
+// useQuery result is returned unwrapped, so callers can read `isPlaceholderData`/`isFetching`
+// directly during a range switch (D-05/D-06).
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useAuth } from './auth.jsx';
 import { normalizeOrder } from './data.jsx';
-import { getLast30DaysRange } from './history-utils.js';
 
-export function useHistoryOrders() {
+export function useHistoryOrders({ from, to }) {
   const { client } = useAuth();
-  // Lazy initializer is load-bearing: calling getLast30DaysRange() inline in the component body
-  // would produce a new `from` every render, changing the query key every render and defeating
-  // caching into an infinite refetch loop (RESEARCH Anti-Patterns). No period switching exists yet
-  // (HIST-04 is a later phase), so a stable per-mount value is correct; the setter is unused.
-  const [{ from, to }] = useState(() => getLast30DaysRange());
 
   return useQuery({
     queryKey: ['history-orders', from, to],
@@ -28,7 +30,8 @@ export function useHistoryOrders() {
       if (result.error) throw new Error(result.error.error ?? 'Failed to load history');
       return (result.data?.orders ?? []).map(normalizeOrder);
     },
-    enabled: !!client,
+    enabled: !!client && !!from && !!to,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
 }
