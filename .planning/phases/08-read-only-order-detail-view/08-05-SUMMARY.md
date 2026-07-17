@@ -62,7 +62,7 @@ coverage:
       - kind: unit
         ref: "src/__tests__/app-guard.test.jsx (full file — auth-guard early-return branches)"
         status: pass
-      - kind: static
+      - kind: other
         ref: "grep -n 'useOrderDetail(\\|if (coldStartBusy)' src/app.jsx — both hook calls at lines 70/76, guard at line 218"
         status: pass
     human_judgment: false
@@ -70,7 +70,7 @@ coverage:
     description: "The skeleton is gated on isPending, not isFetching, so reopening an already-cached order does not flash the skeleton"
     requirement: HIST-10
     verification:
-      - kind: static
+      - kind: other
         ref: "grep -c isFetching src/app.jsx returns 0; grep -c 'isPending: historyDetailPending' returns 1"
         status: pass
       - kind: unit

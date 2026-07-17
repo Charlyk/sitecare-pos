@@ -125,7 +125,7 @@ this phase must use `items: []` for the summary shape. 08-05 Task 2 corrects the
 - [x] No watch-mode flags
 - [x] Feedback latency < 25s
 - [x] `nyquist_compliant: true` set in frontmatter
-- [x] Every documented command re-run and confirmed green as written (2026-07-17 audit)
+- [x] Every documented command re-run and confirmed green as written (2026-07-17 audit; re-confirmed 2026-07-17 re-audit)
 - [x] Every `-t` filter confirmed to select the tests its Secure Behavior column names — no vacuous passes
 
 **Approval:** approved 2026-07-17
@@ -153,3 +153,55 @@ compared against the tests the row claims to guard. No test files were generated
 
 **Not addressed (out of scope, pre-existing):** `build-pipeline.test.js:101` and
 `offline-buttons.test.jsx` remain red — tracked in `deferred-items.md`, unrelated to Phase 8.
+
+---
+
+## Validation Re-Audit 2026-07-17 (`/gsd-validate-phase 8`)
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 1 |
+| Resolved | 1 |
+| Escalated | 0 |
+
+**Test-coverage gaps: zero.** All 10 Per-Task Map rows re-executed as literally transcribed and
+re-classified COVERED. No `gsd-nyquist-auditor` spawn was required — there were no MISSING or PARTIAL
+requirements to fill, and no test file was generated or modified.
+
+**Selectivity re-confirmed against the prior audit's three fixes.** Each `-t` filter's selected-test
+count was compared to the count the row claims, and the selected test *names* were inspected to
+confirm they are the threat-carrying ones rather than merely a matching count:
+
+| Task | Command | Selected | Claimed | Threat-carrying tests confirmed selected |
+|------|---------|----------|---------|------------------------------------------|
+| 8-01-01 | `awk` Phase-8 block + `grep -c 'handled-by'` | → `0` | 0 | — |
+| 8-01-02 | `vitest run i18n.test.js` | 9 passed | — | — |
+| 8-02-01 | `vitest run history-utils.test.js` | 39 passed | — | T-08-04/05/06 |
+| 8-02-02 | `vitest run screen-history.test.jsx` | 13 passed | — | — |
+| 8-03-01 | `-t "duration row"` | 7 | 7 | ✅ |
+| 8-03-02 | `-t "readOnly mode"` | 11 | 11 | ✅ refunded / cancelled (Pitfall 2) / completed / null-fallback — T-08-07, T-08-08 |
+| 8-04-01 | `-t "items-card"` | 10 | 10 | ✅ T-08-02/10/11 |
+| 8-04-02 | `-t "mutating-control gate"` | 6 | 6 | ✅ **both** exhaustive button-sweep allowlist tests — the standing T-08-01 (high) guard |
+| 8-05-01 | `vitest run app-guard + app-history-route` | 16 passed | — | T-08-12 |
+| 8-05-02 | `vitest run app-history-route.test.jsx` | 12 passed | — | T-08-10 |
+
+**Baseline holds.** Full suite `npx vitest run` → **311 passed / 3 failed (314)**. The 3 failures are
+the documented pre-existing ones (`build-pipeline.test.js` BILD-04 updater assertion ×1;
+`offline-buttons.test.jsx` OFF-03 `QueryClientProvider` harness gap ×2). No fourth failure, so no
+Phase 8 regression.
+
+**Gap found and resolved — schema-invalid coverage `kind`.** Three SUMMARY coverage entries used
+`kind: static`, which is not in the allowed set (`unit`, `integration`, `e2e`, `automated_ui`,
+`manual_procedural`, `other`). They failed schema validation and fell through to human checkpoints
+(fail-safe — no deliverable dropped), despite their referenced checks passing. This was flagged in
+`08-UAT.md` § Coverage Block Errors and is now fixed to `kind: other`:
+
+- `08-03-SUMMARY.md:58` — D4, `git diff --stat src/screen-orders.jsx` → re-run, empty ✅
+- `08-05-SUMMARY.md:65` — D3, hook-placement grep → re-run, hooks at `:70`/`:76`, guard at `:218` ✅
+- `08-05-SUMMARY.md:73` — D4, `grep -c isFetching src/app.jsx` → re-run, returns `0` ✅
+
+Not a coverage gap: the behaviors were verified all along. The defect was that a *passing* automated
+check was being reported as an unautomated one, understating the phase's real coverage.
+
+**Sign-off:** `nyquist_compliant: true` reaffirmed — all 10 tasks have a green, selective automated
+verify.

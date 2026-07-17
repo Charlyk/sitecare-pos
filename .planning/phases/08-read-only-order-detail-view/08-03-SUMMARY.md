@@ -55,7 +55,7 @@ coverage:
       - kind: unit
         ref: "src/__tests__/screen-detail.test.jsx#readOnly mode (5 new tests: refunded, cancelled/RESEARCH Pitfall 2, completed, null-fallback, non-readOnly unchanged)"
         status: pass
-      - kind: static
+      - kind: other
         ref: "git diff --stat src/screen-orders.jsx (empty)"
         status: pass
     human_judgment: false
