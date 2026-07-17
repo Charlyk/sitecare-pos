@@ -21,6 +21,50 @@ export function getLast30DaysRange(now = new Date()) {
 }
 
 /**
+ * Returns a one-calendar-day window: `from` is local midnight of `now`'s calendar day, `to` is
+ * local midnight of the following day (exclusive upper bound, D-04 convention).
+ * @param {Date} [now] — injectable clock for deterministic tests.
+ * @returns {{from: string, to: string}}
+ */
+export function getTodayRange(now = new Date()) {
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0)
+  return { from: start.toISOString(), to: end.toISOString() }
+}
+
+/**
+ * D-04: `from` is local midnight 6 days before `now` (7-day window inclusive of today).
+ * `to` is local midnight of the day AFTER `now` (exclusive upper bound), matching every other
+ * builder in this module.
+ * @param {Date} [now] — injectable clock for deterministic tests.
+ * @returns {{from: string, to: string}}
+ */
+export function getLast7DaysRange(now = new Date()) {
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0)
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0)
+  return { from: start.toISOString(), to: end.toISOString() }
+}
+
+/**
+ * Dispatches a period preset id to its matching range builder. `screen-history.jsx` calls this
+ * single function for every preset pill — it never calls an individual builder directly, so
+ * adding a preset later touches one place.
+ *
+ * Returns `null` for any unrecognized id (including `'custom'`, `undefined`, `null`) rather than
+ * silently defaulting to a range — a typo in a caller must never render a period label that does
+ * not describe the fetched data (D-06). Never throws.
+ * @param {string} periodId
+ * @param {Date} [now] — injectable clock for deterministic tests.
+ * @returns {{from: string, to: string}|null}
+ */
+export function getPresetRange(periodId, now = new Date()) {
+  if (periodId === 'today') return getTodayRange(now)
+  if (periodId === '7') return getLast7DaysRange(now)
+  if (periodId === '30') return getLast30DaysRange(now)
+  return null
+}
+
+/**
  * D-01: keeps only finished orders (COMPLETED or CANCELLED). Every in-flight status
  * (NEW/ACCEPTED/PREPARING/READY/OUT_FOR_DELIVERY) is dropped. Never mutates the input.
  * @param {Array<object>} orders
