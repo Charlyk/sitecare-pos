@@ -49,8 +49,7 @@ restructure, and a one-line boundary fix (D-08) for a bug that predates the phas
   the design does — computed from a static summary, so a pill can read `240` while 12 rows show);
   type-but-not-search (an inconsistent rule staff must intuit, and the count still won't match).
 
-- **D-02: Exclude-self faceting — each status count is computed against type + search but NOT the status
-  selection.** With Completed active, Canceled still shows its true count, so the group stays
+- **D-02: Exclude-self faceting — each status count is computed against type + search but NOT the status selection.** With Completed active, Canceled still shows its true count, so the group stays
   navigational ("what's over there if I click it?"). Standard faceted-search behaviour. **Without this,
   every unselected pill reads 0 the moment any status is picked and the group goes dead.**
   - The `All` count = the number of matches of type + search.
@@ -106,8 +105,7 @@ restructure, and a one-line boundary fix (D-08) for a bug that predates the phas
 
 ### Filter bar structure + type filter
 
-- **D-07: Port the design's bar structure — nest search + export together in ONE `marginLeft: auto`
-  container** so they wrap to row 2, right-aligned, with the three pill groups on row 1.
+- **D-07: Port the design's bar structure — nest search + export together in ONE `marginLeft: auto` container** so they wrap to row 2, right-aligned, with the three pill groups on row 1.
   - **The two-row wrap is the design's intent, not a layout failure** — confirmed by
     `screenshots/desktop-history.png`, which is 1440×900, the app's exact default window size, and shows
     search + export on their own right-aligned second row.
@@ -123,8 +121,7 @@ restructure, and a one-line boundary fix (D-08) for a bug that predates the phas
     `pickup` / `dinein` i18n labels that already exist); a type dropdown (a new control pattern nothing
     else on the screen uses).
 
-- **D-08: Fix the SDK `'local'` → UI `'dinein'` mapping in `normalizeOrder` (`src/data.jsx:222`), at the
-  boundary** — inverting `screen-pos.jsx:12`'s existing outbound `orderTypeMap` so `'dinein'` is the
+- **D-08: Fix the SDK `'local'` → UI `'dinein'` mapping in `normalizeOrder` (`src/data.jsx` line 222), at the boundary** — inverting `screen-pos.jsx:12`'s existing outbound `orderTypeMap` so `'dinein'` is the
   single app-wide type vocabulary in **both** directions. Fixes HIST-08 **and** the live Orders defect
   (F-02) in one line.
   - **Rendering is unaffected:** `typeMeta` has no `'local'` key and already falls through to
