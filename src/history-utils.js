@@ -136,6 +136,49 @@ export function customRangeToQuery(startValue, endValue) {
 }
 
 /**
+ * D-14: one locale-aware range formatter serving every render site (summary-tile sub-label,
+ * Custom pill, and any other period-dependent copy). Inputs are the SAME `{ from, to }` ISO
+ * instants every builder in this module returns — `to` is EXCLUSIVE, so the inclusive end is
+ * derived by taking local midnight of the day BEFORE `toIso` before formatting. Getting this
+ * wrong renders a range one calendar day wider than the one actually fetched.
+ *
+ * The year is shown on BOTH endpoints (never just one) whenever EITHER inclusive endpoint's
+ * calendar year differs from `now`'s — a single boolean feeds both formatter calls, so a mixed
+ * one-endpoint-with-year form is never reachable. Month is always rendered as a
+ * locale-aware short name (`month: 'short'`), never a numeric form — a numeric short form
+ * inverts between ro (dd.mm) and en (mm/dd) and would name a different accounting period
+ * depending on the active language.
+ *
+ * Endpoints are joined with ' – ' (an EN DASH, U+2013, single space either side).
+ * @param {string} fromIso — inclusive start instant
+ * @param {string} toIso — EXCLUSIVE end instant (start of the day after the last included day)
+ * @param {string} locale — resolved BCP-47 locale (e.g. 'ro-RO'/'en-GB'); mapping from `lang`
+ *   stays at the call site, per `dayGroupLabel`'s existing convention in screen-history.jsx.
+ * @param {Date} [now] — injectable clock for deterministic tests.
+ * @returns {string}
+ */
+export function formatDateRange(fromIso, toIso, locale, now = new Date()) {
+  const start = new Date(fromIso)
+  const exclusiveEnd = new Date(toIso)
+  const end = new Date(
+    exclusiveEnd.getFullYear(),
+    exclusiveEnd.getMonth(),
+    exclusiveEnd.getDate() - 1,
+    0, 0, 0, 0
+  )
+
+  const showYear = start.getFullYear() !== now.getFullYear() || end.getFullYear() !== now.getFullYear()
+
+  const formatter = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    ...(showYear && { year: 'numeric' }),
+  })
+
+  return `${formatter.format(start)} – ${formatter.format(end)}`
+}
+
+/**
  * D-01: keeps only finished orders (COMPLETED or CANCELLED). Every in-flight status
  * (NEW/ACCEPTED/PREPARING/READY/OUT_FOR_DELIVERY) is dropped. Never mutates the input.
  * @param {Array<object>} orders
