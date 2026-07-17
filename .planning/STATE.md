@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 08
-current_plan: 5
+current_phase: 9 — Period Control
+current_plan: Not started
 status: ready_to_execute
 stopped_at: Completed 08-05-PLAN.md — Phase 8 complete (5/5 plans, HIST-10 delivered)
-last_updated: "2026-07-17T12:47:18.054Z"
+last_updated: "2026-07-17T13:05:35.671Z"
 progress:
   total_phases: 5
   completed_phases: 2
@@ -23,10 +23,10 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-07-16)
+See: `.planning/PROJECT.md` (updated 2026-07-17)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 08 — read-only-order-detail-view
+**Current focus:** Phase 9 — Period Control
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -36,18 +36,19 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
-**Current Phase:** 08
-**Current Plan:** 5
+**Current Phase:** 9 — Period Control
+**Current Plan:** Not started
 **Total Plans in Phase:** 5
-**Overall Status:** Phase 8 executed — 5/5 plans complete across 4 waves, verification passed 9/9
-must-haves. HIST-10 delivered: archived-order detail hydrates via `getOrder(id)` with derived prep
-time, status chip, and loading/error/empty states; no mutating controls reachable in readOnly mode.
-Phase 7 before it: 6/6 plans executed, verification passed, UAT 26/26 with zero issues. Phase 8 is
-ready for UAT.
+**Overall Status:** Phase 8 COMPLETE — 5/5 plans, verification passed 9/9 must-haves, UAT 20/20 with
+zero issues (16 auto-passed from coverage blocks, 4 human-confirmed), security verified with
+`threats_open: 0` across 13 threats. HIST-10 delivered: archived-order detail hydrates via
+`getOrder(id)` with derived prep time, status chip, and loading/error/empty states; no mutating
+controls reachable in readOnly mode. Phase 7 before it: 6/6 plans, UAT 26/26 with zero issues.
+Phase 9 (Period Control) is ready to plan.
 
 ```
-Progress: [██████████] 100% (1/5 phases, v1.1)
-Milestone v1.1 — Phase 7 complete, Phase 8 planned and ready to execute
+Progress: [████████████████████] 11/11 plans (100%)
+Milestone v1.1 — Phases 7 and 8 complete (2/5), Phase 9 ready to plan
 ```
 
 **Phase 8 planning note (F-01):** The planner disproved a premise carried by both `08-RESEARCH.md`
@@ -72,7 +73,7 @@ the plan-checker against source.
 | 5 | Native Integration | Complete — 4 plans done, 166 tests passing, approved-no-hardware (2026-04-29) |
 | 6 | Build Pipeline | Complete — all 4 plans done, human-approved 2026-05-02 |
 | 7 | History Screen Foundation | Complete — 6/6 plans, UAT 26/26, human-verified 2026-07-17 — HIST-01, HIST-02, HIST-03, HIST-05, HIST-06, HIST-13 |
-| 8 | Read-Only Order Detail View | Planned — 5 plans, ready to execute — HIST-10 (NEW phase, inserted 2026-07-17) |
+| 8 | Read-Only Order Detail View | Complete — 5/5 plans, UAT 20/20, security verified, human-verified 2026-07-17 — HIST-10 |
 | 9 | Period Control | Not started — HIST-04 (was Phase 8; summary strip removed per D-15) |
 | 10 | Filters + Search | Not started — HIST-07, HIST-08, HIST-09 (was Phase 9) |
 | 11 | Reprint + CSV Export | Not started — HIST-11, HIST-12 (was Phase 10) |
@@ -84,10 +85,10 @@ the plan-checker against source.
 | Metric | Value |
 |--------|-------|
 | Phases completed (v1.0) | 6 / 6 |
-| Phases completed (v1.1) | 1 / 5 |
+| Phases completed (v1.1) | 2 / 5 |
 | Requirements done (v1.0) | 41 / 41 |
-| Requirements done (v1.1) | 6 / 13 |
-| Sessions | 13 |
+| Requirements done (v1.1) | 7 / 13 |
+| Sessions | 14 |
 
 ---
 **Per-Plan Metrics:**
@@ -174,7 +175,7 @@ the plan-checker against source.
 - ~~`decorations: false` has a known macOS bug~~ — RESOLVED: using `decorations: true` (native chrome).
 - Tax calculation bug in `screen-pos.jsx` (total excludes tax) — confirm in Phase 4 whether API returns a server-calculated total (preferred) or the client must apply Romanian VAT rates (5%/9%/19%).
 - Which thermal printer model(s) are targeted? Needed before Phase 5 plugin validation.
-- **v1.1:** Does the admin token have access to `/v1/orders/{id}` (kitchen endpoint)? If 401 on getOrder, detail view must fall back to AdminOrder summary fields only.
+- ~~**v1.1:** Does the admin token have access to `/v1/orders/{id}` (kitchen endpoint)? If 401 on getOrder, detail view must fall back to AdminOrder summary fields only.~~ — RESOLVED (Phase 8 UAT, 2026-07-17): confirmed by human verification against the live API — opening a historical order hydrates via `getOrder(id)` and renders items, modifiers, phone, and address. No 401; no summary-only fallback needed. The merge-over-summary design (D-03) means a future 401 would degrade to summary fields rather than blanking.
 - ~~**v1.1:** What timezone does the API treat `from`/`to` date params as? Verify Romanian orders appear on the correct calendar day.~~ — RESOLVED (07-06 human verification, 2026-07-17): confirmed by human verification against the live API — orders land under their correct Romanian calendar day, and the oldest day header is ~30 days back. The API's `from`/`to` params behave correctly for Romanian local calendar days.
 - ~~**v1.1:** `AdminOrder.total` units (cents vs RON) — needs live API confirmation.~~ — RESOLVED (07-06 human verification, 2026-07-17): confirmed by human verification against the live API — total is in RON (the day-header revenue subtotal matched the SiteCare admin dashboard, i.e. NOT off by 100×). No `normalizeOrder` change needed.
 
@@ -217,9 +218,9 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T12:47:18.048Z
-**Stopped at:** Completed 08-05-PLAN.md — Phase 8 complete (5/5 plans, HIST-10 delivered)
-**Next action:** `/gsd-verify-work` — UAT Phase 8 (Read-Only Order Detail View)
+**Last session:** 2026-07-17
+**Stopped at:** Phase 8 complete (UAT 20/20, security verified), ready to plan Phase 9
+**Next action:** `/gsd-discuss-phase 9` — gather context for Period Control (HIST-04)
 
 **Phase 7 planning notes:**
 

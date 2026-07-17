@@ -97,14 +97,14 @@ calendar days, and `AdminOrder.total` is denominated in RON (not cents), so no `
 - ✓ History loads via `listAdminOrders({from,to})`; all filtering client-side on the returned array — Validated in Phase 7 (HIST-02)
 - ✓ History defaults to the last 30 days on first open — Validated in Phase 7 (HIST-03)
 - ✓ Clear empty state when no orders match — Validated in Phase 7 (HIST-13)
+- ✓ Period summary strip — orders, revenue, and average order value computed client-side from the same fetched list that backs the rows (D-15 — `getAdminDashboard` is not used); refunds tile is count-only — Validated in Phase 7 (HIST-06)
+- ✓ Read-only detail view — click any row to open `screen-detail.jsx` in `readOnly` mode (D-07, D-09) showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, and derived prep time; hydrated on demand via `getOrder(id)` — Validated in Phase 8 (HIST-10)
 
 ### Active (v1.1)
 
-- [ ] Period presets + custom range on History screen — v1.1 (HIST-04) — *the inert 30-day pill landed in Phase 7; Phase 8 makes it interactive*
-- [ ] Period summary strip via `getAdminDashboard` — v1.1 (HIST-06)
+- [ ] Period presets + custom range on History screen — v1.1 (HIST-04) — *the inert 30-day pill landed in Phase 7; Phase 9 makes it interactive, and per D-15 the summary strip retargets for free*
 - [ ] Search by order number or customer name on History screen — v1.1 (HIST-09)
 - [ ] Filter by status (completed / refunded / canceled) and order type — v1.1 (HIST-07, HIST-08)
-- [ ] Inline expandable read-only receipt row via `getOrder(id)` — v1.1 (HIST-10)
 - [ ] Reprint receipt on historical orders — thermal printer integration — v1.1 (HIST-11)
 - [ ] CSV export of filtered history list — v1.1 (HIST-12)
 - [ ] Windows code signing — unsigned MSI; Azure Trusted Signing is the path forward (BILD-03 deferred)
@@ -158,6 +158,11 @@ calendar days, and `AdminOrder.total` is denominated in RON (not cents), so no `
 | decorations: true (native chrome) | Avoids @tauri-apps/plugin-window-state bug #14822 | ✓ Good — stable, no issues |
 | Zustand for UI state, TanStack Query for server state | Clean separation prevents cache conflicts | ✓ Good — worked well across all phases |
 | BILD-03 deferred (unsigned Windows MSI) | Azure Trusted Signing requires org account setup; not blocking v1 | — Pending — document as v1.1 task |
+| Reuse `screen-detail.jsx` in `readOnly` mode for the history detail (D-07/D-09) | Reverses the earlier inline-expandable-receipt plan; one detail presenter, not two | ✓ Good — Phase 8 shipped it; mutating controls gated by DOM removal with a standing allowlist test |
+| One order, one truth — shared `['order', id]` cache, SSE-writable (D-02) | A late refund event reflects reality catching up, not contamination | ✓ Accepted risk R-08-01 — ⚠ carries a Phase 11 consequence: a reprint may print post-SSE data, not the payload as fetched |
+| Merge hydrated detail over the summary (D-03) | No field ever blanks mid-fetch; hydrated wins on conflict | ✓ Good — also degrades gracefully if `getOrder` ever 401s |
+| Generic detail error copy, no HTTP-status branching (D-08) | 401 is handled app-wide by the auth-refresh layer; raw SDK error strings must not reach the DOM | ✓ Accepted risk R-08-02 — deliberate simplification |
+| Derive prep time from `events[]`, never read `events[].actor` (D-09) | `actor` is `string \| null` with undocumented semantics; misreading would misattribute an order | ✓ Good — "handled-by" cut from ROADMAP/REQUIREMENTS; zero `.actor` reads in `src/` |
 
 ## Evolution
 
@@ -178,4 +183,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-07-17 — Phase 7 (History Screen Foundation) complete; HIST-01, HIST-02, HIST-03, HIST-05, HIST-13 validated*
+*Last updated: 2026-07-17 after Phase 8 — Read-Only Order Detail View complete; HIST-10 validated (HIST-06 also reconciled to Validated, shipped in Phase 7 via 07-04)*
