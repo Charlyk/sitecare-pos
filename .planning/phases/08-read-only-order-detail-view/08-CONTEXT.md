@@ -72,8 +72,8 @@ The genuinely new rendering is the duration row and the loading/failure states.
   - ⚠ **Hook-ordering rule applies** — the new hook call must sit above `App()`'s conditional returns
     (the auth guard at `app.jsx:207`), or React throws "rendered fewer hooks than expected."
 
-- **D-05: The read-only detail reuses Phase 7's derived display status (`history-utils.js`), not raw
-  `order.state`.** A refunded order is `status: COMPLETED` + `paymentCaptureStatus: 'refunded'`
+- **D-05: The read-only detail reuses Phase 7's derived display status (`history-utils.js`), not raw `order.state`.**
+  A refunded order is `status: COMPLETED` + `paymentCaptureStatus: 'refunded'`
   (`P7 D-02`); `screen-detail.jsx` reads `order.state`, which would render it as **Completed** and
   contradict the **Refunded** chip on the row staff just clicked. Apply the same single-status
   derivation so row and detail agree by construction. Rejected: showing both chips (`P7 D-02`
@@ -86,8 +86,8 @@ The genuinely new rendering is the duration row and the loading/failure states.
   swap to real rows. Mirrors `P7 D-16`'s skeleton-rows choice on the list, so History reads as one
   screen. **No layout jump** between loading, error, and content.
 
-- **D-07: On failure, an inline message with Retry replaces the items card — the summary stays on
-  screen.** Satisfies ROADMAP SC2 ("the `AdminOrder` fields already fetched stay visible rather than
+- **D-07: On failure, an inline message with Retry replaces the items card — the summary stays on screen.**
+  Satisfies ROADMAP SC2 ("the `AdminOrder` fields already fetched stay visible rather than
   blanking") and mirrors `P7 D-16`'s retry-in-place pattern. Rejected: a full-area error (discards
   data we already hold) and a toast (easy to miss, no obvious retry).
 

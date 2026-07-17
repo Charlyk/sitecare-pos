@@ -104,10 +104,21 @@ Plans:
 **UI hint**: yes
 
 Plans:
+**Wave 1**
+
 - [ ] 08-01-PLAN.md — Amend ROADMAP/REQUIREMENTS per D-09 (handled-by cut, 401/404) + add 4 i18n keys
 - [ ] 08-02-PLAN.md — deriveDuration() in history-utils.js + export historyStatusMeta (pure derivation layer)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 08-03-PLAN.md — screen-detail: derived duration row (D-10) + readOnly status chip (D-05)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 08-04-PLAN.md — screen-detail: items-card loading/error/empty states + gate the Modify button (SC3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 08-05-PLAN.md — app.jsx: sibling useOrderDetail + merge over summary + route wiring (SC1/SC2/SC4)
 
 ### Phase 9: Period Control

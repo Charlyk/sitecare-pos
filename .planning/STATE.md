@@ -4,9 +4,9 @@ milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 8 — Read-Only Order Detail View (NEW — inserted by the 2026-07-17 restructure)
 current_plan: Not started
-status: ready_to_plan
-stopped_at: Phase 8 context gathered
-last_updated: "2026-07-17T11:00:02.844Z"
+status: ready_to_execute
+stopped_at: Phase 8 planned — 5 plans, checker passed
+last_updated: "2026-07-17T11:48:00.026Z"
 progress:
   total_phases: 5
   completed_phases: 1
@@ -38,16 +38,25 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 8 — Read-Only Order Detail View (NEW — inserted by the 2026-07-17 restructure)
 **Current Plan:** Not started
-**Total Plans in Phase:** TBD
-**Overall Status:** Phase 7 complete — 6/6 plans executed, verification passed, UAT 26/26 with zero
-issues (22 auto-covered by passing tests, 4 human-verified against the live API). Roadmap restructured
-per `07-CONTEXT.md` `<roadmap_impact>`: a new detail-view phase inserted after Phase 7; former Phases
-8, 9, 10 shifted to 9, 10, 11. Phase 8 is ready to plan.
+**Total Plans in Phase:** 5
+**Overall Status:** Phase 8 planned — 5 plans across 4 waves, plan-checker passed on the first
+iteration, requirements and decision coverage gates green (HIST-10 covered; 10/10 CONTEXT decisions).
+Phase 7 before it: 6/6 plans executed, verification passed, UAT 26/26 with zero issues. Phase 8 is
+ready to execute.
 
 ```
 Progress: [██░░░░░░░░] 20% (1/5 phases, v1.1)
-Milestone v1.1 — Phase 7 complete, Phase 8 ready to plan
+Milestone v1.1 — Phase 7 complete, Phase 8 planned and ready to execute
 ```
+
+**Phase 8 planning note (F-01):** The planner disproved a premise carried by both `08-RESEARCH.md`
+and `08-CONTEXT.md` — that the `AdminOrder` summary reaches `screen-detail.jsx` with `items: null`.
+`normalizeOrder` (`src/data.jsx:246`) maps `items: (o.items ?? []).map(...)`, so items is always an
+array. Consequences the plans are built on: the Modify button is reachable on the shipped read-only
+route **today** (a live SC3 defect, tracked as T-08-01, severity high); the minimal-totals fallback at
+`screen-detail.jsx:191-204` is dead code; and pre-hydration is an *empty* receipt, not an absent one,
+so 08-04's state machine keys on query state rather than `items.length`. Confirmed independently by
+the plan-checker against source.
 
 ---
 
@@ -62,7 +71,7 @@ Milestone v1.1 — Phase 7 complete, Phase 8 ready to plan
 | 5 | Native Integration | Complete — 4 plans done, 166 tests passing, approved-no-hardware (2026-04-29) |
 | 6 | Build Pipeline | Complete — all 4 plans done, human-approved 2026-05-02 |
 | 7 | History Screen Foundation | Complete — 6/6 plans, UAT 26/26, human-verified 2026-07-17 — HIST-01, HIST-02, HIST-03, HIST-05, HIST-06, HIST-13 |
-| 8 | Read-Only Order Detail View | Not started — HIST-10 (NEW phase, inserted 2026-07-17) |
+| 8 | Read-Only Order Detail View | Planned — 5 plans, ready to execute — HIST-10 (NEW phase, inserted 2026-07-17) |
 | 9 | Period Control | Not started — HIST-04 (was Phase 8; summary strip removed per D-15) |
 | 10 | Filters + Search | Not started — HIST-07, HIST-08, HIST-09 (was Phase 9) |
 | 11 | Reprint + CSV Export | Not started — HIST-11, HIST-12 (was Phase 10) |
@@ -200,10 +209,10 @@ Milestone v1.1 — Phase 7 complete, Phase 8 ready to plan
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/08-read-only-order-detail-view/08-CONTEXT.md
+**Resume file:** .planning/phases/08-read-only-order-detail-view/08-UI-SPEC.md
 
-**Last session:** 2026-07-17T11:00:02.837Z
-**Stopped at:** Phase 8 context gathered
+**Last session:** 2026-07-17T11:14:47.510Z
+**Stopped at:** Phase 8 UI-SPEC approved
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
