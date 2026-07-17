@@ -247,18 +247,28 @@ async fn print_receipt(
         let id_line = format!("{}{}{}", order_label, " ".repeat(padding), time_str);
         p = p.writeln(&id_line).map_err(|e| e.to_string())?;
 
-        // Order type + source
+        // Order type (+ table) + source — mirrors the on-screen thermal preview,
+        // which renders "TYPE · MASA n" (screen-detail.jsx). The preview's "·"
+        // becomes ASCII "-" here, same as its "→" becomes "->" for the modifiers.
         let type_label = strip_diacritics(match order.order_type.as_str() {
             "dinein" => "La masa",
             "delivery" => "Livrare",
             "pickup" => "Ridicare",
             _ => &order.order_type,
         });
+        let mut type_and_table = type_label.to_uppercase();
+        if let Some(ref table) = order.table {
+            let safe_table = strip_diacritics(table);
+            let truncated: String = safe_table.chars().take(8).collect();
+            if !truncated.is_empty() {
+                type_and_table.push_str(&format!(" - MASA {}", truncated.to_uppercase()));
+            }
+        }
         let source_label = order.source.as_deref().unwrap_or("counter").to_uppercase();
-        let src_padding = chars.saturating_sub(type_label.len() + source_label.len());
+        let src_padding = chars.saturating_sub(type_and_table.len() + source_label.len());
         let type_line = format!(
             "{}{}{}",
-            type_label.to_uppercase(),
+            type_and_table,
             " ".repeat(src_padding),
             source_label
         );

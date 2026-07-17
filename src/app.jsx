@@ -140,7 +140,9 @@ function App() {
           placed_at: order.placedAt,
           order_type: order.type,
           source: order.source ?? null,
-          table: order.table ?? null,
+          // Coerced: Rust deserializes this as Option<String>, and a numeric
+          // table would fail the whole payload.
+          table: order.table != null ? String(order.table) : null,
           customer_name: order.customer?.name ?? null,
           delivery_address: order.address?.line1 ?? null,
           notes: order.notes ?? null,

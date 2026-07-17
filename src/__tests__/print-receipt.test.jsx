@@ -76,7 +76,7 @@ async function callHandlePrint(order, kind, pushToast, t) {
         placed_at: order.placedAt,
         order_type: order.type,
         source: order.source ?? null,
-        table: order.table ?? null,
+        table: order.table != null ? String(order.table) : null,
         customer_name: order.customer?.name ?? null,
         delivery_address: order.address?.line1 ?? null,
         notes: order.notes ?? null,
@@ -170,5 +170,29 @@ describe('PRNT-03: print receipt via ESC/POS Tauri command', () => {
 
     await callHandlePrint(TEST_ORDER, 'customer', pushToast, (k) => k)
     expect(invoke).toHaveBeenCalledWith('print_receipt', expect.objectContaining({ kind: 'customer' }))
+  })
+
+  // Rust deserializes `table` as Option<String>; a numeric table (as the POS
+  // and legacy fixtures produce) would fail the whole payload, not just drop
+  // the field. Coercion happens before invoke.
+  test.each([
+    ['numeric table', 7, '7'],
+    ['string table', '3', '3'],
+    ['absent table', undefined, null],
+    ['null table', null, null],
+  ])('print_receipt receives table as a string or null — %s', async (_label, table, expected) => {
+    load.mockResolvedValue({
+      get: vi.fn().mockResolvedValue({ port: 'COM3', baud: 9600, paperWidth: '80mm' }),
+      set: vi.fn().mockResolvedValue(undefined),
+      save: vi.fn().mockResolvedValue(undefined),
+    })
+    invoke.mockResolvedValueOnce(undefined)
+    const pushToast = vi.fn()
+
+    await callHandlePrint({ ...TEST_ORDER, table }, 'customer', pushToast, (k) => k)
+
+    const { order } = invoke.mock.calls[0][1]
+    expect(order.table).toBe(expected)
+    if (expected !== null) expect(typeof order.table).toBe('string')
   })
 })
