@@ -9,7 +9,7 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1–6 (shipped 2026-05-22)
-- **v1.1 Orders History Screen** — Phases 7–10 (started 2026-05-27, replanned 2026-07-16)
+- **v1.1 Orders History Screen** — Phases 7–11 (started 2026-05-27, replanned 2026-07-16, restructured 2026-07-17)
 
 ---
 
@@ -35,10 +35,16 @@ Full phase details → `.planning/milestones/v1.0-ROADMAP.md`
 > and SDK v1.1.59. The prior Phase 7–9 breakdown (paginated list + side detail panel, no summary strip)
 > is superseded and was never executed.
 
-- [x] **Phase 7: History Screen Foundation** — sidebar entry, `listAdminOrders` hook, 30-day default, day-grouped list, empty state (completed 2026-07-17)
-- [ ] **Phase 8: Period Control + Summary Strip** — Today/7/30/custom presets driving both data sources; `getAdminDashboard` summary tiles
-- [ ] **Phase 9: Filters + Search** — client-side status (incl. Refunded), order type, and debounced search with live counts
-- [ ] **Phase 10: Receipt Detail + Output** — inline expandable receipt via `getOrder(id)`, reprint, CSV export
+> Restructured 2026-07-17 per `07-CONTEXT.md` `<roadmap_impact>` — two user-directed reversals
+> (D-07 detail view replaces the inline expandable receipt; D-15 summary strip is client-computed and
+> `getAdminDashboard` is dropped). A new detail-view phase inserts after Phase 7; former Phases 8, 9,
+> 10 shift to 9, 10, 11.
+
+- [x] **Phase 7: History Screen Foundation** — sidebar entry, `listAdminOrders` hook, 30-day default, day-grouped list, client-computed summary strip, detail routing, empty state (completed 2026-07-17)
+- [ ] **Phase 8: Read-Only Order Detail View** — hydrate the archived-order detail via `getOrder(id)`: items, modifiers, address, prep time (NEW — was not in the prior breakdown)
+- [ ] **Phase 9: Period Control** — Today/7/30/custom presets retargeting the list; the client-computed strip follows for free (was Phase 8)
+- [ ] **Phase 10: Filters + Search** — client-side status (incl. Refunded), order type, and debounced search with live counts (was Phase 9)
+- [ ] **Phase 11: Reprint + CSV Export** — reprint from the detail view, CSV export via native Save dialog (was Phase 10)
 
 ---
 
@@ -48,7 +54,7 @@ Full phase details → `.planning/milestones/v1.0-ROADMAP.md`
 
 **Goal**: Staff can open a History screen from the sidebar and see the last 30 days of orders grouped by day
 **Depends on**: Phase 6 (shipped v1.0 shell, navigation, and SDK data layer)
-**Requirements**: HIST-01, HIST-02, HIST-03, HIST-05, HIST-13
+**Requirements**: HIST-01, HIST-02, HIST-03, HIST-05, HIST-06, HIST-13
 **Success Criteria** (what must be TRUE):
 
   1. A "History" item is visible and clickable in the sidebar at the same level as Orders, KDS, and POS; clicking it opens the History screen without breaking any existing screen
@@ -79,31 +85,42 @@ Plans:
 
 **UI hint**: yes
 
-> ⚠ **Phases 8–10 below are STALE.** CONTEXT.md's `<roadmap_impact>` records two user-directed
-> reversals (D-07, D-15) that invalidate the HIST-06 and HIST-10 requirement text and shift the phase
-> boundaries: a NEW read-only detail-view phase inserts after Phase 7, pushing 8→9, 9→10, 10→11.
-> Phase 7's own scope is settled and unaffected. Run `/gsd-phase` to restructure before planning
-> Phase 8.
+> Note: Phase 7 absorbed the client-computed summary strip (D-15) and the detail routing (D-08), so
+> HIST-06 is satisfied here rather than in the period-control phase.
 
-### Phase 8: Period Control + Summary Strip
+### Phase 8: Read-Only Order Detail View
 
-**Goal**: Staff can retarget the whole screen to any period and read that period's totals at a glance
-**Depends on**: Phase 7
-**Requirements**: HIST-04, HIST-06
+**Goal**: Staff can open any historical order and read its full receipt without being able to change it
+**Depends on**: Phase 7 (rows already navigate to the read-only detail route)
+**Requirements**: HIST-10
 **Success Criteria** (what must be TRUE):
 
-  1. Staff can switch the period with Today / 7 days / 30 days presets and the day-grouped list reloads for the new range
-  2. Staff can pick a custom start and end date and the list reloads for exactly that range
-  3. A summary strip above the list shows orders, revenue, and average order value for the selected period, sourced from `getAdminDashboard({ from, to })`, and updates whenever the period changes
-  4. The refunds tile shows a count only (no amount), and the summary strip renders its own loading and error state independently of the list — a failure in one does not blank the other
+  1. Opening a historical order hydrates the detail view via `getOrder(id)` and shows items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, handled-by, and prep time — none of which exist on the `AdminOrder` summary already in hand
+  2. The detail view shows a loading state while fetching and a readable fallback if `getOrder(id)` fails or returns 401/403; the `AdminOrder` fields already fetched stay visible rather than blanking
+  3. No control that mutates order state is reachable — Advance, Cancel, and the timeline stay hidden, as the `readOnly` mode shipped in Phase 7 already enforces
+  4. Back returns to History with the list and period intact, not to Orders
 
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 9: Filters + Search
+### Phase 9: Period Control
+
+**Goal**: Staff can retarget the whole screen to any period
+**Depends on**: Phase 7
+**Requirements**: HIST-04
+**Success Criteria** (what must be TRUE):
+
+  1. Staff can switch the period with Today / 7 days / 30 days presets and the day-grouped list reloads for the new range
+  2. Staff can pick a custom start and end date and the list reloads for exactly that range
+  3. The summary strip retargets with the period automatically — it is computed from the same fetched list (D-15), so tiles and day headers continue to agree by construction with no second data source and no independent loading or error state
+
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 10: Filters + Search
 
 **Goal**: Staff can narrow a period's orders down to the ones they are looking for
-**Depends on**: Phase 7 (list), Phase 8 (period control)
+**Depends on**: Phase 7 (list), Phase 9 (period control)
 **Requirements**: HIST-07, HIST-08, HIST-09
 **Success Criteria** (what must be TRUE):
 
@@ -115,17 +132,15 @@ Plans:
 **Plans**: TBD
 **UI hint**: yes
 
-### Phase 10: Receipt Detail + Output
+### Phase 11: Reprint + CSV Export
 
-**Goal**: Staff can inspect any historical order's full receipt, reprint it, and export the filtered list for accounting
-**Depends on**: Phase 9
-**Requirements**: HIST-10, HIST-11, HIST-12
+**Goal**: Staff can reprint a historical receipt and export the filtered list for accounting
+**Depends on**: Phase 8 (detail view), Phase 10 (filters drive what CSV exports)
+**Requirements**: HIST-11, HIST-12
 **Success Criteria** (what must be TRUE):
 
-  1. Clicking any row expands an inline read-only receipt showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, handled-by, and prep time — fetched on demand via `getOrder(id)`, with no controls that mutate order state
-  2. The expanded row shows its own loading state while fetching and a readable fallback if `getOrder(id)` fails or is unauthorized; collapsing and re-expanding does not refetch unnecessarily
-  3. Staff can reprint the receipt from the expanded row to the configured thermal printer; the button is greyed-out when no printer is configured
-  4. Staff can export the currently filtered results as CSV via a native Save dialog and open the resulting file with correct rows, headers, and escaped fields
+  1. Staff can reprint the receipt from the read-only detail view to the configured thermal printer; the button is greyed-out when no printer is configured
+  2. Staff can export the currently filtered results as CSV via a native Save dialog and open the resulting file with correct rows, headers, and escaped fields
 
 **Plans**: TBD
 **UI hint**: yes
@@ -143,11 +158,12 @@ Plans:
 | 5. Native Integration | v1.0 | 4/4 | Complete | 2026-04-29 |
 | 6. Build Pipeline | v1.0 | 4/4 | Complete | 2026-05-02 |
 | 7. History Screen Foundation | v1.1 | 6/6 | Complete    | 2026-07-17 |
-| 8. Period Control + Summary Strip | v1.1 | 0/? | Not started | - |
-| 9. Filters + Search | v1.1 | 0/? | Not started | - |
-| 10. Receipt Detail + Output | v1.1 | 0/? | Not started | - |
+| 8. Read-Only Order Detail View | v1.1 | 0/? | Not started | - |
+| 9. Period Control | v1.1 | 0/? | Not started | - |
+| 10. Filters + Search | v1.1 | 0/? | Not started | - |
+| 11. Reprint + CSV Export | v1.1 | 0/? | Not started | - |
 
 ---
 
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-07-16 — v1.1 replanned against new design handoff + SDK v1.1.59; 4 phases (7–10), 13 requirements*
+*Last updated: 2026-07-17 — v1.1 restructured per 07-CONTEXT.md `<roadmap_impact>` (D-07, D-15): new detail-view phase inserted after Phase 7, former 8–10 shifted to 9–11; 5 phases (7–11), 13 requirements*

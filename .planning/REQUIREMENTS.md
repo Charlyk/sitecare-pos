@@ -20,7 +20,9 @@
 > - `events[]` (`OrderEvent`) carries `actor`, `reason`, `toStatus`, `createdAt` — the only source for
 >   handled-by, cancel reason, real close time, and prep duration.
 > - `getAdminDashboard({ from, to })` → `totalEarned`, `totalOrders`, `dailyStats`, `topProducts` — NEW in
->   this SDK range; backs the summary strip.
+>   this SDK range; **not used** — D-15 drops it permanently. The summary strip is computed client-side
+>   from the same `listAdminOrders` result that backs the rows, so tiles and day headers agree by
+>   construction. (Its numbers would contradict a finished-only list anyway.)
 > - `paymentCaptureStatus: 'refunded'` — NEW; makes Refunded a first-class status filter.
 > - No export endpoint — CSV is generated client-side from the fetched and filtered array.
 
@@ -31,12 +33,12 @@
 - [x] **HIST-03**: History screen defaults to the last 30 days on first open
 - [ ] **HIST-04**: User can switch the period via presets — Today / 7 days / 30 days / custom range — and the list reloads for the new range
 - [x] **HIST-05**: User can see orders grouped by calendar day, newest first, each day header showing that day's order count and revenue subtotal
-- [ ] **HIST-06**: User can see a summary strip for the selected period — orders, revenue, and average order value from `getAdminDashboard`; the refunds tile shows count only
+- [x] **HIST-06**: User can see a summary strip for the selected period — orders, revenue, and average order value computed client-side from the same fetched list that backs the rows (D-15 — `getAdminDashboard` is not used); the refunds tile shows count only
 - [ ] **HIST-07**: User can filter by status — All / Completed / Refunded / Canceled — each showing a live count
 - [ ] **HIST-08**: User can filter by order type — All / Delivery / Pickup / Dine-in (`orderType: 'local'` maps to Dine-in)
 - [ ] **HIST-09**: User can search by order number or customer name — debounced text input, filtered client-side
-- [ ] **HIST-10**: User can click any row to expand an inline read-only receipt showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, handled-by, and prep time — fetched on demand via `getOrder(id)`
-- [ ] **HIST-11**: User can reprint a receipt from the expanded row (greyed-out when no printer is configured)
+- [ ] **HIST-10**: User can click any row to open a read-only detail view (reusing `screen-detail.jsx` in `readOnly` mode — D-07, D-09) showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, handled-by, and prep time — hydrated on demand via `getOrder(id)`
+- [ ] **HIST-11**: User can reprint a receipt from the read-only detail view (greyed-out when no printer is configured)
 - [ ] **HIST-12**: User can export the current filtered results as a CSV file via a native Save dialog — generated client-side
 - [x] **HIST-13**: User sees a clear empty state when no orders match the active filters
 
@@ -56,7 +58,8 @@ Revisit if the API adds these fields.
 | Items-count column (collapsed row) | `AdminOrder` has no `items[]`; showing it would force a `getOrder` per row (N+1) |
 | Address subtitle (collapsed row) | `AdminOrder` has no address fields |
 | Table number | No table field in the SDK |
-| Refund total in summary tile | `getAdminDashboard` returns no refund aggregate; count is derived client-side |
+| Refund total in summary tile | No refund aggregate is available; count is derived client-side (D-15 drops `getAdminDashboard` entirely) |
+| `HistoryReceiptRow` (inline expandable receipt) + `screenshots/history-expanded.png` | **User-instructed divergence, not an API gap (D-07).** Rows navigate to a read-only detail view instead; the inline expandable receipt is dropped permanently. The design-fidelity rule in CLAUDE.md requires explicit instruction to break — this is it. Confirmed while looking directly at the tradeoffs and accepted. |
 
 ---
 
@@ -81,7 +84,8 @@ Revisit if the API adds these fields.
 - Status mutations on historical orders — orders in COMPLETED/CANCELLED are final
 - Pagination controls — the design is a day-grouped scroll; there is no pagination in it
 - Infinite scroll — not in the design
-- Side detail panel — superseded by the inline expandable receipt row
+- Inline expandable receipt row — superseded by the read-only detail view (D-07 reversal, 2026-07-17); `screen-detail.jsx` IS reused in `readOnly` mode
+- `getAdminDashboard({from,to})` as a summary-strip source — dropped permanently (D-15); the strip is computed client-side from the fetched list
 - Any non-History screen from the new design bundle (dashboard, mobile, forgot-password)
 
 ---
@@ -90,21 +94,22 @@ Revisit if the API adds these fields.
 
 | REQ-ID | Phase | Plan | Status |
 |--------|-------|------|--------|
-| HIST-01 | Phase 7 | TBD | Complete |
-| HIST-02 | Phase 7 | TBD | Complete |
-| HIST-03 | Phase 7 | TBD | Complete |
-| HIST-04 | Phase 8 | TBD | Pending |
-| HIST-05 | Phase 7 | TBD | Complete |
-| HIST-06 | Phase 8 | TBD | Pending |
-| HIST-07 | Phase 9 | TBD | Pending |
-| HIST-08 | Phase 9 | TBD | Pending |
-| HIST-09 | Phase 9 | TBD | Pending |
-| HIST-10 | Phase 10 | TBD | Pending |
-| HIST-11 | Phase 10 | TBD | Pending |
-| HIST-12 | Phase 10 | TBD | Pending |
-| HIST-13 | Phase 7 | TBD | Complete |
+| HIST-01 | Phase 7 | 07-02 | Complete |
+| HIST-02 | Phase 7 | 07-03 | Complete |
+| HIST-03 | Phase 7 | 07-03 | Complete |
+| HIST-04 | Phase 9 | TBD | Pending |
+| HIST-05 | Phase 7 | 07-01, 07-04 | Complete |
+| HIST-06 | Phase 7 | 07-04 | Complete |
+| HIST-07 | Phase 10 | TBD | Pending |
+| HIST-08 | Phase 10 | TBD | Pending |
+| HIST-09 | Phase 10 | TBD | Pending |
+| HIST-10 | Phase 8 | TBD | Pending |
+| HIST-11 | Phase 11 | TBD | Pending |
+| HIST-12 | Phase 11 | TBD | Pending |
+| HIST-13 | Phase 7 | 07-04 | Complete |
 
 ---
 
 *Created: 2026-05-27 — v1.1 milestone; 11 requirements*
+*Updated: 2026-07-17 — restructured per 07-CONTEXT.md `<roadmap_impact>` (D-07, D-15): HIST-06 and HIST-10 rewritten; HIST-06 reassigned to Phase 7 (client-computed strip shipped in 07-04); HIST-10 → new Phase 8; HIST-07/08/09 → Phase 10; HIST-11/12 → Phase 11*
 *Replanned: 2026-07-16 — new design handoff + SDK v1.1.59; 13 requirements mapped to Phases 7–10*

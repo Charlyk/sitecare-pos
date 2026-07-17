@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 8 — Period Control + Summary Strip
+current_phase: 8 — Read-Only Order Detail View
 current_plan: Not started
-status: ready_to_execute
-stopped_at: Completed 07-06-PLAN.md (app.jsx router wiring + human-verified checkpoint; Phase 7 complete)
-last_updated: "2026-07-17T09:25:32.297Z"
+status: ready_to_plan
+stopped_at: Phase 7 complete (6/6 plans, UAT 26/26 passed 2026-07-17). Roadmap restructured per 07-CONTEXT.md roadmap_impact — new Phase 8 (detail view); former 8–10 shifted to 9–11.
+last_updated: "2026-07-17T10:40:00.000Z"
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 1
   total_plans: 6
   completed_plans: 6
-  percent: 25
+  percent: 20
 ---
 
 # State: SiteCare POS Desktop App
@@ -35,17 +35,18 @@ See: `.planning/PROJECT.md` (updated 2026-07-16)
 
 ## Current Position
 
-**Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16
-**Current Phase:** 8 — Period Control + Summary Strip
+**Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
+**Current Phase:** 8 — Read-Only Order Detail View (NEW — inserted by the 2026-07-17 restructure)
 **Current Plan:** Not started
-**Total Plans in Phase:** 6
-**Overall Status:** Phase 7 executing. Plan 07-01 (history-utils + normalizeOrder dailyNumber fix)
-complete — 3 tasks committed, 27+6 new unit tests green. Ready for the remaining Wave 1 plan
-(07-02) and subsequent waves.
+**Total Plans in Phase:** TBD
+**Overall Status:** Phase 7 complete — 6/6 plans executed, verification passed, UAT 26/26 with zero
+issues (22 auto-covered by passing tests, 4 human-verified against the live API). Roadmap restructured
+per `07-CONTEXT.md` `<roadmap_impact>`: a new detail-view phase inserted after Phase 7; former Phases
+8, 9, 10 shifted to 9, 10, 11. Phase 8 is ready to plan.
 
 ```
-Progress: [██████████] 100% (1/6 plans, phase 7)
-Milestone v1.1 — Phase 7 in progress
+Progress: [██░░░░░░░░] 20% (1/5 phases, v1.1)
+Milestone v1.1 — Phase 7 complete, Phase 8 ready to plan
 ```
 
 ---
@@ -60,10 +61,11 @@ Milestone v1.1 — Phase 7 in progress
 | 4 | Core Screens | Complete — all 10 plans done, 20/20 verification, 125 tests passing (2026-04-27) |
 | 5 | Native Integration | Complete — 4 plans done, 166 tests passing, approved-no-hardware (2026-04-29) |
 | 6 | Build Pipeline | Complete — all 4 plans done, human-approved 2026-05-02 |
-| 7 | History Screen Foundation | Planned — 6 plans in 4 waves, ready to execute — HIST-01, HIST-02, HIST-03, HIST-05, HIST-13 |
-| 8 | Period Control + Summary Strip | Not started — HIST-04, HIST-06 |
-| 9 | Filters + Search | Not started — HIST-07, HIST-08, HIST-09 |
-| 10 | Receipt Detail + Output | Not started — HIST-10, HIST-11, HIST-12 |
+| 7 | History Screen Foundation | Complete — 6/6 plans, UAT 26/26, human-verified 2026-07-17 — HIST-01, HIST-02, HIST-03, HIST-05, HIST-06, HIST-13 |
+| 8 | Read-Only Order Detail View | Not started — HIST-10 (NEW phase, inserted 2026-07-17) |
+| 9 | Period Control | Not started — HIST-04 (was Phase 8; summary strip removed per D-15) |
+| 10 | Filters + Search | Not started — HIST-07, HIST-08, HIST-09 (was Phase 9) |
+| 11 | Reprint + CSV Export | Not started — HIST-11, HIST-12 (was Phase 10) |
 
 ---
 
@@ -72,9 +74,9 @@ Milestone v1.1 — Phase 7 in progress
 | Metric | Value |
 |--------|-------|
 | Phases completed (v1.0) | 6 / 6 |
-| Phases completed (v1.1) | 0 / 4 |
+| Phases completed (v1.1) | 1 / 5 |
 | Requirements done (v1.0) | 41 / 41 |
-| Requirements done (v1.1) | 0 / 13 |
+| Requirements done (v1.1) | 6 / 13 |
 | Sessions | 13 |
 
 ---
@@ -142,12 +144,12 @@ Milestone v1.1 — Phase 7 in progress
 
 - **No server-side pagination or filtering** — confirmed against SDK v1.1.59 types: `listAdminOrders({from,to})` returns the full set for the date range. All status/type/search filtering is client-side on the fetched array.
 - **No pagination at all** — the new design is a day-grouped scroll, not a paged list. The old HIST-05 pagination requirement is dropped. Infinite scroll is also out.
-- **Inline expandable receipt row replaces the side detail panel** — `screen-detail.jsx` is NOT reused; the receipt renders inline within the expanded row.
-- **Summary strip is a second, independent data source** — `getAdminDashboard({from,to})` (new in v1.1.59) backs it alongside `listAdminOrders`. Both are driven by the same period selection but fail independently.
+- **Rows navigate to a read-only detail view; the inline expandable receipt is dropped** (D-07, 2026-07-17 — ⚠ REVERSES the earlier "inline expandable receipt row replaces the side detail panel; `screen-detail.jsx` is NOT reused"). `screen-detail.jsx` IS reused via a `readOnly` prop (D-09) that hides the mutating controls and routes back to History. User-directed and permanent, not interim scaffolding. Shipped in 07-05.
+- **Summary strip is client-computed from the fetched list; `getAdminDashboard` is dropped permanently** (D-15, 2026-07-17 — ⚠ REVERSES the earlier "summary strip is a second, independent data source ... both fail independently"). One data source, one loading state, no independent failure; tiles and day headers agree by construction. The refunds tile stays count-only. Shipped in 07-04. Consequence: period control (Phase 9) retargets the strip for free.
 - **Refunded is a first-class status** — derived from `paymentCaptureStatus: 'refunded'` (new in v1.1.59); sits alongside Completed and Canceled in the status filter.
 - **Period presets replace raw date pickers** — Today / 7 / 30 / custom; default is last 30 days.
 - **No server-side export endpoint** — CSV must be generated client-side (field escaping: wrap all fields in double-quotes, escape internal `"` as `""`). PDF deferred to v1.2.
-- **Expanded row requires a third, on-demand getOrder(id) call** — AdminOrder summary has no items/address/notes; `getOrder(id)` is fetched lazily on row expand and is the only source for handled-by, cancel reason, close time, and prep duration (via `events[]`).
+- **The detail view requires a second, on-demand getOrder(id) call** — AdminOrder summary has no items/address/notes; `getOrder(id)` hydrates the read-only detail route (not an expanded row — D-07) and is the only source for handled-by, cancel reason, close time, and prep duration (via `events[]`). Deferred out of Phase 7 by D-08; it is the whole of Phase 8.
 - **Filter state resets on navigation** — acceptable for v1.1; document as known behavior, not a bug.
 - **History screen added to Zustand `screen` enum** — 'history' added alongside 'orders', 'kds', 'pos', 'menu', 'settings'; Zustand partialize rules carry forward unchanged.
 
@@ -169,7 +171,7 @@ Milestone v1.1 — Phase 7 in progress
 - **React hook ordering in app.jsx** — useSSE and useOrders MUST be called before any conditional return (coldStartBusy, isAuthenticated guards). Violating this causes "rendered fewer hooks" runtime error.
 - **macOS notarization is a hard distribution block** — Apple Developer account ($99/yr) required before Phase 6. Configure all CI secrets before the first release build.
 - **TanStack Query v5 API** — useQuery takes single options object; useMutation uses .isPending not .isLoading. All Phase 3 hooks use v5 syntax.
-- **v1.1: Large result sets** — warn or limit if >500 orders returned for a wide date range; document threshold.
+- ~~**v1.1: Large result sets** — warn or limit if >500 orders returned for a wide date range~~ — SUPERSEDED by D-03 (2026-07-17): render every row, no cap, no warning, no virtualization. ~500 lightweight rows is within React's comfort; measure against real data before adding machinery. Virtualization deferred (see PROJECT.md deferred ideas).
 - **v1.1: CSV escaping** — wrap all fields in double-quotes; escape internal `"` as `""`.
 - **v1.1: Printer config check before Reprint** — reuse existing printer-configured guard; button greyed-out when not configured.
 
