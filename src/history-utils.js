@@ -347,6 +347,32 @@ export function matchesSearch(order, query) {
 }
 
 /**
+ * HIST-07: predicate for the status filter group. `'all'` always matches; otherwise delegates to
+ * `deriveDisplayStatus`'s precedence-correct vocabulary (refunded > canceled > completed) — never
+ * re-derives that precedence here (a second precedence source would drift, D-02 INVARIANT).
+ * @param {object} order
+ * @param {'all'|'completed'|'refunded'|'canceled'} statusFilter
+ * @returns {boolean}
+ */
+export function matchesStatus(order, statusFilter) {
+  if (statusFilter === 'all') return true
+  return deriveDisplayStatus(order) === statusFilter
+}
+
+/**
+ * HIST-08: predicate for the type filter group. Assumes the `normalizeOrder` boundary fix (D-08,
+ * plan 10-02) has already mapped `'local'` -> `'dinein'` upstream — this predicate does its own
+ * mapping-free equality check only, no history-only special-casing.
+ * @param {object} order
+ * @param {'all'|'delivery'|'pickup'|'dinein'} typeFilter
+ * @returns {boolean}
+ */
+export function matchesType(order, typeFilter) {
+  if (typeFilter === 'all') return true
+  return order.type === typeFilter
+}
+
+/**
  * D-15: client-computed summary tiles from the same finished-orders list groupOrdersByDay uses,
  * so tiles and day headers can never disagree.
  * @param {Array<object>} orders

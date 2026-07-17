@@ -17,6 +17,8 @@ import {
   deriveDuration,
   foldDiacritics,
   matchesSearch,
+  matchesStatus,
+  matchesType,
 } from '../history-utils.js'
 
 // Local Y-M-D formatter for building `<input type="date">` value strings from test fixtures —
@@ -715,5 +717,71 @@ describe('matchesSearch', () => {
   test('non-matching query returns false', () => {
     const order = { id: 'abc12345678', dailyOrderNumber: 42, customer: { name: 'Ion Pop' } }
     expect(matchesSearch(order, 'zzz')).toBe(false)
+  })
+})
+
+// ── matchesStatus — HIST-07, D-02 INVARIANT (delegates to deriveDisplayStatus) ─
+
+describe('matchesStatus', () => {
+  test("'all' matches every order regardless of underlying status", () => {
+    expect(matchesStatus({ status: 'COMPLETED', paymentCaptureStatus: null }, 'all')).toBe(true)
+    expect(matchesStatus({ status: 'CANCELLED', paymentCaptureStatus: 'refunded' }, 'all')).toBe(true)
+  })
+
+  test("'completed' matches only a COMPLETED, non-refunded order", () => {
+    const completed = { status: 'COMPLETED', paymentCaptureStatus: null }
+    expect(matchesStatus(completed, 'completed')).toBe(true)
+    expect(matchesStatus(completed, 'canceled')).toBe(false)
+    expect(matchesStatus(completed, 'refunded')).toBe(false)
+  })
+
+  test("'canceled' matches only a CANCELLED, non-refunded order", () => {
+    const canceled = { status: 'CANCELLED', paymentCaptureStatus: 'captured' }
+    expect(matchesStatus(canceled, 'canceled')).toBe(true)
+    expect(matchesStatus(canceled, 'completed')).toBe(false)
+  })
+
+  test("'refunded' matches only when deriveDisplayStatus resolves to refunded (refunded-precedence order)", () => {
+    // canceled + refunded -> refunded wins per D-02 precedence
+    const canceledAndRefunded = { status: 'CANCELLED', paymentCaptureStatus: 'refunded' }
+    expect(matchesStatus(canceledAndRefunded, 'refunded')).toBe(true)
+    expect(matchesStatus(canceledAndRefunded, 'canceled')).toBe(false)
+
+    // completed + refunded -> refunded wins per D-02 precedence
+    const completedAndRefunded = { status: 'COMPLETED', paymentCaptureStatus: 'refunded' }
+    expect(matchesStatus(completedAndRefunded, 'refunded')).toBe(true)
+    expect(matchesStatus(completedAndRefunded, 'completed')).toBe(false)
+  })
+
+  test('an in-flight order (deriveDisplayStatus === null) matches no named status', () => {
+    const inFlight = { status: 'PREPARING', paymentCaptureStatus: null }
+    expect(matchesStatus(inFlight, 'completed')).toBe(false)
+    expect(matchesStatus(inFlight, 'canceled')).toBe(false)
+    expect(matchesStatus(inFlight, 'refunded')).toBe(false)
+  })
+})
+
+// ── matchesType — HIST-08, D-08 (mapping-free equality only) ──────────────
+
+describe('matchesType', () => {
+  test("'all' matches every order regardless of type", () => {
+    expect(matchesType({ type: 'delivery' }, 'all')).toBe(true)
+    expect(matchesType({ type: 'dinein' }, 'all')).toBe(true)
+    expect(matchesType({ type: 'pickup' }, 'all')).toBe(true)
+  })
+
+  test('exact equality per named type', () => {
+    expect(matchesType({ type: 'dinein' }, 'dinein')).toBe(true)
+    expect(matchesType({ type: 'delivery' }, 'delivery')).toBe(true)
+    expect(matchesType({ type: 'pickup' }, 'pickup')).toBe(true)
+  })
+
+  test('non-match returns false', () => {
+    expect(matchesType({ type: 'delivery' }, 'dinein')).toBe(false)
+    expect(matchesType({ type: 'pickup' }, 'delivery')).toBe(false)
+  })
+
+  test('does not translate a raw "local" type itself (mapping happens upstream at normalizeOrder, D-08)', () => {
+    expect(matchesType({ type: 'local' }, 'dinein')).toBe(false)
   })
 })
