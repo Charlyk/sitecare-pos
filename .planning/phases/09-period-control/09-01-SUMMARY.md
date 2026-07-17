@@ -156,3 +156,10 @@ None - no external service configuration required.
 ---
 *Phase: 09-period-control*
 *Completed: 2026-07-17*
+
+## Self-Check: PASSED
+
+- FOUND: src/history-utils.js
+- FOUND: src/__tests__/history-utils.test.js
+- FOUND: .planning/phases/09-period-control/09-01-SUMMARY.md
+- FOUND: 246d5c0, ca1040f, a2b6f93, 319f3a5, 044cdaf, 644384a, 55096d2, 5ecf7a6 (all task/deferred/summary commits)
