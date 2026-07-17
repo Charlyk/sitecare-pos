@@ -4,7 +4,7 @@
 // needed — that is the point of the screen-owns-its-hook split.
 
 import { createElement } from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 
 vi.mock('../use-history-orders.js', () => ({ useHistoryOrders: vi.fn() }))
 
@@ -745,6 +745,209 @@ describe('Custom range popover wiring — D-03/D-04 (09-05)', () => {
     callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
     const expected = getPresetRange('7')
     expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
+  })
+})
+
+// ── Phase 10 integration coverage (10-04) — faceted status filtering (D-01/D-02), F-03 order,
+// D-03 zero-pill→empty, D-04 filtered day-header/tile recompute, D-15 Avg-tile fix, the D-10
+// debounce (fake timers), and both empty-state variants (D-13/D-14) ─────
+
+describe('Phase 10 integration — faceting, debounce, filtered recompute, empty-state variants', () => {
+  // Fixture spans completed/refunded/canceled and delivery/pickup/dinein, all on the SAME local
+  // day (2026-07-10) so D-04's day-header recompute has exactly one group to observe.
+  function facetedFixture() {
+    return [
+      makeOrder({ id: 'f-completed-dinein', dailyOrderNumber: 601, status: 'COMPLETED', type: 'dinein', total: 100, customerName: 'Lucas Popescu', placedAt: new Date(2026, 6, 10, 9, 0).toISOString() }),
+      makeOrder({ id: 'f-completed-delivery', dailyOrderNumber: 602, status: 'COMPLETED', type: 'delivery', total: 50, customerName: 'Maria Ionescu', placedAt: new Date(2026, 6, 10, 10, 0).toISOString() }),
+      makeOrder({ id: 'f-refunded-pickup', dailyOrderNumber: 603, status: 'COMPLETED', paymentCaptureStatus: 'refunded', type: 'pickup', total: 30, customerName: 'Elena Radu', placedAt: new Date(2026, 6, 10, 11, 0).toISOString() }),
+      makeOrder({ id: 'f-canceled-dinein', dailyOrderNumber: 604, status: 'CANCELLED', type: 'dinein', total: 40, customerName: 'Vasile Dan', placedAt: new Date(2026, 6, 10, 12, 0).toISOString() }),
+      makeOrder({ id: 'f-canceled-delivery', dailyOrderNumber: 605, status: 'CANCELLED', type: 'delivery', total: 20, customerName: 'Ioana Cristea', placedAt: new Date(2026, 6, 10, 13, 0).toISOString() }),
+    ]
+  }
+
+  // getNodeText (RTL's default text matcher) only concatenates a node's DIRECT text-node
+  // children — the button's own {f.label} text node, never the nested <span> badge's text —
+  // so getByText(label).closest('button') resolves the exact status pill (existing precedent,
+  // line 281 above).
+  function getStatusPill(label) {
+    return screen.getByText(label).closest('button')
+  }
+  function badgeCount(button) {
+    return button.querySelector('span').textContent
+  }
+
+  test('F-03: the four status pills render in order All/Completed/Refunded/Canceled', () => {
+    useHistoryOrders.mockReturnValue({ data: facetedFixture(), isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    // The status group is whichever 'Toate'-labeled pill's parent has 4 children each carrying a
+    // count badge span — the type group's 'Toate' pill has no badge, so this disambiguates
+    // without relying on DOM order alone.
+    const toatePills = screen.getAllByText('Toate').map((el) => el.closest('button'))
+    const statusAllPill = toatePills.find((btn) => btn.querySelector('span') !== null)
+    const statusGroup = statusAllPill.parentElement
+    const labels = Array.from(statusGroup.children).map((btn) => btn.childNodes[0].textContent)
+    expect(labels).toEqual(['Toate', 'Finalizate', 'Rambursate', 'Anulate'])
+  })
+
+  test('D-02: selecting Completed leaves the Canceled and Refunded pills showing their true non-zero counts, not 0', () => {
+    useHistoryOrders.mockReturnValue({ data: facetedFixture(), isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    // Before selecting: all=5, completed=2, refunded=1, canceled=2.
+    expect(badgeCount(getStatusPill('Rambursate'))).toBe('1')
+    expect(badgeCount(getStatusPill('Anulate'))).toBe('2')
+
+    fireEvent.click(getStatusPill('Finalizate'))
+
+    // D-02 (exclude-self faceting): selecting Completed must NOT zero out the sibling pills'
+    // counts — they are tallied over byTypeAndSearch, never re-derived from the post-selection set.
+    expect(badgeCount(getStatusPill('Rambursate'))).toBe('1')
+    expect(badgeCount(getStatusPill('Anulate'))).toBe('2')
+    // The rows themselves DO narrow to the selected status (D-04, confirmed in its own test below).
+    expect(screen.getAllByTestId('history-row').length).toBe(2)
+  })
+
+  test('D-03: a zero-count status pill is clickable and lands on the filtered empty state (Variant B)', () => {
+    // No refunded orders in this smaller fixture — the Refunded pill reads 0 and must still work.
+    const orders = [
+      makeOrder({ id: 'zc-1', dailyOrderNumber: 700, status: 'COMPLETED', type: 'dinein', total: 10 }),
+      makeOrder({ id: 'zc-2', dailyOrderNumber: 701, status: 'CANCELLED', type: 'dinein', total: 20 }),
+    ]
+    useHistoryOrders.mockReturnValue({ data: orders, isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const refundedPill = getStatusPill('Rambursate')
+    expect(badgeCount(refundedPill)).toBe('0')
+    expect(refundedPill.disabled).toBeFalsy()
+
+    fireEvent.click(refundedPill)
+
+    expect(screen.getByText('Nicio comandă nu se potrivește cu filtrele active.')).toBeTruthy()
+    expect(screen.queryByText('Comenzile finalizate vor apărea aici.')).toBeNull()
+    expect(screen.getByText('Șterge filtrele')).toBeTruthy()
+  })
+
+  test('D-13/D-14: Clear Filters resets status/type/query and restores Variant A', () => {
+    const orders = [
+      makeOrder({ id: 'cf-1', dailyOrderNumber: 800, status: 'COMPLETED', type: 'dinein', total: 10 }),
+    ]
+    useHistoryOrders.mockReturnValue({ data: orders, isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    // Select Canceled — the fixture has no canceled orders, so Variant B renders (D-03/D-13).
+    fireEvent.click(getStatusPill('Anulate'))
+    expect(screen.getByText('Nicio comandă nu se potrivește cu filtrele active.')).toBeTruthy()
+
+    fireEvent.click(screen.getByText('Șterge filtrele'))
+
+    // D-14: Clear Filters must restore Variant A (period copy) — the single completed order is
+    // visible again, and the status pill is back to All.
+    expect(screen.queryByText('Nicio comandă nu se potrivește cu filtrele active.')).toBeNull()
+    expect(screen.getAllByTestId('history-row').length).toBe(1)
+  })
+
+  test('D-14 prohibition: Clear Filters never touches the active period/date-range', () => {
+    const orders = [makeOrder({ id: 'cf-period-1', dailyOrderNumber: 810, status: 'CANCELLED', type: 'dinein', total: 10 })]
+    useHistoryOrders.mockReturnValue({ data: orders, isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    // Switch to the 7-day period first.
+    const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
+    fireEvent.click(sevenPill)
+    const rangeBeforeClear = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+
+    // Land on the filtered-empty state (no completed orders in this fixture) and Clear Filters.
+    // Selecting a status pill and clicking Clear Filters both re-render HistoryScreen (so
+    // useHistoryOrders — a hook call, not a fetch trigger — IS invoked again on each render); the
+    // load-bearing assertion is that the RANGE ARGUMENT never changes, i.e. no period/range setter
+    // was ever touched by either action (D-14 prohibition).
+    fireEvent.click(getStatusPill('Finalizate'))
+    expect(screen.getByText('Nicio comandă nu se potrivește cu filtrele active.')).toBeTruthy()
+    fireEvent.click(screen.getByText('Șterge filtrele'))
+
+    const rangeAfterClear = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    expect(rangeAfterClear).toEqual(rangeBeforeClear)
+    expect(sevenPill.style.background).toBe('var(--sc-foreground)')
+  })
+
+  test('D-04: a canceled-only filter recomputes day-header counts/subtotals and the summary tiles to the canceled subset', () => {
+    useHistoryOrders.mockReturnValue({ data: facetedFixture(), isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    fireEvent.click(getStatusPill('Anulate'))
+
+    // Only the 2 canceled rows remain; the day header narrows its count/revenue to that subset.
+    expect(screen.getAllByTestId('history-row').length).toBe(2)
+    const header = screen.getByTestId('history-day-header')
+    expect(header.textContent).toContain('2')
+    // Canceled rows never contribute to revenue (history-utils.groupOrdersByDay) — 0,00 lei.
+    expect(header.textContent).toContain('0,00 lei')
+
+    // Summary tiles: ordersCount narrows to 2, revenue to 0.
+    const ordersCard = screen.getByText('Comenzi').closest('.card')
+    expect(ordersCard.textContent).toContain('2')
+    const revenueCard = screen.getByText('Încasări').closest('.card')
+    expect(revenueCard.textContent).toContain('0,00 lei')
+  })
+
+  test('D-15: a canceled-only filter with canceled rows present renders the Avg tile as a RON zero, not "—"', () => {
+    useHistoryOrders.mockReturnValue({ data: facetedFixture(), isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    fireEvent.click(getStatusPill('Anulate'))
+
+    const avgCard = screen.getByText('Valoare medie').closest('.card')
+    expect(avgCard.textContent).toContain('0,00 lei')
+    expect(avgCard.textContent).not.toContain('—')
+  })
+
+  test('type filter: selecting "Livrare" narrows rows to delivery-type orders across every status', () => {
+    useHistoryOrders.mockReturnValue({ data: facetedFixture(), isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    // 'Livrare' also renders inside each delivery row's type chip (a <span>, not a <button>) —
+    // scope to the actual <button> element to avoid TestingLibraryElementError.
+    const deliveryTypeBtn = screen.getAllByText('Livrare').find((el) => el.tagName === 'BUTTON')
+    fireEvent.click(deliveryTypeBtn)
+
+    // Fixture has exactly 2 delivery orders (one completed, one canceled) — both survive.
+    expect(screen.getAllByTestId('history-row').length).toBe(2)
+  })
+
+  test('D-10: a rapid keystroke burst yields exactly one filtered recompute after advanceTimersByTime(250); clearing applies immediately', () => {
+    vi.useFakeTimers()
+    try {
+      useHistoryOrders.mockReturnValue({ data: facetedFixture(), isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+      render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+      const searchInput = screen.getByPlaceholderText('Caută după # sau client')
+      expect(screen.getAllByTestId('history-row').length).toBe(5)
+
+      // A rapid keystroke burst — each keystroke supersedes the previous debounce timer
+      // (clearTimeout cleanup, D-10/Pitfall 3).
+      fireEvent.change(searchInput, { target: { value: 'L' } })
+      fireEvent.change(searchInput, { target: { value: 'Lu' } })
+      fireEvent.change(searchInput, { target: { value: 'Luc' } })
+      fireEvent.change(searchInput, { target: { value: 'Luca' } })
+      fireEvent.change(searchInput, { target: { value: 'Lucas' } })
+
+      // Before the debounce window elapses, the filtered set has NOT recomputed — all 5 rows
+      // still render (debouncedQuery is still '').
+      expect(screen.getAllByTestId('history-row').length).toBe(5)
+
+      act(() => { vi.advanceTimersByTime(250) })
+
+      // Exactly one recompute lands, filtering to the single Lucas Popescu row.
+      expect(screen.getAllByTestId('history-row').length).toBe(1)
+      expect(screen.getByText('Lucas Popescu')).toBeTruthy()
+
+      // D-10: clearing the box applies immediately — no timer advance needed.
+      fireEvent.change(searchInput, { target: { value: '' } })
+      expect(screen.getAllByTestId('history-row').length).toBe(5)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 
