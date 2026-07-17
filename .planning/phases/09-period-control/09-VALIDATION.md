@@ -3,7 +3,7 @@ phase: 9
 slug: period-control
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
+status: validated
 nyquist_compliant: true
 wave_0_complete: true
 created: 2026-07-17
@@ -40,21 +40,21 @@ created: 2026-07-17
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 9-01-01 | 01 | 1 | HIST-04 | — | N/A — pure range arithmetic, no boundary crossed | unit | `npx vitest run src/__tests__/history-utils.test.js` | ✅ | ⬜ pending |
-| 9-01-02 | 01 | 1 | HIST-04 | T-09-01 / T-09-02 | An inclusive span over 366 days is rejected before it can parameterize a fetch; a malformed date string is rejected as `'incomplete'` rather than converted | unit | `npx vitest run src/__tests__/history-utils.test.js -t "validateCustomRange"` | ✅ | ⬜ pending |
-| 9-01-03 | 01 | 1 | HIST-04 | T-09-03 | The rendered period never names a range other than the one fetched — exclusive-`to` round-trip and locale-stable month names | unit | `npx vitest run src/__tests__/history-utils.test.js -t "formatDateRange"` | ✅ | ⬜ pending |
-| 9-02-01 | 02 | 1 | HIST-04 | T-09-05 / T-09-06 | No locale renders a raw key name; no key shadows another | unit + scan | `npx vitest run` + the duplicate-key node scan in 09-02 Task 1 | ✅ | ⬜ pending |
-| 9-02-02 | 02 | 1 | HIST-04 | — | N/A — additive stylesheet rule | scan | the `@keyframes spin` / `.spin` node check in 09-02 Task 2 | ✅ | ⬜ pending |
-| 9-03-01 | 03 | 1 | HIST-04 | T-09-08 / T-09-09 / T-09-10 | The hook computes no range and cannot cause key instability; the `['history-orders', …]` cache root stays distinct from `['orders']`; `isPlaceholderData` is exposed so stale data is labelable | unit (hook) | `npx vitest run src/__tests__/use-history-orders.test.js` | ✅ | ⬜ pending |
-| 9-03-02 | 03 | 1 | HIST-04 | T-09-08 | A stable caller-supplied range refetches zero times; A→B→A serves from cache, proving the key is the resolved range and nothing else | unit (hook) | `npx vitest run src/__tests__/use-history-orders.test.js -t "cache"` | ✅ | ⬜ pending |
-| 9-04-01 | 04 | 2 | HIST-04 | T-09-13 / T-09-14 | The range resolves inside a `useMemo`, so no render-loop refetch is reachable; every Phase 10/11 control is provably still inert | integration | `npx vitest run src/__tests__/screen-history.test.jsx` | ✅ | ⬜ pending |
-| 9-04-02 | 04 | 2 | HIST-04 | T-09-15 / T-09-16 | A failed switch discards placeholder rows rather than presenting them as the new period's result; the dimming gates on `isFetching`, so the D-05 contract cannot silently no-op | integration | `npx vitest run src/__tests__/screen-history.test.jsx` | ✅ | ⬜ pending |
-| 9-04-03 | 04 | 2 | HIST-04 | T-09-12 | No tile sub-label or empty-state phrase can read `selectedPeriod` — a period label above another period's figures is unreachable from those components | integration | `npx vitest run src/__tests__/screen-history.test.jsx -t "settled"` | ✅ | ⬜ pending |
-| 9-05-01 | 05 | 3 | HIST-04 | T-09-17 / T-09-18 / T-09-20 / T-09-21 | Apply is gated by the pure validator at render AND click time; dismissal never applies; both document listeners are cleaned up | integration | `npx vitest run src/__tests__/screen-history.test.jsx -t "popover"` | ✅ | ⬜ pending |
-| 9-05-02 | 05 | 3 | HIST-04 | T-09-19 | The Custom pill's label and the resolved range read one source, so the pill cannot advertise a range that is not live | integration | `npx vitest run src/__tests__/screen-history.test.jsx` | ✅ | ⬜ pending |
-| 9-05-03 | 05 | 3 | HIST-04 | T-09-17 (residual) / T-09-22 | Human: measure the 366-day worst case; confirm the native picker's real chrome; confirm the dimming reads as loading | manual | — see Manual-Only Verifications | n/a | ⬜ pending |
+| 9-01-01 | 01 | 1 | HIST-04 | — | N/A — pure range arithmetic, no boundary crossed | unit | `npx vitest run src/__tests__/history-utils.test.js` | ✅ | ✅ green |
+| 9-01-02 | 01 | 1 | HIST-04 | T-09-01 / T-09-02 | An inclusive span over 366 days is rejected before it can parameterize a fetch; a malformed date string is rejected as `'incomplete'` rather than converted | unit | `npx vitest run src/__tests__/history-utils.test.js -t "validateCustomRange"` | ✅ | ✅ green |
+| 9-01-03 | 01 | 1 | HIST-04 | T-09-03 | The rendered period never names a range other than the one fetched — exclusive-`to` round-trip and locale-stable month names | unit | `npx vitest run src/__tests__/history-utils.test.js -t "formatDateRange"` | ✅ | ✅ green |
+| 9-02-01 | 02 | 1 | HIST-04 | T-09-05 / T-09-06 | No locale renders a raw key name; no key shadows another | unit + scan | `npx vitest run` + the duplicate-key node scan in 09-02 Task 1 | ✅ | ✅ green |
+| 9-02-02 | 02 | 1 | HIST-04 | — | N/A — additive stylesheet rule | scan | the `@keyframes spin` / `.spin` node check in 09-02 Task 2 | ✅ | ✅ green |
+| 9-03-01 | 03 | 1 | HIST-04 | T-09-08 / T-09-09 / T-09-10 | The hook computes no range and cannot cause key instability; the `['history-orders', …]` cache root stays distinct from `['orders']`; `isPlaceholderData` is exposed so stale data is labelable | unit (hook) | `npx vitest run src/__tests__/use-history-orders.test.js` | ✅ | ✅ green |
+| 9-03-02 | 03 | 1 | HIST-04 | T-09-08 | A stable caller-supplied range refetches zero times; A→B→A serves from cache, proving the key is the resolved range and nothing else | unit (hook) | `npx vitest run src/__tests__/use-history-orders.test.js -t "cache"` | ✅ | ✅ green |
+| 9-04-01 | 04 | 2 | HIST-04 | T-09-13 / T-09-14 | The range resolves inside a `useMemo`, so no render-loop refetch is reachable; every Phase 10/11 control is provably still inert | integration | `npx vitest run src/__tests__/screen-history.test.jsx` | ✅ | ✅ green |
+| 9-04-02 | 04 | 2 | HIST-04 | T-09-15 / T-09-16 | A failed switch discards placeholder rows rather than presenting them as the new period's result; the dimming gates on `isFetching`, so the D-05 contract cannot silently no-op | integration | `npx vitest run src/__tests__/screen-history.test.jsx` | ✅ | ✅ green |
+| 9-04-03 | 04 | 2 | HIST-04 | T-09-12 | No tile sub-label or empty-state phrase can read `selectedPeriod` — a period label above another period's figures is unreachable from those components | integration | `npx vitest run src/__tests__/screen-history.test.jsx -t "settled"` | ✅ | ✅ green |
+| 9-05-01 | 05 | 3 | HIST-04 | T-09-17 / T-09-18 / T-09-20 / T-09-21 | Apply is gated by the pure validator at render AND click time; dismissal never applies; both document listeners are cleaned up | integration | `npx vitest run src/__tests__/screen-history.test.jsx -t "popover"` | ✅ | ✅ green |
+| 9-05-02 | 05 | 3 | HIST-04 | T-09-19 | The Custom pill's label and the resolved range read one source, so the pill cannot advertise a range that is not live | integration | `npx vitest run src/__tests__/screen-history.test.jsx` | ✅ | ✅ green |
+| 9-05-03 | 05 | 3 | HIST-04 | T-09-17 (residual) / T-09-22 | Human: measure the 366-day worst case; confirm the native picker's real chrome; confirm the dimming reads as loading | manual | — see Manual-Only Verifications | n/a | ☑ manual (approved — 366-day timing unmeasured) |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky · ☑ manual (human-verified)*
 
 ---
 
@@ -92,4 +92,24 @@ and updates all 12 zero-argument call sites in the file.
 - [x] Feedback latency < 35s
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** validated 2026-07-18 — all 11 automated tasks run green; the sole manual task (9-05-03) was human-approved during the 09-05 blocking checkpoint.
+
+---
+
+## Validation Audit 2026-07-18
+
+Ran the three phase-9 test files as the audit sample — `history-utils.test.js`, `use-history-orders.test.js`, `screen-history.test.jsx` — plus each `-t`-filtered command in the Per-Task Map to confirm every targeted row resolves to real, passing tests (no filter matched zero tests).
+
+| Metric | Count |
+|--------|-------|
+| Tasks audited | 12 |
+| Automated — COVERED (green) | 11 |
+| Manual — human-verified | 1 (9-05-03) |
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+| Tests run | 153 passed / 153 |
+
+**Result:** Nyquist-compliant. No gaps; no new tests generated. `status` advanced draft → validated.
+
+**Carried-forward (non-blocking):** 9-05-03's 366-day worst-case fetch timing (`P7 D-03`) was not itemized in the checkpoint's blanket "approved" reply. Not a validation gap — the 366-day cap guardrail is enforced and unit-tested — but the timing figure remains unmeasured for any future virtualization decision.
