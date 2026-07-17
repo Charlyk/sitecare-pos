@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 8 — Read-Only Order Detail View
+current_phase: 8 — Read-Only Order Detail View (NEW — inserted by the 2026-07-17 restructure)
 current_plan: Not started
 status: ready_to_plan
-stopped_at: Phase 7 complete (6/6 plans, UAT 26/26 passed 2026-07-17). Roadmap restructured per 07-CONTEXT.md roadmap_impact — new Phase 8 (detail view); former 8–10 shifted to 9–11.
-last_updated: "2026-07-17T10:40:00.000Z"
+stopped_at: Phase 8 context gathered
+last_updated: "2026-07-17T11:00:02.844Z"
 progress:
   total_phases: 5
   completed_phases: 1
@@ -200,10 +200,10 @@ Milestone v1.1 — Phase 7 complete, Phase 8 ready to plan
 
 ## Session Continuity
 
-**Resume file:** None
+**Resume file:** .planning/phases/08-read-only-order-detail-view/08-CONTEXT.md
 
-**Last session:** 2026-07-17T09:19:31.590Z
-**Stopped at:** Completed 07-06-PLAN.md (app.jsx router wiring + human-verified checkpoint; Phase 7 complete)
+**Last session:** 2026-07-17T11:00:02.837Z
+**Stopped at:** Phase 8 context gathered
 **Next action:** `/gsd-execute-phase 7` — execute Phase 7 (History Screen Foundation)
 
 **Phase 7 planning notes:**
