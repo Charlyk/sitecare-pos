@@ -118,6 +118,12 @@ const HISTORY_ORDER = {
 // unconditional on readOnly rather than derived from order.state.
 const HISTORY_ORDER_NON_TERMINAL = { ...HISTORY_ORDER, state: 'new' }
 
+// F-02/D-08 regression fixture — a normalized dine-in order (type: 'dinein', the value
+// normalizeOrder now emits for a raw orderType of 'local'). The detail route imports the
+// SAME typeMeta as screen-orders.jsx, which has no 'local' key and already falls through
+// to map.dinein, so this proves the chip renders byte-identically after the boundary fix.
+const HISTORY_ORDER_DINEIN = { ...HISTORY_ORDER, id: 'ord-history-dinein', type: 'dinein', table: null }
+
 describe('readOnly mode', () => {
   beforeEach(() => { vi.clearAllMocks() })
 
@@ -193,6 +199,23 @@ describe('readOnly mode', () => {
     )
     expect(screen.getByText('Maria Ionescu')).toBeTruthy()
     expect(screen.getByText('0722111222')).toBeTruthy()
+  })
+
+  test('readOnly detail render shows the dine-in type chip for a normalized "dinein" order (F-02/D-08)', () => {
+    render(
+      createElement(OrderDetailScreen, {
+        order: HISTORY_ORDER_DINEIN,
+        lang: 'en',
+        readOnly: true,
+        onBack: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+    // typeMeta has no 'local' key and falls through to map.dinein — rendering is byte-identical
+    // before and after the src/data.jsx normalizeOrder boundary fix (Task 1 of this plan).
+    // The header chip (always rendered) and the minimal-totals-card chip (order.items == null)
+    // both source their label from typeMeta(order.type, t) — hence multiple matches expected.
+    expect(screen.getAllByText('Dine-in').length).toBeGreaterThan(0)
   })
 
   test('readOnly with items-less order collapses the outer grid to a single 1fr column', () => {

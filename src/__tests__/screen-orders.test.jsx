@@ -191,4 +191,34 @@ describe('OrdersScreen', () => {
       expect(btns.length).toBeGreaterThan(0)
     })
   })
+
+  describe('F-02/D-08: Dine-in type filter matches normalized "dinein" orders (formerly-\'local\')', () => {
+    test('a normalized dine-in order shows under the Dine-in type filter and under All; a delivery order is excluded from Dine-in', () => {
+      const orders = [
+        // Represents an order whose raw SDK orderType was 'local' — normalizeOrder now
+        // emits type: 'dinein' for it (src/data.jsx:222 boundary fix, Task 1 of this plan).
+        makeOrder({ id: 'dinein-1', dailyOrderNumber: 501, type: 'dinein', state: 'new' }),
+        makeOrder({ id: 'delivery-1', dailyOrderNumber: 502, type: 'delivery', state: 'new' }),
+      ]
+      render(
+        createElement(OrdersScreen, { orders, lang: 'en', onOpen: noop, onAdvance: noop, onPrint: noop, isOffline: false }),
+        { wrapper: w }
+      )
+      // Both orders visible under the default 'all' type filter.
+      expect(screen.getByText('#501')).toBeTruthy()
+      expect(screen.getByText('#502')).toBeTruthy()
+
+      // Click the Dine-in type filter pill.
+      const typeBtns = screen.getAllByRole('button')
+      const dineInBtn = typeBtns.find(b => b.textContent.includes('Dine-in') || b.textContent.includes('dinein'))
+      expect(dineInBtn).toBeTruthy()
+      fireEvent.click(dineInBtn)
+
+      // Previously (before the boundary fix), a formerly-'local' order's o.type would never
+      // equal 'dinein' and would be silently excluded here — this is the F-02 defect site
+      // (screen-orders.jsx:187). Now it must be visible; the delivery order must not.
+      expect(screen.getByText('#501')).toBeTruthy()
+      expect(screen.queryByText('#502')).toBeNull()
+    })
+  })
 })
