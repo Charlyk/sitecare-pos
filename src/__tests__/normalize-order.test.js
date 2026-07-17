@@ -35,3 +35,33 @@ describe('normalizeOrder — dailyOrderNumber fallback chain (D-05)', () => {
     expect(result.dailyOrderNumber).toBe(0)
   })
 })
+
+// F-02 regression — HIST-08/D-08: the SDK's raw 'local' orderType must normalize to the
+// app-wide 'dinein' vocabulary so the live Orders Dine-in filter (and History's type filter)
+// match dine-in rows. Only 'local' is translated; delivery/pickup pass through unchanged.
+describe('normalizeOrder — type boundary mapping (F-02, D-08)', () => {
+  test("orderType 'local' normalizes to type 'dinein'", () => {
+    const result = normalizeOrder({ id: 'x1', orderType: 'local', status: 'COMPLETED' })
+    expect(result.type).toBe('dinein')
+  })
+
+  test("orderType 'delivery' passes through unchanged", () => {
+    const result = normalizeOrder({ id: 'x2', orderType: 'delivery' })
+    expect(result.type).toBe('delivery')
+  })
+
+  test("orderType 'pickup' passes through unchanged", () => {
+    const result = normalizeOrder({ id: 'x3', orderType: 'pickup' })
+    expect(result.type).toBe('pickup')
+  })
+
+  test('absent type/orderType still falls back to dinein', () => {
+    const result = normalizeOrder({ id: 'x4' })
+    expect(result.type).toBe('dinein')
+  })
+
+  test("an order that already carries type: 'delivery' (not orderType) still yields 'delivery'", () => {
+    const result = normalizeOrder({ id: 'x5', type: 'delivery' })
+    expect(result.type).toBe('delivery')
+  })
+})
