@@ -202,7 +202,7 @@ export function normalizeOrder(o) {
   const rawDiscountAmt = o.discountAmount ?? 0;
   const discount = rawDiscountAmt === 0 ? 0
     : discountType === 'percent'
-      ? +((o.subtotal ?? 0) * rawDiscountAmt / 10000).toFixed(2)
+      ? +(cRON(o.subtotal) * rawDiscountAmt / 10000).toFixed(2)
       : cRON(rawDiscountAmt);
 
   const subtotal    = cRON(o.subtotal);
