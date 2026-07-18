@@ -404,3 +404,124 @@ export function computeSummary(orders) {
     canceledCount,
   }
 }
+
+// D-07..D-12, T-11: accounting-grade CSV export for the History screen. Fixed English machine
+// headers (D-10) — never localized, unlike every other user-facing string in this app.
+const CSV_HEADERS = [
+  'order_number',
+  'placed_at',
+  'type',
+  'status',
+  'customer',
+  'phone',
+  'payment',
+  'subtotal',
+  'delivery_fee',
+  'tip',
+  'tax',
+  'discount',
+  'total',
+]
+
+/**
+ * Module-private: leading-character guard for OWASP CSV-injection (T-11). A field opened by
+ * `=`/`+`/`-`/`@`/tab/CR can execute as a spreadsheet formula when the file is opened in
+ * Excel/Sheets — RFC-4180 quoting alone does NOT neutralize this, so this check runs BEFORE the
+ * quote step below, never after.
+ */
+const FORMULA_INJECTION_RE = /^[=+\-@\t\r]/
+
+/**
+ * Module-private: RFC-4180 field escaper (D-12) with the T-11 formula-injection guard applied
+ * first. `null`/`undefined` coerce to an empty field, never the literal string 'null'/'undefined'
+ * (partial-row coverage). A value containing a comma, double-quote, or newline is wrapped in
+ * double-quotes with embedded quotes doubled; a plain value is emitted unquoted.
+ * @param {*} value
+ * @returns {string}
+ */
+function escapeCsvField(value) {
+  let s = value === null || value === undefined ? '' : String(value)
+  if (FORMULA_INJECTION_RE.test(s)) s = `'${s}`
+  if (/[",\n\r]/.test(s)) s = `"${s.replace(/"/g, '""')}"`
+  return s
+}
+
+/**
+ * Module-private: local-time 'YYYY-MM-DD HH:mm' formatter for the placed_at CSV column
+ * (UI-SPEC: sortable, no comma, avoids ISO's 'T' separator misparsing in some regional Excel
+ * builds). Co-located here rather than importing `orderTimeLabel` from data.jsx — this module
+ * never imports react/data.jsx/@charlyk (file-header invariant).
+ * @param {string} iso
+ * @returns {string}
+ */
+function csvPlacedAt(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/**
+ * Module-private: order_number CSV column value — same derivation as `orderNumberLabel` in
+ * screen-history.jsx (D-09): the numeric `dailyOrderNumber` when present, else the first 8
+ * characters of `id` (normalizeOrder's UUID-fallback path).
+ * @param {object} order
+ * @returns {number|string}
+ */
+function csvOrderNumber(order) {
+  const num = order.dailyOrderNumber
+  if (typeof num === 'number') return num
+  return String(order.id).slice(0, 8)
+}
+
+/**
+ * Module-private: coerces a monetary field to a fixed-two-decimal string (Open Question 2), or an
+ * empty field when the value is null/undefined (partial-row coverage) — never '0.00' for a
+ * genuinely-absent field.
+ * @param {number|null|undefined} v
+ * @returns {string}
+ */
+function csvMoney(v) {
+  return v === null || v === undefined ? '' : Number(v).toFixed(2)
+}
+
+/**
+ * Module-private: maps one order to its 13-field CSV row, positionally matching CSV_HEADERS.
+ * Every field passes unconditionally through `escapeCsvField` (T-11-B) — a missing value becomes
+ * an empty position, never a dropped one that would shift downstream columns.
+ * @param {object} order
+ * @returns {string}
+ */
+function orderToCsvRow(order) {
+  const fields = [
+    csvOrderNumber(order),
+    csvPlacedAt(order.placedAt),
+    order.type,
+    deriveDisplayStatus(order),
+    order.customer?.name,
+    order.customer?.phone,
+    order.payment,
+    csvMoney(order.subtotal),
+    csvMoney(order.deliveryFee),
+    csvMoney(order.tip),
+    csvMoney(order.tax),
+    csvMoney(order.discount),
+    csvMoney(order.total),
+  ]
+  return fields.map(escapeCsvField).join(',')
+}
+
+/**
+ * D-07..D-12: builds the accounting-grade CSV export string for a set of already-fetched,
+ * already-normalized orders. One row per order (D-07), the fixed accounting-full column set
+ * (D-08), comma-delimited with dot decimals (D-09), fixed English machine headers as the first
+ * line — never localized (D-10) — and exactly one UTF-8 BOM (U+FEFF) prepended at position 0 of
+ * the whole string, never per-row (D-11). Rows are CRLF-joined per RFC-4180. Zero orders yields a
+ * header-only, still BOM-prefixed string — CSV structure never branches on row count.
+ * @param {Array<object>} orders — already-normalized orders (see normalizeOrder in data.jsx)
+ * @returns {string}
+ */
+export function buildCsv(orders) {
+  const lines = [CSV_HEADERS.join(','), ...orders.map(orderToCsvRow)]
+  return '\uFEFF' + lines.join('\r\n')
+}
