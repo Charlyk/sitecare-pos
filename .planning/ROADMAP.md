@@ -183,7 +183,20 @@ Plans:
   1. Staff can reprint the receipt from the read-only detail view to the configured thermal printer; the button is greyed-out when no printer is configured
   2. Staff can export the currently filtered results as CSV via a native Save dialog and open the resulting file with correct rows, headers, and escaped fields
 
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+
+**Wave 1**
+
+- [ ] 11-01-PLAN.md — install + register `@tauri-apps/plugin-dialog` + `plugin-fs` (4-file lockstep, [SUS] legitimacy checkpoint, narrow capability grant) (HIST-12)
+- [ ] 11-02-PLAN.md — pure `buildCsv` serializer (RFC-4180 + BOM + formula-injection guard T-11) + 3 new i18n keys (HIST-11/12)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 11-03-PLAN.md — read-only reprint buttons + printer-configured gate (D-04/05/06) + `onPrint={handlePrint}` history-detail wiring (Pitfall 1) (HIST-11)
+- [ ] 11-04-PLAN.md — activate `h_export` button: `buildCsv(visible)` → native `save()` → `writeTextFile()`, cancel/error/empty handling, D-14 filename (HIST-12)
+
 **UI hint**: yes
 
 ---
@@ -202,7 +215,7 @@ Plans:
 | 8. Read-Only Order Detail View | v1.1 | 5/5 | Complete    | 2026-07-17 |
 | 9. Period Control | v1.1 | 5/5 | Complete    | 2026-07-18 |
 | 10. Filters + Search | v1.1 | 4/4 | Complete    | 2026-07-18 |
-| 11. Reprint + CSV Export | v1.1 | 0/? | Not started | - |
+| 11. Reprint + CSV Export | v1.1 | 0/4 | Planned | - |
 
 ---
 

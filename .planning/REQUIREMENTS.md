@@ -106,8 +106,8 @@ Revisit if the API adds these fields.
 | HIST-08 | Phase 10 | TBD | Complete |
 | HIST-09 | Phase 10 | TBD | Complete |
 | HIST-10 | Phase 8 | 08-01..08-05 | Complete (08-01..08-05) |
-| HIST-11 | Phase 11 | TBD | Pending |
-| HIST-12 | Phase 11 | TBD | Pending |
+| HIST-11 | Phase 11 | 11-02, 11-03 | Pending |
+| HIST-12 | Phase 11 | 11-01, 11-02, 11-04 | Pending |
 | HIST-13 | Phase 7 | 07-04 | Complete |
 
 ---
