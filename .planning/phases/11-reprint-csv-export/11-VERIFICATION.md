@@ -1,17 +1,20 @@
 ---
 phase: 11-reprint-csv-export
 verified: 2026-07-19T00:35:00Z
-status: human_needed
+status: passed
 score: 15/15 must-haves verified
 behavior_unverified: 0
 overrides_applied: 0
 human_verification:
+
   - test: "With a real thermal printer configured, open a historical order in the read-only detail view and tap Print kitchen / Print customer."
     expected: "Both receipts print on the physical printer with correct kitchen/customer content."
     why_human: "print_receipt IPC targets real serial-port hardware; cannot be exercised in Vitest/JSDOM. Reuses the handlePrint/print_receipt path already hardware-verified in Phase 5 — this phase only adds a second UI entry point to it."
+
   - test: "In History, apply a filter, click Export CSV, save the file, and open it in Excel."
     expected: "Rows/headers/escaped fields are correct, and Romanian diacritics (ă/ș/ț) render correctly via the UTF-8 BOM."
     why_human: "Native OS Save dialog + real filesystem write + Excel rendering are outside the JSDOM/Vitest environment. buildCsv's row/header/escaping/BOM logic is unit-tested; end-to-end Excel rendering with real diacritics is not (tracked as coverage item D6 in 11-04-SUMMARY.md)."
+
   - test: "Run `npm run tauri dev`, filter History, and click Export CSV to pick a save path."
     expected: "save() and writeTextFile() succeed with no permission/capability error, confirming the dialog:allow-save + fs:allow-write-text-file grants (and the fs-scope auto-extension assumption, Research A1) hold at runtime."
     why_human: "Capability/permission enforcement only manifests in a real Tauri runtime, not the web test harness."
@@ -83,6 +86,7 @@ human_verification:
 | Full workspace suite (baseline check) | `npx vitest run` | 481 passed / 3 failed (484 total) | ✓ PASS (3 failures pre-existing, unrelated — see below) |
 
 **Full-suite result detail:** `npx vitest run` (run once, not filtered per-truth) → **481 passed / 3 failed**. The 3 failures are:
+
 1. `src/__tests__/build-pipeline.test.js` — `BILD-04 — bundle.createUpdaterArtifacts is true` (pre-existing, `tauri.conf.json` has `"v1Compatible"` instead of `true`, last touched Phase 6, commit `7d00bcd`)
 2. `src/__tests__/offline-buttons.test.jsx` — `U12` (×2 assertions) — `OrdersScreen` throws `No QueryClient set` because the test renders without a `QueryClientProvider` wrapper (pre-existing, Phase 6, commit `7d00bcd`)
 
