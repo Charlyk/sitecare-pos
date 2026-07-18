@@ -4,9 +4,9 @@ milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 11 — Reprint + CSV Export
 current_plan: Not started
-status: planning
+status: executing
 stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed, verified & transitioned; ready to plan Phase 11
-last_updated: "2026-07-18T19:59:32.224Z"
+last_updated: "2026-07-18T20:36:31.323Z"
 progress:
   total_phases: 5
   completed_phases: 4
@@ -38,7 +38,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-18)
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 11 — Reprint + CSV Export
 **Current Plan:** Not started
-**Total Plans in Phase:** TBD
+**Total Plans in Phase:** 4
 **Overall Status:** Phase 10 (Filters + Search) COMPLETE — 4/4 plans, HIST-07/08/09 sealed, UAT 2/2
 (both human-judgment checkpoints — two-row FilterBar wrap at 1440×900, and debounced-search "feels
 responsive" — passed 2026-07-18). Status (All/Completed/Refunded/Canceled) and type
@@ -241,10 +241,10 @@ the plan-checker against source.
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Ready to plan
+  derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Phase 11 context gathered
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Phase 11 UI-SPEC approved
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -254,9 +254,9 @@ the plan-checker against source.
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/11-reprint-csv-export/11-CONTEXT.md
+**Resume file:** .planning/phases/11-reprint-csv-export/11-UI-SPEC.md
 
-**Last session:** 2026-07-18T19:59:32.217Z
+**Last session:** 2026-07-18T20:12:32.763Z
 **Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
 **Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
 
