@@ -6,13 +6,13 @@ current_phase: 11
 current_plan: Not started
 status: completed
 stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
-last_updated: "2026-07-18T21:45:49.541Z"
+last_updated: "2026-07-18T22:31:40.852Z"
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
   total_plans: 24
   completed_plans: 24
-  percent: 100
+  percent: 83
 ---
 
 # State: SiteCare POS Desktop App
@@ -248,7 +248,7 @@ the plan-checker against source.
   derives that key from a body-level `Status:`/`**Status:**All phases complete
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 11-04-PLAN.md — Export CSV activated (HIST-12); Phase 11 (Reprint + CSV Export) is now 4/4 plans complete, ready for verification
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Phase 12 context gathered — audit found stale (CR-01/WR-01/G-07-1 already fixed); phase scoped to verify + state-continuity fix + HIST-06 docs + Nyquist 10/11 + audit correction
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -256,11 +256,15 @@ the plan-checker against source.
 ---
 - 09-04 must update src/__tests__/screen-history.test.jsx (2 assertions) and src/__tests__/app-history-route.test.jsx (2 assertions) that still expect the removed 'Nicio comandă în ultimele 30 de zile.' literal — h_empty_prefix (09-02) was renamed but the consumer's tests were not in 09-02's scope. Full suite is 7 failed/342 passed until this lands.
 
+### Roadmap Evolution
+
+- Phase 12 added: Close CR-01 tax-in-fallback-total + HIST-06 traceability + WR-01 popover
+
 ## Session Continuity
 
-**Resume file:** None
+**Resume file:** .planning/phases/12-close-cr-01-tax-in-fallback-total-hist-06-traceability-wr-01/12-CONTEXT.md
 
-**Last session:** 2026-07-18T21:09:33.289Z
+**Last session:** 2026-07-18T22:31:40.843Z
 **Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
 **Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
 
