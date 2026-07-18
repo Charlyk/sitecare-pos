@@ -195,7 +195,7 @@ export const SDK_STATE_MAP = {
 export function normalizeOrder(o) {
   const cRON = (v) => (v ?? 0) / 100; // SDK returns monetary values in cents
   const rawState = o.state ?? o.status ?? '';
-  const state = SDK_STATE_MAP[rawState] ?? rawState.toLowerCase() ?? 'new';
+  const state = SDK_STATE_MAP[rawState] ?? (rawState.toLowerCase() || 'new');
 
   // Compute discount first so total can be derived from components
   const discountType = o.discountType ?? null;
@@ -219,7 +219,7 @@ export function normalizeOrder(o) {
     ...o,
     dailyOrderNumber: o.dailyOrderNumber ?? o.dailyNumber ?? o.id,
     state,
-    type: ((raw) => (raw === 'local' ? 'dinein' : raw ?? 'dinein'))(o.type ?? o.orderType),
+    type: ((raw) => (raw === 'local' ? 'dinein' : (raw || 'dinein')))(o.type ?? o.orderType),
     source: o.source ?? 'counter',
     payment: o.payment ?? o.paymentType ?? 'cash',
     placedAt: o.placedAt ?? o.createdAt ?? o.orderDate,
