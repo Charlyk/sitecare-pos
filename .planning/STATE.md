@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 11 — Reprint + CSV Export
-current_plan: Not started
+current_phase: 11
+current_plan: 2
 status: executing
 stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed, verified & transitioned; ready to plan Phase 11
-last_updated: "2026-07-18T20:36:31.323Z"
+last_updated: "2026-07-18T20:47:30.826Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 20
-  completed_plans: 20
+  total_plans: 24
+  completed_plans: 21
   percent: 80
 ---
 
@@ -26,7 +26,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-18)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 11 — Reprint + CSV Export
+**Current focus:** Phase 11 — reprint-csv-export
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -36,8 +36,8 @@ See: `.planning/PROJECT.md` (updated 2026-07-18)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
-**Current Phase:** 11 — Reprint + CSV Export
-**Current Plan:** Not started
+**Current Phase:** 11
+**Current Plan:** 2
 **Total Plans in Phase:** 4
 **Overall Status:** Phase 10 (Filters + Search) COMPLETE — 4/4 plans, HIST-07/08/09 sealed, UAT 2/2
 (both human-judgment checkpoints — two-row FilterBar wrap at 1440×900, and debounced-search "feels
@@ -49,7 +49,7 @@ before it: 5/5 plans, HIST-04 sealed (all four periods live). Phase 8: 5/5 plans
 Phase 7: 6/6 plans, UAT 26/26. Phase 11 (Reprint + CSV Export — HIST-11/12) is not yet planned.
 
 ```
-Progress: [████████████████░░░░] Phases 7–10 complete (4/5) · 20/20 executed plans passing
+Progress: [█████████░] 88%
 Milestone v1.1 — one phase remaining: Phase 11 (Reprint + CSV Export), not yet planned
 ```
 
@@ -117,6 +117,7 @@ the plan-checker against source.
 | Phase 10 P02 | 6min | 2 tasks | 4 files |
 | Phase 10 P03 | ~10min | 2 tasks | 2 files |
 | Phase 10 P04 | 18min | 2 tasks | 2 files |
+| Phase 11 P01 | 8min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -244,7 +245,7 @@ the plan-checker against source.
   derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Phase 11 UI-SPEC approved
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 11-01-PLAN.md
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -254,9 +255,9 @@ the plan-checker against source.
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/11-reprint-csv-export/11-UI-SPEC.md
+**Resume file:** None
 
-**Last session:** 2026-07-18T20:12:32.763Z
+**Last session:** 2026-07-18T20:47:30.819Z
 **Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
 **Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
 
@@ -328,3 +329,6 @@ the plan-checker against source.
 - [Phase ?]: EmptyBlock Variant B (filtersActive) is an early-return branch, keeping Variant A's period-composition logic completely unreachable/untouched when filters are active
 - [Phase ?]: handleClearFilters composes exactly setStatusFilter/setTypeFilter/setQuery and never setSelectedPeriod — auditable at one call site (D-12/D-14)
 - [Phase ?]: D-12 compose-with-period backstop written as a full automated test (not deferred) since Phase 9's period-pill plumbing was confirmed wired at execution time
+- [Phase ?]: [Phase 11-01]: T-11-SC blocking-human legitimacy checkpoint for plugin-dialog resolved by orchestrator+human before dispatch; recorded as passed
+- [Phase ?]: [Phase 11-01]: capabilities/default.json grants only dialog:allow-save + fs:allow-write-text-file, no fs:scope — dialog plugin session-extends fs write scope to the picked path (T-11-CAP)
+- [Phase ?]: [Phase 11-01]: Cargo.lock regenerated via cargo check --lib (minimal 83-line diff) not cargo generate-lockfile (which bumped 517 unrelated packages) to keep the lockfile change scoped to the two new plugins

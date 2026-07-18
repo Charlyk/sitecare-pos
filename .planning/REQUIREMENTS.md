@@ -40,7 +40,7 @@
 - [x] **HIST-10**: User can click any row to open a read-only detail view (reusing `screen-detail.jsx` in `readOnly` mode — D-07, D-09) showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, and prep time — hydrated on demand via `getOrder(id)`
   - **F-01 (planner finding):** `08-RESEARCH.md` and `08-CONTEXT.md` both assert the `AdminOrder` summary reaches `screen-detail.jsx` with a null `items` value. This is false and was verified false by executing `normalizeOrder` against an `AdminOrder`-shaped object: `normalizeOrder` maps `items: (o.items ?? []).map(...)`, which returns an empty array, never null, and `use-history-orders.js` runs every summary through `normalizeOrder`. Consequences: (1) the ungated Modify control is reachable on the `history-detail` route in production today — a live defect, not one this phase introduces; (2) the minimal-totals-card fallback at `screen-detail.jsx:191-204` is unreachable on both routes; (3) the pre-hydration state is an empty receipt, not an absent one, so loading must be distinguished from a genuinely empty order by query state rather than by the items value.
 - [ ] **HIST-11**: User can reprint a receipt from the read-only detail view (greyed-out when no printer is configured)
-- [ ] **HIST-12**: User can export the current filtered results as a CSV file via a native Save dialog — generated client-side
+- [x] **HIST-12**: User can export the current filtered results as a CSV file via a native Save dialog — generated client-side
 - [x] **HIST-13**: User sees a clear empty state when no orders match the active filters
 
 ---
@@ -107,7 +107,7 @@ Revisit if the API adds these fields.
 | HIST-09 | Phase 10 | TBD | Complete |
 | HIST-10 | Phase 8 | 08-01..08-05 | Complete (08-01..08-05) |
 | HIST-11 | Phase 11 | 11-02, 11-03 | Pending |
-| HIST-12 | Phase 11 | 11-01, 11-02, 11-04 | Pending |
+| HIST-12 | Phase 11 | 11-01, 11-02, 11-04 | Complete |
 | HIST-13 | Phase 7 | 07-04 | Complete |
 
 ---
