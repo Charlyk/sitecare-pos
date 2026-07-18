@@ -389,7 +389,8 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
     const counts = { all: 0, completed: 0, refunded: 0, canceled: 0 };
     for (const o of byTypeAndSearch) {
       counts.all += 1;
-      counts[deriveDisplayStatus(o)] += 1;
+      const status = deriveDisplayStatus(o);
+      if (status) counts[status] += 1;
     }
     return counts;
   }, [byTypeAndSearch]);
