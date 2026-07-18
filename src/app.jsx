@@ -262,6 +262,7 @@ function App() {
             detailError={historyDetailError}
             onRetryDetail={refetchHistoryDetail}
             onBack={() => setScreen('history')}
+            onPrint={handlePrint}
             isOffline={isOffline}
           />
         )}

@@ -47,6 +47,25 @@ import { useAuth } from '../auth.jsx'
 import { useAppStore } from '../store.js'
 import App from '../app.jsx'
 
+// Pitfall-1 regression guard (11-03): wraps the real OrderDetailScreen so we can capture the
+// exact props app.jsx passes on each route render, without altering what actually renders (the
+// wrapper still mounts the real component via createElement). A blanket jest-style mock would
+// blank out every other test in this file, which asserts on real rendered content.
+// capturedDetailProps is declared via vi.hoisted (matching useOrderDetailMock's precedent above)
+// so the hoisted vi.mock factory below can close over it safely.
+const capturedDetailProps = vi.hoisted(() => ({ calls: [] }))
+vi.mock('../screen-detail.jsx', async (importOriginal) => {
+  const actual = await importOriginal()
+  const { createElement } = await import('react')
+  return {
+    ...actual,
+    OrderDetailScreen: (props) => {
+      capturedDetailProps.calls.push(props)
+      return createElement(actual.OrderDetailScreen, props)
+    },
+  }
+})
+
 // Production-shaped fixture per F-01: normalizeOrder (src/data.jsx) always maps
 // `items: (o.items ?? []).map(...)`, so an AdminOrder summary always reaches the route with
 // `items: []`, never `items: null`. The prior fixture's `items: null` was unrepresentative and
@@ -138,6 +157,7 @@ describe('app-history-route — router wiring + fetch/merge (HIST-01, HIST-10, D
     // Reset per-id response map and give the hook TanStack v5's real disabled-query shape by
     // default: an undefined id (e.g. the live route when nothing is selected) is not pending.
     detailResponses = new Map()
+    capturedDetailProps.calls = []
     useOrderDetailMock.mockReset()
     useOrderDetailMock.mockImplementation((id) => {
       if (id && detailResponses.has(id)) return detailResponses.get(id)
@@ -184,6 +204,15 @@ describe('app-history-route — router wiring + fetch/merge (HIST-01, HIST-10, D
     expect(screen.getByText(/Înapoi la istoric/i)).toBeInTheDocument()
     // No Advance/Cancel/print controls reach the readOnly route (T-07-21).
     expect(screen.queryByText(/Modifică/i)).not.toBeInTheDocument()
+  })
+
+  test('history-detail route passes onPrint=handlePrint to OrderDetailScreen (Pitfall 1 regression guard)', () => {
+    useAppStore.setState({ screen: 'history-detail', historyOrder: historyOrderFixture })
+    renderApp()
+
+    const historyDetailCall = capturedDetailProps.calls.find((p) => p.readOnly === true)
+    expect(historyDetailCall).toBeDefined()
+    expect(typeof historyDetailCall.onPrint).toBe('function')
   })
 
   test('screen === history renders HistoryScreen inside the Shell', () => {
