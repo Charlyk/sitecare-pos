@@ -213,7 +213,7 @@ export function normalizeOrder(o) {
   // Fall back to recomputing from components if the server doesn't provide it.
   const total = o.total != null
     ? cRON(o.total)
-    : +(subtotal + deliveryFee + tip - discount).toFixed(2);
+    : +(subtotal + tax + deliveryFee + tip - discount).toFixed(2);
 
   return {
     ...o,
