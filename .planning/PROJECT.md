@@ -102,11 +102,11 @@ calendar days, and `AdminOrder.total` is denominated in RON (not cents), so no `
 - ✓ Period presets + custom range on History screen — Today / 7 / 30 / custom retarget the fetch; the client-computed summary strip retargets for free (D-15) — Validated in Phase 9 (HIST-04)
 - ✓ Filter by status (All / Completed / Refunded / Canceled) and order type (All / Delivery / Pickup / Dine-in, with `orderType: 'local'` shown as Dine-in), each with live per-period counts — Validated in Phase 10 (HIST-07, HIST-08)
 - ✓ Debounced search by order number or customer name; filters, search, and period compose so day headers reflect only visible rows — Validated in Phase 10 (HIST-09)
+- ✓ Reprint receipt on historical orders — read-only detail view surfaces Print kitchen / Print customer, reusing the existing `handlePrint`/`print_receipt` path; greyed-out when no printer is configured — Validated in Phase 11 (HIST-11)
+- ✓ CSV export of the filtered history list — native Save dialog (`plugin-dialog`) + `writeTextFile` (`plugin-fs`), accounting-grade `buildCsv` with RFC-4180 escaping, UTF-8 BOM, and OWASP formula-injection guard on user-authored columns — Validated in Phase 11 (HIST-12)
 
 ### Active (v1.1)
 
-- [ ] Reprint receipt on historical orders — thermal printer integration — v1.1 (HIST-11)
-- [ ] CSV export of filtered history list — v1.1 (HIST-12)
 - [ ] Windows code signing — unsigned MSI; Azure Trusted Signing is the path forward (BILD-03 deferred)
 - [ ] Thermal printer hardware validation — approved-no-hardware for v1.0; real-device test needed
 - [ ] Tax display — server-authoritative total used; Romanian VAT (5%/9%/19%) display to be confirmed with SiteCare
@@ -183,4 +183,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-07-18 after Phase 10 — Filters + Search complete; HIST-07, HIST-08, HIST-09 validated (HIST-04 also reconciled to Validated, shipped in Phase 9)*
+*Last updated: 2026-07-19 after Phase 11 — Reprint + CSV Export complete; HIST-11, HIST-12 validated. Milestone v1.1 (Orders History Screen) — all 5 phases (7–11) and 13 requirements delivered.*

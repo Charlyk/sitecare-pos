@@ -44,7 +44,7 @@ Full phase details → `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 8: Read-Only Order Detail View** — hydrate the archived-order detail via `getOrder(id)`: items, modifiers, address, prep time (completed 2026-07-17)
 - [x] **Phase 9: Period Control** — Today/7/30/custom presets retargeting the list; the client-computed strip follows for free (was Phase 8) (completed 2026-07-18)
 - [x] **Phase 10: Filters + Search** — client-side status (incl. Refunded), order type, and debounced search with live counts (was Phase 9) (completed 2026-07-18)
-- [ ] **Phase 11: Reprint + CSV Export** — reprint from the detail view, CSV export via native Save dialog (was Phase 10)
+- [x] **Phase 11: Reprint + CSV Export** — reprint from the detail view, CSV export via native Save dialog (was Phase 10) (completed 2026-07-19)
 
 ---
 
@@ -215,7 +215,7 @@ Plans:
 | 8. Read-Only Order Detail View | v1.1 | 5/5 | Complete    | 2026-07-17 |
 | 9. Period Control | v1.1 | 5/5 | Complete    | 2026-07-18 |
 | 10. Filters + Search | v1.1 | 4/4 | Complete    | 2026-07-18 |
-| 11. Reprint + CSV Export | v1.1 | 4/4 | In Progress|  |
+| 11. Reprint + CSV Export | v1.1 | 4/4 | Complete    | 2026-07-19 |
 
 ---
 
