@@ -1,7 +1,7 @@
 ---
 phase: 11
 slug: reprint-csv-export
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-18
@@ -93,24 +93,41 @@ Accent reserved for: the "Print customer" button fill/hover, and the shared toas
 
 ## UI Considerations
 
-Applicable state considerations resolved: 8 covered, 1 backstop, 0 unresolved.
+> Produced by the post-verification UI-consideration probe (18 applicable considerations across 3
+> surfaces: **E1** CSV-export button, **E2** reprint-button row, **E3** disabled-state tooltips).
+> Two decisions were resolved with the user on 2026-07-18: **overflow → covered** (a large-export
+> test is now a planner must-have), and the reprint row's four collection-shape states → **dismissed**
+> (it is two fixed buttons, not a data collection).
+
+Resolved: **14 covered · 4 dismissed · 0 backstop · 0 unresolved** (18 applicable).
 
 | Category | Element(s) | Status | Resolution / Reason |
 |----------|------------|--------|---------------------|
-| empty | csv-export (list-collection over `visible`) | ✅ covered | When `visible.length === 0`, the Export button renders disabled (`opacity: 0.5; pointerEvents: none; cursor: not-allowed`, exactly D-05's inert-Export dimming values) with the `h_export_empty_tooltip` tooltip (see Copywriting Contract). No header-only-file fallback. |
-| loading | csv-export (interactive-control) | ✅ covered | CSV string is built synchronously from the already-fetched `visible` array (no network call, D-07); the only async step is the native `save()` dialog, which shows its own OS chrome. No in-app spinner/disabled-while-pending state is introduced — this matches the existing precedent that the live print buttons (`handlePrint`) also show no per-click loading state. |
-| error | csv-export (interactive-control) | ✅ covered | `writeTextFile` or `save()` throwing → `h_export_error_title` error toast + `String(err)` detail (see Copywriting Contract). Explicitly distinct from **dialog cancellation**: `save()` resolving to `null`/`undefined` (user clicked Cancel) is a silent early-return — no toast, no error state, matches how a cancelled OS file picker is universally treated. |
-| populated | csv-export (list-collection) | ✅ covered | One row per order (D-07), accounting-full column set (D-08), comma-delimited RFC-4180 CSV with dot decimals (D-09), fixed English headers (D-10), UTF-8 BOM (D-11), standard quote/escape rules (D-12). |
-| partial | csv-export (list-collection — some orders missing optional fields, e.g. no `deliveryFee` on a pickup order, no `tip`, no `discount`, walk-in orders with a null `customer.phone`) | ✅ covered | Missing/undefined optional fields serialize as an **empty CSV field** (`""`), never the literal string `null`/`undefined`/`N/A` — standard, spreadsheet-import-friendly convention, consistent with D-12's escaping rules. |
-| overflow | csv-export (list-collection — up to 366 days of orders in one export, per `MAX_RANGE_DAYS`) | 🧪 backstop | `history-utils.js`'s existing `MAX_RANGE_DAYS = 366` cap (already shipped, chosen partly so a full-year export runs in one pass — see `11-CONTEXT.md` canonical refs) is the sole mitigation; no additional client-side truncation, pagination, or streaming write is added this phase. No dedicated large-export performance test is planned — if one is not added at execution time, this resolves via `insufficient_spec → human_needed` at verification per the honest-verifier rule, not a silent pass. |
-| zero-one-many | csv-export (list-collection) | ✅ covered | CSV structure (header + N data rows) is identical at 0/1/many rows — no singular/plural branching in the file itself; the only user-visible plural/singular text is the success-toast detail, which already uses the shipped `h_orders_count_one`/`h_orders_count_other` pair. |
-| long-text | reprint-buttons, disabled-tooltips (interactive-control, static-content) | ✅ covered | All new/reused strings are short, single-line, fixed-length labels (≤ ~35 characters for the longest tooltip sentence); native `title` tooltips wrap by browser default with no custom width constraint, and button labels never approach the button's fixed padding limits at either locale (ro/en). No truncation/ellipsis handling is needed. |
+| empty | E1 csv-export (list-collection over `visible`) | ✅ covered | When `visible.length === 0`, the Export button renders disabled (`opacity: 0.5; pointerEvents: none; cursor: not-allowed`, exactly D-05's inert-Export dimming values) with the `h_export_empty_tooltip` tooltip (see Copywriting Contract). No header-only-file fallback. |
+| loading | E1 csv-export (interactive-control) | ✅ covered | CSV string is built synchronously from the already-fetched `visible` array (no network call, D-07); the only async step is the native `save()` dialog, which shows its own OS chrome. No in-app spinner/disabled-while-pending state is introduced — matches the precedent that the live print buttons (`handlePrint`) also show no per-click loading state. |
+| error | E1 csv-export (interactive-control) | ✅ covered | `writeTextFile` or `save()` throwing → `h_export_error_title` error toast + `String(err)` detail (see Copywriting Contract). Explicitly distinct from **dialog cancellation**: `save()` resolving to `null`/`undefined` (user clicked Cancel) is a silent early-return — no toast, no error state. |
+| populated | E1 csv-export (list-collection) | ✅ covered | One row per order (D-07), accounting-full column set (D-08), comma-delimited RFC-4180 CSV with dot decimals (D-09), fixed English headers (D-10), UTF-8 BOM (D-11), standard quote/escape rules (D-12). |
+| partial | E1 csv-export (some orders missing optional fields — no `deliveryFee` on pickup, no `tip`/`discount`, walk-in with null `customer.phone`) | ✅ covered | Missing/undefined optional fields serialize as an **empty CSV field** (`""`), never the literal `null`/`undefined`/`N/A` — standard, spreadsheet-import-friendly, consistent with D-12's escaping rules. |
+| overflow | E1 csv-export (up to 366 days of orders in one export, per `MAX_RANGE_DAYS`) | ✅ covered | **[user decision 2026-07-18 — upgraded from backstop]** The existing `MAX_RANGE_DAYS = 366` cap bounds the worst case; **the planner MUST add a held-out large-export test** asserting a full-year (~thousands of rows) export builds and writes correctly within acceptable time. No client-side truncation/pagination/streaming is added — the test is the evidence, so this covers rather than defers. |
+| zero-one-many | E1 csv-export (list-collection) | ✅ covered | CSV structure (header + N data rows) is identical at 0/1/many rows — no singular/plural branching in the file itself; the only user-visible plural/singular text is the success-toast detail, using the shipped `h_orders_count_one`/`h_orders_count_other` pair. |
+| long-text | E1 csv-export (interactive-control label) | ✅ covered | The "Export CSV" label is short, single-line, fixed-length at both locales (ro/en); never approaches the button's fixed padding limits. No truncation/ellipsis handling needed. |
+| loading | E2 reprint-buttons (interactive-control) | ✅ covered | No per-click loading state — the read-only reprint reuses `handlePrint` unchanged, which shows no in-flight spinner (same precedent as the live detail's print buttons). |
+| error | E2 reprint-buttons (interactive-control) | ✅ covered | Print failure fires the existing `print_failed` error toast with `String(err)` detail, exactly as the live detail does (`app.jsx:174`). |
+| overflow | E2 reprint-buttons (button-row layout) | ✅ covered | The two-button row is `display: flex; gap: 8px` with each button `flex: 1`; short fixed labels never exceed the row width at either locale — no wrap/clip/overflow handling needed. |
+| long-text | E2 reprint-buttons (interactive-control labels) | ✅ covered | "Print kitchen"/"Print customer" (and ro equivalents) are short, single-line, within the button's fixed padding at both locales. |
+| empty | E2 reprint-buttons | ❌ dismissed | Two fixed buttons, not a data collection — there is no empty-collection state. The genuinely-applicable "no printer configured" **disabled** state is covered in the Copywriting Contract via the `print_configure_hint` tooltip + D-05 disabled styling. |
+| partial | E2 reprint-buttons | ❌ dismissed | Not a collection — no partial-data state. The order is fully hydrated (`getOrder(id)`, Phase 8) before the read-only detail with reprint buttons renders. |
+| populated | E2 reprint-buttons | ❌ dismissed | Not a collection — the "populated" state is the trivial happy path (both buttons enabled), fully described by the Copywriting Contract; no separate volume-of-content consideration applies. |
+| zero-one-many | E2 reprint-buttons | ❌ dismissed | Not a collection — a fixed pair of buttons has no zero/one/many cardinality; no singular/plural copy branching. |
+| overflow | E3 disabled-tooltips (static-content) | ✅ covered | Native `title` tooltips wrap by the browser/OS default with no custom width constraint; no clipping introduced. |
+| long-text | E3 disabled-tooltips (static-content) | ✅ covered | `print_configure_hint` / `h_export_empty_tooltip` are short fixed sentences (≤ ~35 chars) at both locales; native tooltip chrome handles any wrap. No truncation handling needed. |
 
 <!-- Status vocabulary (locked by probe-core projectTruths):
-     ✅ covered   → a plain truth string lifted into must_haves.truths
-     🧪 backstop  → a flat scalar { statement, verification: backstop }; at verify time, no explicit
-                    evidence → insufficient_spec → human_needed (never a silent pass, #1154)
-     ⚠ unresolved → an explicit planner assumption (surfaced, never silently dropped)
+     ✅ covered    → a plain truth string lifted into must_haves.truths
+     🧪 backstop   → a flat scalar { statement, verification: backstop }; at verify time, no explicit
+                     evidence → insufficient_spec → human_needed (never a silent pass, #1154)
+     ❌ dismissed  → resolved as not-applicable with a recorded reason (not carried as a truth)
+     ⚠ unresolved  → an explicit planner assumption (surfaced, never silently dropped)
      Rows are REPLACED (not appended) on a probe re-run — idempotent. -->
 
 ---
@@ -137,11 +154,11 @@ No component-registry blocks are introduced this phase. The two new dependencies
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: FLAG (non-blocking — declare visual priority in the reprint row; layout mirrors an already-shipped approved pattern)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: FLAG (non-blocking — 3 weights are pre-existing shipped tokens; no new type roles introduced, locked by CLAUDE.md design-fidelity)
+- [x] Dimension 5 Spacing: PASS with declared exceptions — FLAG (non-blocking — 18px/38px are pre-existing reused values, justified; locked by CLAUDE.md)
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED (verified 2026-07-18) — 6/6 dimensions cleared, 3 non-blocking FLAGs carried forward as executor recommendations. No BLOCK-tier issues.
