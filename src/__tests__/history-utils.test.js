@@ -19,6 +19,7 @@ import {
   matchesSearch,
   matchesStatus,
   matchesType,
+  buildCsv,
 } from '../history-utils.js'
 
 // Local Y-M-D formatter for building `<input type="date">` value strings from test fixtures —
@@ -783,5 +784,189 @@ describe('matchesType', () => {
 
   test('does not translate a raw "local" type itself (mapping happens upstream at normalizeOrder, D-08)', () => {
     expect(matchesType({ type: 'local' }, 'dinein')).toBe(false)
+  })
+})
+
+// ── buildCsv — D-07..D-12, T-11 (accounting-grade CSV export) ─────────────
+
+describe('buildCsv', () => {
+  const fullOrder = {
+    id: 'order-full-uuid',
+    dailyOrderNumber: 42,
+    placedAt: new Date(2026, 6, 18, 14, 32, 0, 0).toISOString(), // 2026-07-18 14:32 local
+    type: 'delivery',
+    status: 'COMPLETED',
+    paymentCaptureStatus: 'captured',
+    customer: { name: 'Ana Popescu', phone: '0712345678' },
+    payment: 'card',
+    subtotal: 100,
+    deliveryFee: 10,
+    tip: 5,
+    tax: 19,
+    discount: 2,
+    total: 132,
+  }
+
+  test('populated: one row per order, fixed English header, accounting-full column order', () => {
+    const csv = buildCsv([fullOrder])
+    const body = csv.slice(1) // strip BOM before asserting header content (Pitfall 4)
+    const lines = body.split('\r\n')
+    expect(lines[0]).toBe(
+      'order_number,placed_at,type,status,customer,phone,payment,subtotal,delivery_fee,tip,tax,discount,total'
+    )
+    expect(lines).toHaveLength(2) // header + 1 data row
+    expect(lines[1]).toBe(
+      '42,2026-07-18 14:32,delivery,completed,Ana Popescu,0712345678,card,100.00,10.00,5.00,19.00,2.00,132.00'
+    )
+  })
+
+  test('BOM: exactly one U+FEFF at position 0, never per-row', () => {
+    const csv = buildCsv([fullOrder, fullOrder])
+    expect(csv.charCodeAt(0)).toBe(0xfeff)
+    const body = csv.slice(1)
+    expect(body.charCodeAt(0)).not.toBe(0xfeff)
+    expect(body.split('\r\n').filter((l) => l.charCodeAt(0) === 0xfeff)).toHaveLength(0)
+  })
+
+  test('status column equals deriveDisplayStatus(order), empty string when null', () => {
+    const inFlight = { ...fullOrder, status: 'PREPARING', paymentCaptureStatus: null }
+    const csv = buildCsv([inFlight])
+    const dataLine = csv.slice(1).split('\r\n')[1]
+    const statusField = dataLine.split(',')[3]
+    expect(statusField).toBe('')
+  })
+
+  test('placed_at is YYYY-MM-DD HH:mm 24-hour local time, no T, no comma', () => {
+    const order = { ...fullOrder, placedAt: new Date(2026, 0, 5, 9, 5, 0, 0).toISOString() }
+    const dataLine = buildCsv([order]).slice(1).split('\r\n')[1]
+    const placedAtField = dataLine.split(',')[1]
+    expect(placedAtField).toBe('2026-01-05 09:05')
+    expect(placedAtField).not.toMatch(/T/)
+    expect(placedAtField).not.toMatch(/,/)
+  })
+
+  test('monetary columns render with two decimals via toFixed(2)', () => {
+    const order = { ...fullOrder, subtotal: 145, deliveryFee: 0, tip: 0, tax: 0, discount: 0, total: 145 }
+    const dataLine = buildCsv([order]).slice(1).split('\r\n')[1]
+    const fields = dataLine.split(',')
+    expect(fields[7]).toBe('145.00') // subtotal
+    expect(fields[8]).toBe('0.00') // delivery_fee
+    expect(fields[12]).toBe('145.00') // total
+  })
+
+  test('escaping: a value containing a comma is wrapped in double quotes', () => {
+    const order = { ...fullOrder, customer: { name: 'Popescu, Ana', phone: '0712345678' } }
+    const csv = buildCsv([order])
+    expect(csv).toContain('"Popescu, Ana"')
+  })
+
+  test('escaping: a value containing a double quote is wrapped and the quote is doubled', () => {
+    const order = { ...fullOrder, customer: { name: 'Ana "AJ" Popescu', phone: '0712345678' } }
+    const csv = buildCsv([order])
+    expect(csv).toContain('"Ana ""AJ"" Popescu"')
+  })
+
+  test('escaping: a value containing a newline is wrapped in double quotes', () => {
+    const order = { ...fullOrder, customer: { name: 'Ana\nPopescu', phone: '0712345678' } }
+    const csv = buildCsv([order])
+    expect(csv).toContain('"Ana\nPopescu"')
+  })
+
+  test('escaping: a plain value with no special characters is emitted unquoted', () => {
+    const csv = buildCsv([fullOrder])
+    const dataLine = csv.slice(1).split('\r\n')[1]
+    expect(dataLine.split(',')[4]).toBe('Ana Popescu')
+    expect(dataLine).not.toContain('"Ana Popescu"')
+  })
+
+  test('formula injection (T-11): a customer name starting with = is neutralized with a leading apostrophe', () => {
+    const order = { ...fullOrder, customer: { name: '=1+1', phone: '0712345678' } }
+    const csv = buildCsv([order])
+    const dataLine = csv.slice(1).split('\r\n')[1]
+    expect(dataLine.split(',')[4]).toBe("'=1+1")
+  })
+
+  test('formula injection (T-11): leading +, -, @, tab, and carriage-return are all neutralized', () => {
+    const prefixes = ['+1', '-1', '@SUM(A1)', '\tevil', '\revil']
+    for (const name of prefixes) {
+      const order = { ...fullOrder, customer: { name, phone: '0712345678' } }
+      const dataLine = buildCsv([order]).slice(1).split('\r\n')[1]
+      const field = dataLine.split(',')[4]
+      // A leading CR also contains a newline-class char, so RFC-4180 quoting wraps the field on
+      // top of the T-11 apostrophe guard (D-12 + T-11 both apply) — unwrap before asserting.
+      const unquoted = field.startsWith('"') ? field.slice(1, -1).replace(/""/g, '"') : field
+      expect(unquoted.startsWith("'")).toBe(true)
+    }
+  })
+
+  test('formula injection guard runs before the RFC-4180 quote step (leading = plus a comma is both apostrophe-prefixed and quoted)', () => {
+    const order = { ...fullOrder, customer: { name: '=1+1,2', phone: '0712345678' } }
+    const csv = buildCsv([order])
+    expect(csv).toContain('"\'=1+1,2"')
+  })
+
+  test('partial rows: missing optional fields serialize as empty CSV fields, never null/undefined/N/A, and every row keeps exactly 13 positional fields', () => {
+    const partial = {
+      id: 'order-partial-uuid',
+      dailyOrderNumber: 7,
+      placedAt: new Date(2026, 6, 18, 10, 0, 0, 0).toISOString(),
+      type: 'dinein',
+      status: 'COMPLETED',
+      paymentCaptureStatus: null,
+      customer: { name: 'Walk-in', phone: null },
+      payment: 'cash',
+      subtotal: 50,
+      deliveryFee: undefined,
+      tip: undefined,
+      tax: 0,
+      discount: undefined,
+      total: 50,
+    }
+    const dataLine = buildCsv([partial]).slice(1).split('\r\n')[1]
+    const fields = dataLine.split(',')
+    expect(fields).toHaveLength(13)
+    expect(fields[5]).toBe('') // phone
+    expect(fields[8]).toBe('') // delivery_fee
+    expect(fields[9]).toBe('') // tip
+    expect(fields[11]).toBe('') // discount
+    expect(dataLine).not.toMatch(/null|undefined|N\/A/)
+  })
+
+  test('zero-one-many: 0 orders yields a header-only, BOM-prefixed string', () => {
+    const csv = buildCsv([])
+    expect(csv.charCodeAt(0)).toBe(0xfeff)
+    const body = csv.slice(1)
+    expect(body.split('\r\n')).toHaveLength(1)
+    expect(body).toBe(
+      'order_number,placed_at,type,status,customer,phone,payment,subtotal,delivery_fee,tip,tax,discount,total'
+    )
+  })
+
+  test('zero-one-many: 1 row has identical structure to many rows (header + N data lines)', () => {
+    const oneCsv = buildCsv([fullOrder])
+    const manyCsv = buildCsv([fullOrder, fullOrder, fullOrder])
+    expect(oneCsv.slice(1).split('\r\n')).toHaveLength(2)
+    expect(manyCsv.slice(1).split('\r\n')).toHaveLength(4)
+    expect(oneCsv.slice(1).split('\r\n')[0]).toBe(manyCsv.slice(1).split('\r\n')[0])
+  })
+
+  test('order_number falls back to the first 8 chars of id when dailyOrderNumber is not numeric (mirrors orderNumberLabel)', () => {
+    const order = { ...fullOrder, id: 'abcdefgh-uuid-rest', dailyOrderNumber: undefined }
+    const dataLine = buildCsv([order]).slice(1).split('\r\n')[1]
+    expect(dataLine.split(',')[0]).toBe('abcdefgh')
+  })
+
+  test('large export: ~2000 orders (full-year worst case) builds in under 1000ms', () => {
+    const orders = Array.from({ length: 2000 }, (_, i) => ({
+      ...fullOrder,
+      id: `order-${i}`,
+      dailyOrderNumber: i,
+      placedAt: new Date(2026, 0, 1 + (i % 365), 12, 0, 0, 0).toISOString(),
+    }))
+    const start = performance.now()
+    const csv = buildCsv(orders)
+    const elapsed = performance.now() - start
+    expect(elapsed).toBeLessThan(1000)
+    expect(csv.slice(1).split('\r\n')).toHaveLength(2001) // header + 2000 rows
   })
 })
