@@ -99,12 +99,12 @@ calendar days, and `AdminOrder.total` is denominated in RON (not cents), so no `
 - ✓ Clear empty state when no orders match — Validated in Phase 7 (HIST-13)
 - ✓ Period summary strip — orders, revenue, and average order value computed client-side from the same fetched list that backs the rows (D-15 — `getAdminDashboard` is not used); refunds tile is count-only — Validated in Phase 7 (HIST-06)
 - ✓ Read-only detail view — click any row to open `screen-detail.jsx` in `readOnly` mode (D-07, D-09) showing items with modifiers, subtotal, delivery fee, total, customer phone, delivery address, and derived prep time; hydrated on demand via `getOrder(id)` — Validated in Phase 8 (HIST-10)
+- ✓ Period presets + custom range on History screen — Today / 7 / 30 / custom retarget the fetch; the client-computed summary strip retargets for free (D-15) — Validated in Phase 9 (HIST-04)
+- ✓ Filter by status (All / Completed / Refunded / Canceled) and order type (All / Delivery / Pickup / Dine-in, with `orderType: 'local'` shown as Dine-in), each with live per-period counts — Validated in Phase 10 (HIST-07, HIST-08)
+- ✓ Debounced search by order number or customer name; filters, search, and period compose so day headers reflect only visible rows — Validated in Phase 10 (HIST-09)
 
 ### Active (v1.1)
 
-- [ ] Period presets + custom range on History screen — v1.1 (HIST-04) — *the inert 30-day pill landed in Phase 7; Phase 9 makes it interactive, and per D-15 the summary strip retargets for free*
-- [ ] Search by order number or customer name on History screen — v1.1 (HIST-09)
-- [ ] Filter by status (completed / refunded / canceled) and order type — v1.1 (HIST-07, HIST-08)
 - [ ] Reprint receipt on historical orders — thermal printer integration — v1.1 (HIST-11)
 - [ ] CSV export of filtered history list — v1.1 (HIST-12)
 - [ ] Windows code signing — unsigned MSI; Azure Trusted Signing is the path forward (BILD-03 deferred)
@@ -183,4 +183,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-07-17 after Phase 8 — Read-Only Order Detail View complete; HIST-10 validated (HIST-06 also reconciled to Validated, shipped in Phase 7 via 07-04)*
+*Last updated: 2026-07-18 after Phase 10 — Filters + Search complete; HIST-07, HIST-08, HIST-09 validated (HIST-04 also reconciled to Validated, shipped in Phase 9)*

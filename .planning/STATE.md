@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 10
-current_plan: 4
-status: verifying
-stopped_at: Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
-last_updated: "2026-07-17T22:10:20.080Z"
+current_phase: 11 — Reprint + CSV Export
+current_plan: Not started
+status: planning
+stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed, verified & transitioned; ready to plan Phase 11
+last_updated: "2026-07-18T19:47:56.729Z"
 progress:
   total_phases: 5
   completed_phases: 4
@@ -23,10 +23,10 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-07-17)
+See: `.planning/PROJECT.md` (updated 2026-07-18)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 10 — filters-search
+**Current focus:** Phase 11 — Reprint + CSV Export
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -36,23 +36,21 @@ See: `.planning/PROJECT.md` (updated 2026-07-17)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
-**Current Phase:** 10
-**Current Plan:** 4
-**Total Plans in Phase:** 4
-**Overall Status:** Phase 9 (Period Control) COMPLETE — 5/5 plans, HIST-04 sealed. All four History
-periods (Today/7/30/Custom) are live: presets retarget the fetch, the custom-range popover applies
-an explicit start/end with a 366-day cap (D-09/D-10/D-11), and the applied range renders on the
-Custom pill while never advertising a range that isn't live (D-03/D-04). 09-05's blocking human
-checkpoint (live API, native picker chrome, 366-day timing, D-05 dimming perception) returned
-"approved" — the three specific observations were not individually itemized in that reply; the
-366-day worst-case timing measurement remains an open, non-blocking follow-up (see `09-05-SUMMARY.md`
-§ Human Checkpoint). Phase 8 before it: 5/5 plans, UAT 20/20, HIST-10 delivered. Phase 7 before that:
-6/6 plans, UAT 26/26 with zero issues. Phase 10 (Filters + Search — HIST-07/08/09) is already
-planned (`10-01`..`10-04-PLAN.md`) and ready to execute.
+**Current Phase:** 11 — Reprint + CSV Export
+**Current Plan:** Not started
+**Total Plans in Phase:** TBD
+**Overall Status:** Phase 10 (Filters + Search) COMPLETE — 4/4 plans, HIST-07/08/09 sealed, UAT 2/2
+(both human-judgment checkpoints — two-row FilterBar wrap at 1440×900, and debounced-search "feels
+responsive" — passed 2026-07-18). Status (All/Completed/Refunded/Canceled) and type
+(All/Delivery/Pickup/Dine-in, with `orderType: 'local'` → Dine-in) filters carry live per-period
+counts; search is diacritic-folded and debounced; filters, search, and period compose so day headers
+reflect only visible rows, with a distinct filtered-empty variant + Clear Filters (D-13/D-14). Phase 9
+before it: 5/5 plans, HIST-04 sealed (all four periods live). Phase 8: 5/5 plans, UAT 20/20, HIST-10.
+Phase 7: 6/6 plans, UAT 26/26. Phase 11 (Reprint + CSV Export — HIST-11/12) is not yet planned.
 
 ```
-Progress: [████████████████████] 11/11 plans ([██████████] 100%)
-Milestone v1.1 — Phases 7, 8, and 9 complete (3/5), Phase 10 planned and ready to execute
+Progress: [████████████████░░░░] Phases 7–10 complete (4/5) · 20/20 executed plans passing
+Milestone v1.1 — one phase remaining: Phase 11 (Reprint + CSV Export), not yet planned
 ```
 
 **Phase 8 planning note (F-01):** The planner disproved a premise carried by both `08-RESEARCH.md`
@@ -243,7 +241,7 @@ the plan-checker against source.
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
+  derives that key from a body-level `Status:`/`**Status:**Ready to plan
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
   sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 10-04-PLAN.md
@@ -258,9 +256,9 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-17T22:10:20.073Z
-**Stopped at:** Completed 09-05-PLAN.md — Phase 9 (Period Control) COMPLETE, HIST-04 sealed (human checkpoint approved)
-**Next action:** `/gsd-execute-phase 10` — Filters + Search (HIST-07/08/09) is already planned (`10-01`..`10-04-PLAN.md`) and ready to execute
+**Last session:** 2026-07-18
+**Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
+**Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
 
 **Phase 7 planning notes:**
 

@@ -43,7 +43,7 @@ Full phase details → `.planning/milestones/v1.0-ROADMAP.md`
 - [x] **Phase 7: History Screen Foundation** — sidebar entry, `listAdminOrders` hook, 30-day default, day-grouped list, client-computed summary strip, detail routing, empty state (completed 2026-07-17)
 - [x] **Phase 8: Read-Only Order Detail View** — hydrate the archived-order detail via `getOrder(id)`: items, modifiers, address, prep time (completed 2026-07-17)
 - [x] **Phase 9: Period Control** — Today/7/30/custom presets retargeting the list; the client-computed strip follows for free (was Phase 8) (completed 2026-07-18)
-- [ ] **Phase 10: Filters + Search** — client-side status (incl. Refunded), order type, and debounced search with live counts (was Phase 9)
+- [x] **Phase 10: Filters + Search** — client-side status (incl. Refunded), order type, and debounced search with live counts (was Phase 9) (completed 2026-07-18)
 - [ ] **Phase 11: Reprint + CSV Export** — reprint from the detail view, CSV export via native Save dialog (was Phase 10)
 
 ---
@@ -201,7 +201,7 @@ Plans:
 | 7. History Screen Foundation | v1.1 | 6/6 | Complete    | 2026-07-17 |
 | 8. Read-Only Order Detail View | v1.1 | 5/5 | Complete    | 2026-07-17 |
 | 9. Period Control | v1.1 | 5/5 | Complete    | 2026-07-18 |
-| 10. Filters + Search | v1.1 | 4/4 | In Progress|  |
+| 10. Filters + Search | v1.1 | 4/4 | Complete    | 2026-07-18 |
 | 11. Reprint + CSV Export | v1.1 | 0/? | Not started | - |
 
 ---
