@@ -180,9 +180,9 @@ export const formatDuration = (minutes) => {
   const m = minutes % 60;
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 };
-export const orderTimeLabel = (iso) => {
+export const orderTimeLabel = (iso, lang = 'ro') => {
   const d = new Date(iso);
-  return d.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString(lang === 'ro' ? 'ro-RO' : 'en-GB', { hour: '2-digit', minute: '2-digit' });
 };
 
 // Normalize an Order from the SDK (cents, flat fields) to the prototype shape (RON, nested).

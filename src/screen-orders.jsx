@@ -71,7 +71,7 @@ function OrderCard({ order, lang, t, onOpen, onAdvance, onPrint, isOffline }) {
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600 }}>{orderTimeLabel(placedAt)}</div>
+          <div style={{ fontSize: 11, color: 'var(--sc-muted-foreground)', fontWeight: 600 }}>{orderTimeLabel(placedAt, lang)}</div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 2, fontSize: 12, fontWeight: 700, color: 'var(--sc-muted-foreground)' }}>
             <Icon name="clock" size={12} />
             {formatDuration(elapsed)}

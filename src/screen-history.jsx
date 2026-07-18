@@ -216,7 +216,7 @@ function TableHeaderRow({ t }) {
   );
 }
 
-function HistoryRow({ order, t, onOpenOrder }) {
+function HistoryRow({ order, lang, t, onOpenOrder }) {
   const displayStatus = deriveDisplayStatus(order);
   const meta = historyStatusMeta(displayStatus, t);
   const typ = typeMeta(order.type, t);
@@ -246,7 +246,7 @@ function HistoryRow({ order, t, onOpenOrder }) {
       </div>
       <div><span className="chip chip-slate"><Icon name={typ.icon} size={11} />{typ.label}</span></div>
       <div style={{ fontSize: 13, color: 'var(--sc-muted-foreground)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-        {orderTimeLabel(order.placedAt)}
+        {orderTimeLabel(order.placedAt, lang)}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: 'var(--sc-muted-foreground)', fontWeight: 600 }}>
         <Icon name={paymentIconFor(order.payment)} size={13} />
@@ -289,7 +289,7 @@ function DayGroup({ day, lang, t, onOpenOrder }) {
         </div>
       </div>
       {day.orders.map((order) => (
-        <HistoryRow key={order.id} order={order} t={t} onOpenOrder={onOpenOrder} />
+        <HistoryRow key={order.id} order={order} lang={lang} t={t} onOpenOrder={onOpenOrder} />
       ))}
     </>
   );

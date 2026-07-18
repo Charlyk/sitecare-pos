@@ -56,10 +56,10 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
             <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', marginTop: 4 }}>
               {readOnly ? (
                 duration
-                  ? `${orderTimeLabel(order.placedAt)} · ${t(duration.kind === 'prep' ? 'h_prep_time' : 'h_canceled_after')}: ${formatDuration(duration.minutes)}`
-                  : orderTimeLabel(order.placedAt)
+                  ? `${orderTimeLabel(order.placedAt, lang)} · ${t(duration.kind === 'prep' ? 'h_prep_time' : 'h_canceled_after')}: ${formatDuration(duration.minutes)}`
+                  : orderTimeLabel(order.placedAt, lang)
               ) : (
-                `${orderTimeLabel(order.placedAt)} · ${formatDuration(elapsed)} ${t('elapsed').toLowerCase()}`
+                `${orderTimeLabel(order.placedAt, lang)} · ${formatDuration(elapsed)} ${t('elapsed').toLowerCase()}`
               )}
             </div>
           </div>
@@ -228,7 +228,7 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
               <span className="chip chip-slate"><Icon name={typ.icon} size={11} />{typ.label}{order.table ? ` · ${t('table')} ${order.table}` : ''}</span>
               <span className="chip chip-slate"><Icon name={order.payment === 'card' ? 'card' : order.payment === 'online' ? 'wifi' : 'cash'} size={11} />{t(order.payment ?? 'cash')}</span>
             </div>
-            <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', marginBottom: 12 }}>{orderTimeLabel(order.placedAt)}</div>
+            <div style={{ fontSize: 12, color: 'var(--sc-muted-foreground)', marginBottom: 12 }}>{orderTimeLabel(order.placedAt, lang)}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <span style={{ fontWeight: 900, fontSize: 16 }}>{t('total')}</span>
               <span style={{ fontWeight: 900, fontSize: 26, letterSpacing: '-0.02em', color: 'var(--sc-primary)' }}>{formatRON(order.total)}</span>
@@ -372,7 +372,7 @@ function ThermalTicket({ order, lang, kind, restaurantSettings, displayAddress }
 
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <span>{lang === 'ro' ? 'Comanda' : 'Order'} #{order.dailyOrderNumber}</span>
-        <span>{orderTimeLabel(order.placedAt)}</span>
+        <span>{orderTimeLabel(order.placedAt, lang)}</span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <span>{typeMeta(order.type, t).label.toUpperCase()}{order.table ? ` · MASA ${order.table}` : ''}</span>
