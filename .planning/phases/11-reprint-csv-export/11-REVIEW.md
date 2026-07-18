@@ -21,7 +21,12 @@ findings:
   warning: 2
   info: 1
   total: 4
-status: issues_found
+status: resolved
+resolution:
+  commit: d3d20e4
+  fixed: [CR-01, WR-01, WR-02]
+  deferred: [IN-01]
+  note: "CR-01/WR-01/WR-02 fixed inline with regression tests (481 passed, no new failures). IN-01 (toFixed rounding) left as a documented pre-existing pattern, not a new regression."
 ---
 
 # Phase 11: Code Review Report
