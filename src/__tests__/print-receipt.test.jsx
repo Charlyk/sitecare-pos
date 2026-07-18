@@ -72,7 +72,7 @@ async function callHandlePrint(order, kind, pushToast, t) {
       baud: config.baud ?? 9600,
       paperWidth: config.paperWidth ?? '80mm',
       order: {
-        daily_order_number: order.dailyOrderNumber,
+        daily_order_number: typeof order.dailyOrderNumber === 'number' ? order.dailyOrderNumber : 0,
         placed_at: order.placedAt,
         order_type: order.type,
         source: order.source ?? null,
@@ -194,5 +194,33 @@ describe('PRNT-03: print receipt via ESC/POS Tauri command', () => {
     const { order } = invoke.mock.calls[0][1]
     expect(order.table).toBe(expected)
     if (expected !== null) expect(typeof order.table).toBe('string')
+  })
+
+  // CR-01: Rust deserializes `daily_order_number` as a strict u32. normalizeOrder's
+  // UUID-fallback path (data.jsx: `dailyOrderNumber ?? dailyNumber ?? id`) can leave a
+  // non-number here — a UUID string would fail the whole payload, not just this field.
+  // Coercion to a number (0 for the fallback case) happens before invoke, matching the
+  // `typeof === 'number'` guard used everywhere else in the codebase.
+  test.each([
+    ['numeric daily number', 10, 10],
+    ['UUID-fallback string', 'a1b2c3d4-e5f6-7890-abcd-ef0123456789', 0],
+    ['null daily number', null, 0],
+    ['undefined daily number', undefined, 0],
+  ])('print_receipt receives daily_order_number as a number — %s', async (_label, dailyOrderNumber, expected) => {
+    load.mockResolvedValue({
+      get: vi.fn().mockResolvedValue({ port: 'COM3', baud: 9600, paperWidth: '80mm' }),
+      set: vi.fn().mockResolvedValue(undefined),
+      save: vi.fn().mockResolvedValue(undefined),
+    })
+    invoke.mockResolvedValueOnce(undefined)
+    const pushToast = vi.fn()
+
+    await callHandlePrint({ ...TEST_ORDER, dailyOrderNumber }, 'customer', pushToast, (k) => k)
+
+    const { order } = invoke.mock.calls[0][1]
+    expect(order.daily_order_number).toBe(expected)
+    expect(typeof order.daily_order_number).toBe('number')
+    // The invoke must have succeeded (payload accepted), never fallen to the error toast.
+    expect(pushToast).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Print failed' }))
   })
 })

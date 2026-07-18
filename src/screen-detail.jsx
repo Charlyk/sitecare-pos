@@ -17,10 +17,14 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
 
   useEffect(() => {
     if (!readOnly) return;
+    // WR-01: guard against setState after unmount — "Back to history" can fire before
+    // this async store read resolves.
+    let cancelled = false;
     load('preferences.json', { autoSave: false })
       .then((store) => store.get('printer'))
-      .then((config) => setPrinterConfigured(!!config?.port))
-      .catch(() => setPrinterConfigured(false));
+      .then((config) => { if (!cancelled) setPrinterConfigured(!!config?.port); })
+      .catch(() => { if (!cancelled) setPrinterConfigured(false); });
+    return () => { cancelled = true; };
   }, [readOnly]);
 
   if (!order) return null;

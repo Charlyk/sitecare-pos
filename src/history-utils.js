@@ -433,15 +433,24 @@ const FORMULA_INJECTION_RE = /^[=+\-@\t\r]/
 
 /**
  * Module-private: RFC-4180 field escaper (D-12) with the T-11 formula-injection guard applied
- * first. `null`/`undefined` coerce to an empty field, never the literal string 'null'/'undefined'
- * (partial-row coverage). A value containing a comma, double-quote, or newline is wrapped in
- * double-quotes with embedded quotes doubled; a plain value is emitted unquoted.
+ * first — but only for genuinely user-authored columns (WR-02). `null`/`undefined` coerce to an
+ * empty field, never the literal string 'null'/'undefined' (partial-row coverage). A value
+ * containing a comma, double-quote, or newline is wrapped in double-quotes with embedded quotes
+ * doubled; a plain value is emitted unquoted.
+ *
+ * `guardFormula` gates the leading-character neutralization. Only free-text columns a user can
+ * type into (customer name, phone) can carry an injected formula, so only those pass `true`.
+ * Programmatically-formatted columns (order_number, placed_at, type, status, payment, and every
+ * money column) bypass the guard — otherwise a legitimately negative money value like `-5.00`
+ * (or any future negative adjustment) would be rewritten to the text `'-5.00`, breaking the
+ * D-09 numeric-column contract Excel needs to sum/sort that column.
  * @param {*} value
+ * @param {boolean} [guardFormula=false]
  * @returns {string}
  */
-function escapeCsvField(value) {
+function escapeCsvField(value, guardFormula = false) {
   let s = value === null || value === undefined ? '' : String(value)
-  if (FORMULA_INJECTION_RE.test(s)) s = `'${s}`
+  if (guardFormula && FORMULA_INJECTION_RE.test(s)) s = `'${s}`
   if (/[",\n\r]/.test(s)) s = `"${s.replace(/"/g, '""')}"`
   return s
 }
@@ -487,28 +496,29 @@ function csvMoney(v) {
 
 /**
  * Module-private: maps one order to its 13-field CSV row, positionally matching CSV_HEADERS.
- * Every field passes unconditionally through `escapeCsvField` (T-11-B) — a missing value becomes
- * an empty position, never a dropped one that would shift downstream columns.
+ * Every field passes through `escapeCsvField` (T-11-B) — a missing value becomes an empty
+ * position, never a dropped one that would shift downstream columns. The formula-injection guard
+ * is applied only to the two user-authored columns (customer name, phone); programmatic columns
+ * bypass it so numeric/formatted values are never mangled (WR-02).
  * @param {object} order
  * @returns {string}
  */
 function orderToCsvRow(order) {
-  const fields = [
-    csvOrderNumber(order),
-    csvPlacedAt(order.placedAt),
-    order.type,
-    deriveDisplayStatus(order),
-    order.customer?.name,
-    order.customer?.phone,
-    order.payment,
-    csvMoney(order.subtotal),
-    csvMoney(order.deliveryFee),
-    csvMoney(order.tip),
-    csvMoney(order.tax),
-    csvMoney(order.discount),
-    csvMoney(order.total),
-  ]
-  return fields.map(escapeCsvField).join(',')
+  return [
+    escapeCsvField(csvOrderNumber(order)),
+    escapeCsvField(csvPlacedAt(order.placedAt)),
+    escapeCsvField(order.type),
+    escapeCsvField(deriveDisplayStatus(order)),
+    escapeCsvField(order.customer?.name, true),
+    escapeCsvField(order.customer?.phone, true),
+    escapeCsvField(order.payment),
+    escapeCsvField(csvMoney(order.subtotal)),
+    escapeCsvField(csvMoney(order.deliveryFee)),
+    escapeCsvField(csvMoney(order.tip)),
+    escapeCsvField(csvMoney(order.tax)),
+    escapeCsvField(csvMoney(order.discount)),
+    escapeCsvField(csvMoney(order.total)),
+  ].join(',')
 }
 
 /**

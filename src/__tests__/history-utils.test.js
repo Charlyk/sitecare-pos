@@ -905,6 +905,22 @@ describe('buildCsv', () => {
     expect(csv).toContain('"\'=1+1,2"')
   })
 
+  test('WR-02: a legitimately negative money value is NOT formula-guarded — stays numeric, never apostrophe-prefixed', () => {
+    const order = { ...fullOrder, total: -5, discount: -1.5 }
+    const dataLine = buildCsv([order]).slice(1).split('\r\n')[1]
+    const fields = dataLine.split(',')
+    expect(fields[11]).toBe('-1.50') // discount — numeric, sum-able by Excel
+    expect(fields[12]).toBe('-5.00') // total
+    expect(fields[11]).not.toContain("'")
+    expect(fields[12]).not.toContain("'")
+  })
+
+  test('WR-02: the phone column keeps the formula-injection guard (user-authored) — a leading + is neutralized', () => {
+    const order = { ...fullOrder, customer: { name: 'Ana', phone: '+40712345678' } }
+    const dataLine = buildCsv([order]).slice(1).split('\r\n')[1]
+    expect(dataLine.split(',')[5]).toBe("'+40712345678")
+  })
+
   test('partial rows: missing optional fields serialize as empty CSV fields, never null/undefined/N/A, and every row keeps exactly 13 positional fields', () => {
     const partial = {
       id: 'order-partial-uuid',

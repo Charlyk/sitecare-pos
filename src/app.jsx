@@ -142,7 +142,13 @@ function App() {
         baud: config.baud ?? 9600,
         paperWidth: config.paperWidth ?? '80mm',
         order: {
-          daily_order_number: order.dailyOrderNumber,
+          // Coerced: Rust deserializes this as a strict u32, and normalizeOrder's
+          // UUID-fallback path (data.jsx: `dailyOrderNumber ?? dailyNumber ?? id`) can
+          // leave a non-number here — a UUID string would fail the whole payload
+          // (CR-01). Guard with the same `typeof === 'number'` check used everywhere
+          // else (csvOrderNumber, orderNumberLabel); 0 keeps the order reprintable
+          // instead of hard-failing with a generic print_failed toast.
+          daily_order_number: typeof order.dailyOrderNumber === 'number' ? order.dailyOrderNumber : 0,
           placed_at: order.placedAt,
           order_type: order.type,
           source: order.source ?? null,
