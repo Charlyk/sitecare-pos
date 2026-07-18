@@ -4,13 +4,46 @@
 // needed — that is the point of the screen-owns-its-hook split.
 
 import { createElement } from 'react'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 
 vi.mock('../use-history-orders.js', () => ({ useHistoryOrders: vi.fn() }))
+
+// HIST-12 (11-04): screen-history.jsx now imports store.js (pushToast) and the two Tauri
+// export plugins. store.js itself imports @tauri-apps/plugin-store at module scope, so that
+// must be mocked too (same convention as screen-detail.test.jsx/screen-orders.test.jsx) even
+// though this screen never calls `load` directly.
+vi.mock('@tauri-apps/plugin-store', () => ({
+  load: vi.fn().mockResolvedValue({
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+    save: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
+vi.mock('@tauri-apps/plugin-dialog', () => ({ save: vi.fn() }))
+vi.mock('@tauri-apps/plugin-fs', () => ({ writeTextFile: vi.fn() }))
+
+// vi.hoisted: pushToastMock must exist before the vi.mock('../store.js', ...) factory below runs
+// (factories are hoisted above imports) — this keeps ONE stable pushToast reference across every
+// HistoryScreen render in every test, rather than a fresh vi.fn() per render that assertions
+// could never reach.
+const { pushToastMock } = vi.hoisted(() => ({ pushToastMock: vi.fn() }))
+vi.mock('../store.js', () => ({
+  useAppStore: vi.fn((selector) => selector({ lang: 'ro', pushToast: pushToastMock })),
+}))
 
 import { useHistoryOrders } from '../use-history-orders.js'
 import { HistoryScreen, historyStatusMeta, CustomRangePopover } from '../screen-history.jsx'
 import { getPresetRange, customRangeToQuery } from '../history-utils.js'
+import { buildCsv } from '../history-utils.js'
+import { save } from '@tauri-apps/plugin-dialog'
+import { writeTextFile } from '@tauri-apps/plugin-fs'
+
+beforeEach(() => {
+  pushToastMock.mockClear()
+  save.mockReset()
+  writeTextFile.mockReset()
+})
 
 // Helper — build a POST-normalizeOrder-shaped fixture (RON totals, resolved dailyOrderNumber,
 // nested customer object) — never a raw SDK/cents shape.
@@ -185,7 +218,7 @@ describe('HistoryScreen', () => {
       expect(onOpenOrder).toHaveBeenCalledWith(order)
     })
 
-    test('the filter bar: Export stays inert, search is activated (Phase 10, HIST-09)', () => {
+    test('the filter bar: search and Export are both activated when the visible set is non-empty (Phase 10 search, Phase 11 HIST-12 export)', () => {
       const order = makeOrder({ id: 'inert-1', total: 10 })
       useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, error: null, isSuccess: true, refetch: vi.fn() })
       render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
@@ -194,7 +227,7 @@ describe('HistoryScreen', () => {
       expect(searchInput.disabled).toBe(false)
 
       const exportBtn = screen.getByText('Exportă CSV').closest('button')
-      expect(exportBtn.disabled).toBe(true)
+      expect(exportBtn.disabled).toBe(false)
     })
   })
 })
@@ -382,16 +415,19 @@ describe('D-05 — dimmed-in-place loading treatment + spinner (period switch)',
     expect(screen.queryByTestId('history-switch-spinner')).toBeNull()
   })
 
-  test('the inert Export button (0.5) and the dimmed rows (0.6) render simultaneously with different opacity values', () => {
-    // Phase 10 activates the status pills (no longer group-dimmed) — the surviving "unready
-    // feature" dimming on this bar is scoped to the Export button itself (D-07), which still
-    // needs to coexist with the D-05 loading-dim of the rows region at a different opacity.
+  test('Export enabled/disabled dimming (data-driven, HIST-12) and the D-05 rows loading-dim (0.6) are independent axes', () => {
+    // Phase 11 (11-04/HIST-12) makes Export's dimming purely data-driven (visible.length === 0)
+    // rather than the Phase 10 permanently-inert feature flag this test used to lock. With a
+    // non-empty visible set, Export renders fully enabled/undimmed even while the rows region is
+    // separately dimmed to 0.6 by an in-flight period switch — the two mechanisms never share a
+    // condition.
     const order = makeOrder({ id: 'switch-4' })
     useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: true, isPlaceholderData: true, isSuccess: true, refetch: vi.fn() })
     render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
 
     const exportBtn = screen.getByText('Exportă CSV').closest('button')
-    expect(exportBtn.style.opacity).toBe('0.5')
+    expect(exportBtn.disabled).toBe(false)
+    expect(exportBtn.style.opacity).toBe('')
     expect(screen.getByTestId('history-rows').style.opacity).toBe('0.6')
   })
 })
@@ -1143,5 +1179,163 @@ describe('CustomRangePopover popover (09-05)', () => {
     unmount()
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(onClose).not.toHaveBeenCalled()
+  })
+})
+
+// ── Export CSV — HIST-12 (11-04): handleExportCsv build -> save -> writeTextFile, with
+// cancel/error/empty/success coverage and the D-14 default-filename contract ─────
+
+describe('Export CSV — HIST-12 (11-04)', () => {
+  function renderWithOrder(overrides = {}) {
+    const order = makeOrder({ id: 'export-1', dailyOrderNumber: 900, total: 42, ...overrides })
+    useHistoryOrders.mockReturnValue({ data: [order], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+    return order
+  }
+  function exportButton() {
+    return screen.getByText('Exportă CSV').closest('button')
+  }
+
+  test('empty visible set: Export is disabled, dimmed (opacity 0.5/pointerEvents none/cursor not-allowed), carries the h_export_empty_tooltip title', () => {
+    useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+
+    const btn = exportButton()
+    expect(btn.disabled).toBe(true)
+    expect(btn.style.opacity).toBe('0.5')
+    expect(btn.style.pointerEvents).toBe('none')
+    expect(btn.style.cursor).toBe('not-allowed')
+    expect(btn.title).toBe('Nicio comandă de exportat')
+  })
+
+  test('non-empty visible set: Export is enabled, full-opacity, and carries no title', () => {
+    renderWithOrder()
+    const btn = exportButton()
+    expect(btn.disabled).toBe(false)
+    expect(btn.style.opacity).toBe('')
+    expect(btn.title).toBe('')
+  })
+
+  test('happy path: click -> save() resolves a path -> writeTextFile(path, buildCsv(visible)) -> toast_saved success toast with pluralized detail', async () => {
+    const order = renderWithOrder()
+    save.mockResolvedValue('/Users/staff/Desktop/orders.csv')
+    writeTextFile.mockResolvedValue(undefined)
+
+    fireEvent.click(exportButton())
+
+    await waitFor(() => expect(writeTextFile).toHaveBeenCalledTimes(1))
+    const [path, csv] = writeTextFile.mock.calls[0]
+    expect(path).toBe('/Users/staff/Desktop/orders.csv')
+    expect(csv).toBe(buildCsv([order]))
+
+    await waitFor(() => expect(pushToastMock).toHaveBeenCalledTimes(1))
+    expect(pushToastMock).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'success',
+      title: 'Salvat',
+      detail: '1 comandă',
+    }))
+  })
+
+  test('happy path pluralization: 2 visible orders push a "2 comenzi" success detail', async () => {
+    const orders = [
+      makeOrder({ id: 'p1', dailyOrderNumber: 901, total: 10 }),
+      makeOrder({ id: 'p2', dailyOrderNumber: 902, total: 20 }),
+    ]
+    useHistoryOrders.mockReturnValue({ data: orders, isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
+    render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
+    save.mockResolvedValue('/tmp/orders.csv')
+    writeTextFile.mockResolvedValue(undefined)
+
+    fireEvent.click(exportButton())
+
+    await waitFor(() => expect(pushToastMock).toHaveBeenCalledTimes(1))
+    expect(pushToastMock).toHaveBeenCalledWith(expect.objectContaining({ detail: '2 comenzi' }))
+  })
+
+  test('cancel: save() resolving null is a silent no-op — writeTextFile is never called and no toast is pushed', async () => {
+    renderWithOrder()
+    save.mockResolvedValue(null)
+
+    fireEvent.click(exportButton())
+
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
+    expect(writeTextFile).not.toHaveBeenCalled()
+    expect(pushToastMock).not.toHaveBeenCalled()
+  })
+
+  test('cancel: save() resolving undefined behaves identically to null (silent no-op)', async () => {
+    renderWithOrder()
+    save.mockResolvedValue(undefined)
+
+    fireEvent.click(exportButton())
+
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
+    expect(writeTextFile).not.toHaveBeenCalled()
+    expect(pushToastMock).not.toHaveBeenCalled()
+  })
+
+  test('error: a thrown writeTextFile (after a real save() path) pushes an h_export_error_title error toast with String(err) detail', async () => {
+    renderWithOrder()
+    save.mockResolvedValue('/tmp/orders.csv')
+    writeTextFile.mockRejectedValue(new Error('disk full'))
+
+    fireEvent.click(exportButton())
+
+    await waitFor(() => expect(pushToastMock).toHaveBeenCalledTimes(1))
+    expect(pushToastMock).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'error',
+      title: 'Eroare la export',
+      detail: 'Error: disk full',
+    }))
+  })
+
+  test('error: a thrown save() pushes the same error toast and writeTextFile is never called', async () => {
+    renderWithOrder()
+    save.mockRejectedValue(new Error('dialog crashed'))
+
+    fireEvent.click(exportButton())
+
+    await waitFor(() => expect(pushToastMock).toHaveBeenCalledTimes(1))
+    expect(writeTextFile).not.toHaveBeenCalled()
+    expect(pushToastMock).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'error',
+      title: 'Eroare la export',
+      detail: 'Error: dialog crashed',
+    }))
+  })
+
+  test('filename: save() is called with defaultPath orders_<from>_<to>.csv for the active range and a CSV filter', async () => {
+    renderWithOrder()
+    save.mockResolvedValue('/tmp/orders.csv')
+    writeTextFile.mockResolvedValue(undefined)
+
+    fireEvent.click(exportButton())
+
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
+    const arg = save.mock.calls[0][0]
+    expect(arg.defaultPath).toMatch(/^orders_\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.csv$/)
+    expect(arg.filters).toEqual([{ name: 'CSV', extensions: ['csv'] }])
+
+    // The end date is the settled range's INCLUSIVE last day (today, for the default 30-day
+    // mount), never the exclusive to-boundary (tomorrow) getPresetRange('30') actually returns.
+    const today = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`
+    expect(arg.defaultPath).toContain(`_${todayStr}.csv`)
+  })
+
+  test('no in-app pending/disabled-while-running state: Export stays enabled/undimmed through the in-flight async save (loading coverage)', async () => {
+    renderWithOrder()
+    let resolveSave
+    save.mockReturnValue(new Promise((resolve) => { resolveSave = resolve }))
+
+    fireEvent.click(exportButton())
+
+    const btn = exportButton()
+    expect(btn.disabled).toBe(false)
+    expect(btn.style.opacity).toBe('')
+
+    resolveSave(null)
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1))
   })
 })

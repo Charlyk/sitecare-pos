@@ -3,6 +3,8 @@
 // filter/group/summary computation is delegated to history-utils.js (Plan 01).
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { useHistoryOrders } from './use-history-orders.js';
 import {
   filterFinishedOrders,
@@ -17,11 +19,13 @@ import {
   matchesStatus,
   matchesType,
   matchesSearch,
+  buildCsv,
 } from './history-utils.js';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { formatRON, orderTimeLabel } from './data.jsx';
 import { typeMeta } from './screen-orders.jsx';
+import { useAppStore } from './store.js';
 
 // D-06: 8-track grid (7 data columns + a chevron affordance track), replacing the design
 // source's 9-track definition. The dropped items-count track and dropped sub-line rows are
@@ -44,6 +48,20 @@ function toDateInputValue(d) {
 function minStartFor(endValue) {
   const [y, m, d] = endValue.split('-').map(Number);
   return toDateInputValue(new Date(y, m - 1, d - (MAX_RANGE_DAYS - 1), 0, 0, 0, 0));
+}
+
+// D-14 (11-04): converts the resolved `{from, to}` query range into the two YYYY-MM-DD values
+// driving the CSV export's default filename. `to` is EXCLUSIVE (local midnight of the day AFTER
+// the last included day — every range builder in history-utils.js uses this convention), so the
+// filename's end date is the INCLUSIVE last day, mirroring formatDateRange's own
+// exclusive-to-inclusive-end conversion. Never slice range.to directly — that would name the
+// file with tomorrow's date instead of the period's actual last day.
+function rangeToFilenameDates(range) {
+  const from = toDateInputValue(new Date(range.from));
+  const exclusiveEnd = new Date(range.to);
+  const inclusiveEnd = new Date(exclusiveEnd.getFullYear(), exclusiveEnd.getMonth(), exclusiveEnd.getDate() - 1, 0, 0, 0, 0);
+  const to = toDateInputValue(inclusiveEnd);
+  return { from, to };
 }
 
 // Exported (was module-private): chip class + icon-tile colors for a row's derived display
@@ -297,6 +315,7 @@ function DayGroup({ day, lang, t, onOpenOrder }) {
 
 export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
   const t = useT(lang);
+  const pushToast = useAppStore((s) => s.pushToast);
 
   // HIST-04: the active period is resolved to a { from, to } range exactly once per state
   // transition, memoized on the selected period — never recomputed inline in the render body
@@ -382,6 +401,30 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
     [byTypeAndSearch, statusFilter]
   );
 
+  // HIST-12 (11-04): serializes the CURRENTLY VISIBLE filtered/searched/period-scoped set —
+  // never getOrder-hydrates or issues a new fetch (D-07). Research Pattern 2 / Pitfall 3: a
+  // cancelled save() dialog (path falsy) is an explicit silent no-op BEFORE writeTextFile is ever
+  // called — it must never fall into the catch block's error toast. Only a genuine save()/
+  // writeTextFile() throw reaches the catch. No in-app pending/disabled state is shown (loading
+  // coverage) — the CSV builds synchronously and only the native dialog is async.
+  const handleExportCsv = async () => {
+    try {
+      const csv = buildCsv(visible);
+      const { from: fromDateStr, to: toDateStr } = rangeToFilenameDates(range);
+      const path = await save({
+        defaultPath: `orders_${fromDateStr}_${toDateStr}.csv`,
+        filters: [{ name: 'CSV', extensions: ['csv'] }],
+      });
+      if (!path) return; // user canceled — silent no-op, never an error toast (Pitfall 3)
+      await writeTextFile(path, csv);
+      const count = visible.length;
+      const noun = t(count === 1 ? 'h_orders_count_one' : 'h_orders_count_other');
+      pushToast({ id: Date.now(), kind: 'success', title: t('toast_saved'), detail: `${count} ${noun}` });
+    } catch (err) {
+      pushToast({ id: Date.now(), kind: 'error', title: t('h_export_error_title'), detail: String(err) });
+    }
+  };
+
   // D-02: exclude-self faceting — tallied via deriveDisplayStatus over byTypeAndSearch (never
   // subtraction, RESEARCH Pitfall 1), so a sibling pill's count is unaffected by the status
   // selection itself. `all` = byTypeAndSearch.length (D-02).
@@ -448,6 +491,8 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
         query={query}
         setQuery={setQuery}
         statusCounts={statusCounts}
+        exportDisabled={visible.length === 0}
+        onExportCsv={handleExportCsv}
       />
 
       <div className="card" style={{ overflow: 'hidden' }}>
@@ -659,12 +704,13 @@ export function CustomRangePopover({ t, onApply, onClose, containerRef }) {
   );
 }
 
-// Filter bar (D-14/HIST-04, Phase 10 HIST-07/08/09): period presets, status pills (with live
-// faceted counts, F-03 order), the net-new type-filter group, and search are all LIVE. Export
-// stays inert (Phase 11).
+// Filter bar (D-14/HIST-04, Phase 10 HIST-07/08/09, Phase 11 HIST-12): period presets, status
+// pills (with live faceted counts, F-03 order), the net-new type-filter group, search, and Export
+// (HIST-12, 11-04) are all LIVE.
 function FilterBar({
   t, lang, selectedPeriod, onSelectPeriod, onApplyCustomRange, isFetching, isPlaceholderData, isLoading,
   statusFilter, setStatusFilter, typeFilter, setTypeFilter, query, setQuery, statusCounts,
+  exportDisabled, onExportCsv,
 }) {
   // 09-05/D-04: the popover unmounts entirely when closed (rangeOpen false) so its blank local
   // state is genuinely fresh on each open — nothing is remembered across a close/reopen cycle.
@@ -832,15 +878,21 @@ function FilterBar({
       </div>
 
       {/* D-07: ONE marginLeft:auto container holding BOTH search and Export, so they wrap
-          together to a right-aligned row 2. Search is activated (HIST-09); Export stays inert
-          (Phase 11) — its own opacity/pointerEvents dimming moves onto the button itself since
-          the container is no longer exclusively its own. */}
+          together to a right-aligned row 2. Search is activated (HIST-09); Export is activated
+          (HIST-12, 11-04) — disabled+greyed+tooltipped only when the visible set is empty (the
+          project's greyed-out-not-hidden convention, D-05 dimming values, not a hidden button). */}
       <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
         <div className="search" style={{ width: 220 }}>
           <Icon name="search" size={15} style={{ color: 'var(--sc-muted-foreground)' }} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('h_search')} />
         </div>
-        <button className="btn-secondary" disabled style={{ opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }}>
+        <button
+          className="btn-secondary"
+          disabled={exportDisabled}
+          onClick={onExportCsv}
+          title={exportDisabled ? t('h_export_empty_tooltip') : undefined}
+          style={exportDisabled ? { opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' } : {}}
+        >
           <Icon name="download" size={14} /> {t('h_export')}
         </button>
       </div>
