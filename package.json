@@ -7,13 +7,15 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri dev"
   },
   "dependencies": {
-    "@charlyk/admin-client": "^1.1.29",
+    "@charlyk/admin-client": "^1.1.59",
     "@microsoft/fetch-event-source": "^2.0.1",
     "@tanstack/react-query": "^5.99.2",
     "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2.7.2",
+    "@tauri-apps/plugin-fs": "^2.5.1",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-store": "^2.4.2",

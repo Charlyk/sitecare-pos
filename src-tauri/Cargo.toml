@@ -27,6 +27,8 @@ keyring = "3"
 serialport = "4.9"
 escpos = { version = "0.17", features = ["serial_port"] }
 tauri-plugin-process = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"

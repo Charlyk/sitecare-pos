@@ -9,6 +9,8 @@
     "window-state:default",
     "opener:default",
     "updater:default",
-    "process:default"
+    "process:default",
+    "dialog:allow-save",
+    "fs:allow-write-text-file"
   ]
 }
