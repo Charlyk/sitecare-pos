@@ -1,4 +1,5 @@
-import { useState, Fragment } from 'react';
+import { useState, useEffect, Fragment } from 'react';
+import { load } from '@tauri-apps/plugin-store';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
 import { formatRON, elapsedMinutes, orderTimeLabel, formatDuration } from './data.jsx';
@@ -9,6 +10,18 @@ import { historyStatusMeta } from './screen-history.jsx';
 function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = [], onBack, onAdvance, onPrint, onCancel, isOffline, readOnly = false, detailLoading = false, detailError = false, onRetryDetail }) {
   const t = useT(lang);
   const [tab, setTab] = useState('overview');
+  // HIST-11 reprint gate (D-04): mount-time read of preferences.json -> printer.port, only for
+  // the readOnly route. Starts false; a store read failure (or no readOnly) leaves it false, so
+  // the reprint buttons render inert-by-default rather than briefly enabled.
+  const [printerConfigured, setPrinterConfigured] = useState(false);
+
+  useEffect(() => {
+    if (!readOnly) return;
+    load('preferences.json', { autoSave: false })
+      .then((store) => store.get('printer'))
+      .then((config) => setPrinterConfigured(!!config?.port))
+      .catch(() => setPrinterConfigured(false));
+  }, [readOnly]);
 
   if (!order) return null;
 
@@ -257,6 +270,31 @@ function OrderDetailScreen({ order, lang, restaurantSettings, deliveryAreas = []
 
         {/* The ticket */}
         <ThermalTicket order={order} lang={lang} kind={tab} restaurantSettings={restaurantSettings} displayAddress={displayAddress} />
+
+        {/* HIST-11: read-only reprint row (D-01/D-02/D-03) — an added block, not a widened
+            guard, so the live !readOnly Advance/Cancel controls below stay hidden here. */}
+        {readOnly && (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            className="btn-secondary"
+            style={{ flex: 1, justifyContent: 'center', ...(printerConfigured ? {} : { opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }) }}
+            disabled={!printerConfigured}
+            title={printerConfigured ? undefined : t('print_configure_hint')}
+            onClick={() => onPrint(order, 'kitchen')}
+          >
+            <Icon name="printer" size={14} /> {t('print_kitchen')}
+          </button>
+          <button
+            className="btn-primary"
+            style={{ flex: 1, justifyContent: 'center', ...(printerConfigured ? {} : { opacity: 0.5, pointerEvents: 'none', cursor: 'not-allowed' }) }}
+            disabled={!printerConfigured}
+            title={printerConfigured ? undefined : t('print_configure_hint')}
+            onClick={() => onPrint(order, 'customer')}
+          >
+            <Icon name="printer" size={14} /> {t('print_customer')}
+          </button>
+        </div>
+        )}
 
         {!readOnly && (
         <div style={{ display: 'flex', gap: 8 }}>

@@ -23,6 +23,7 @@ const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
 
 import { OrderDetailScreen } from '../screen-detail.jsx'
+import { load } from '@tauri-apps/plugin-store'
 
 const MINIMAL_ORDER = {
   id: 'ord-print-1',
@@ -123,6 +124,19 @@ const HISTORY_ORDER_NON_TERMINAL = { ...HISTORY_ORDER, state: 'new' }
 // SAME typeMeta as screen-orders.jsx, which has no 'local' key and already falls through
 // to map.dinein, so this proves the chip renders byte-identically after the boundary fix.
 const HISTORY_ORDER_DINEIN = { ...HISTORY_ORDER, id: 'ord-history-dinein', type: 'dinein', table: null }
+
+// A hydrated-shape history fixture (real items array, so order.items != null and the thermal
+// rail — where the readOnly reprint row lives — actually mounts). print-receipt.test.jsx's
+// store mock shape is reused: get() resolving printer config vs null gates printerConfigured.
+const HISTORY_ORDER_WITH_ITEMS = {
+  ...HISTORY_ORDER,
+  items: [{ name: 'Pizza', qty: 1, price: 30, mods: [], source: 'menu' }],
+  subtotal: 30,
+  tax: 0,
+  deliveryFee: 0,
+  tip: 0,
+  discount: 0,
+}
 
 describe('readOnly mode', () => {
   beforeEach(() => { vi.clearAllMocks() })
@@ -313,6 +327,80 @@ describe('readOnly mode', () => {
     )
     const chip = screen.getAllByText('Acceptată').find(el => el.closest('span.chip'))
     expect(chip).toBeTruthy()
+  })
+
+  test('readOnly + printer configured: reprint buttons render enabled and fire onPrint(order, kind) (HIST-11)', async () => {
+    load.mockResolvedValueOnce({
+      get: vi.fn().mockResolvedValue({ port: 'COM3', baud: 9600, paperWidth: '80mm' }),
+    })
+    const onPrint = vi.fn()
+    render(
+      createElement(OrderDetailScreen, {
+        order: HISTORY_ORDER_WITH_ITEMS,
+        lang: 'en',
+        readOnly: true,
+        onBack: vi.fn(),
+        onPrint,
+      }),
+      { wrapper: w }
+    )
+
+    const kitchenBtn = () => screen.getAllByText('Print kitchen').find(el => el.closest('button.btn-secondary')).closest('button')
+    const customerBtn = () => screen.getAllByText('Print customer').find(el => el.closest('button.btn-primary')).closest('button')
+
+    await waitFor(() => expect(kitchenBtn()).not.toBeDisabled())
+    expect(customerBtn()).not.toBeDisabled()
+
+    fireEvent.click(kitchenBtn())
+    expect(onPrint).toHaveBeenCalledWith(HISTORY_ORDER_WITH_ITEMS, 'kitchen')
+    fireEvent.click(customerBtn())
+    expect(onPrint).toHaveBeenCalledWith(HISTORY_ORDER_WITH_ITEMS, 'customer')
+  })
+
+  test('readOnly + no printer configured: reprint buttons render disabled, greyed, with print_configure_hint tooltip (D-05/D-06)', () => {
+    // Default plugin-store mock (top of file) resolves get() -> null, i.e. no printer configured.
+    render(
+      createElement(OrderDetailScreen, {
+        order: HISTORY_ORDER_WITH_ITEMS,
+        lang: 'en',
+        readOnly: true,
+        onBack: vi.fn(),
+        onPrint: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+
+    const kitchenBtn = screen.getAllByText('Print kitchen').find(el => el.closest('button.btn-secondary')).closest('button')
+    const customerBtn = screen.getAllByText('Print customer').find(el => el.closest('button.btn-primary')).closest('button')
+    for (const btn of [kitchenBtn, customerBtn]) {
+      expect(btn).toBeDisabled()
+      expect(btn.style.opacity).toBe('0.5')
+      expect(btn.style.pointerEvents).toBe('none')
+      expect(btn.style.cursor).toBe('not-allowed')
+      expect(btn.title).toBe('Configure a printer in Settings')
+    }
+  })
+
+  test('readOnly + printer configured: Advance/Cancel controls stay absent (D-03 — added block, guard not widened)', async () => {
+    load.mockResolvedValueOnce({
+      get: vi.fn().mockResolvedValue({ port: 'COM3', baud: 9600, paperWidth: '80mm' }),
+    })
+    render(
+      createElement(OrderDetailScreen, {
+        order: { ...HISTORY_ORDER_WITH_ITEMS, state: 'new' },
+        lang: 'en',
+        readOnly: true,
+        onBack: vi.fn(),
+        onPrint: vi.fn(),
+      }),
+      { wrapper: w }
+    )
+
+    const kitchenBtn = () => screen.getAllByText('Print kitchen').find(el => el.closest('button.btn-secondary')).closest('button')
+    await waitFor(() => expect(kitchenBtn()).not.toBeDisabled())
+
+    expect(screen.queryByText('Accept')).toBeNull()
+    expect(screen.queryByText('Cancel order')).toBeNull()
   })
 })
 
