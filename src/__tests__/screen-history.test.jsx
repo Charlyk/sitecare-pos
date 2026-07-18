@@ -981,8 +981,10 @@ describe('historyStatusMeta', () => {
     expect(historyStatusMeta('completed', t).chip).toBe('chip-sage')
   })
 
-  test('falls back to the completed mapping for an unrecognized status', () => {
-    expect(historyStatusMeta('unknown', t)).toEqual(historyStatusMeta('completed', t))
+  test('falls back to a distinct neutral mapping (not completed) for an unrecognized status', () => {
+    const meta = historyStatusMeta('unknown', t)
+    expect(meta).not.toEqual(historyStatusMeta('completed', t))
+    expect(meta.chip).toBe('chip-slate')
   })
 })
 

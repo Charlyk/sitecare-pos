@@ -57,7 +57,7 @@ export function historyStatusMeta(status, t) {
     canceled: { chip: 'chip-red', tile: 'hsl(0 84% 60% / 0.1)', ink: 'hsl(0 72% 45%)', icon: 'x', label: t('status_canceled') },
     refunded: { chip: 'chip-amber', tile: 'hsl(38 92% 50% / 0.14)', ink: 'hsl(30 80% 40%)', icon: 'refresh', label: t('status_refunded') },
   };
-  return map[status] || map.completed;
+  return map[status] ?? { chip: 'chip-slate', tile: 'hsl(210 15% 92%)', ink: '#556', icon: 'help', label: '—' };
 }
 
 // D-05: render the daily number directly when it is numeric; fall back to a short slice of
