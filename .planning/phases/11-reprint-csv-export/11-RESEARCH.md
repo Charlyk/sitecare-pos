@@ -349,17 +349,19 @@ tauri::Builder::default()
 | A1 | Dialog-picked paths auto-extend `fs` scope for the session without an explicit `fs:scope` capability rule | Common Pitfalls #2, Code Examples | If wrong, `writeTextFile` fails with a scope-denied error on every export attempt at first manual test; low actual risk because the fix (add a scoped `fs:scope` rule, or widen slightly) is a same-session, low-cost correction, not an architecture change. Cross-confirmed by two independent WebSearch sources during this research session (official Tauri v2 docs synthesis + community-source synthesis), giving MEDIUM rather than LOW confidence, but neither source is a verbatim quote from an official doc page — verify with a smoke test in the first execution wave |
 | A2 | `@tauri-apps/plugin-dialog`'s same-day publish timestamp (2026-07-18) reflects a routine patch in the official `tauri-apps/plugins-workspace` monorepo, not a compromised/hijacked release | Package Legitimacy Audit | If wrong (extremely unlikely given 955K weekly downloads and the shared monorepo with 3 already-trusted sibling packages), a compromised patch release could introduce malicious install-time behavior; mitigated by the required `checkpoint:human-verify` task before install |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> Both questions were resolved during planning and are pinned in executable plan content (11-02 Task 2). Retained here for traceability.
 
 1. **Exact `placed_at` local-time formatting helper to reuse or write**
    - What we know: UI-SPEC locks the format as `YYYY-MM-DD HH:mm` (24h local time); `orderTimeLabel` (imported from `data.jsx` into `screen-detail.jsx`) already formats `placedAt` for on-screen display, but its exact output format hasn't been confirmed to match the CSV's locked format.
    - What's unclear: Whether `orderTimeLabel` can be reused/parameterized, or whether `buildCsv` needs its own small local-time formatter in `history-utils.js` (consistent with that module's "pure, no shared formatting imports beyond what's already there" convention, per its own header comment banning new cross-module imports).
-   - Recommendation: Planner should default to a new small pure formatter co-located in `history-utils.js` (mirrors the module's existing `pad`/`localDayKey` private-helper pattern) rather than importing/repurposing `data.jsx`'s `orderTimeLabel`, to keep `history-utils.js`'s zero-react/zero-data.jsx-import invariant intact (stated explicitly in that file's header comment and reinforced by the Phase 07 decision log: "history-utils.js stays pure: no react/data.jsx/@charlyk imports").
+   - **RESOLVED (adopted in 11-02 Task 2):** a new small pure formatter co-located in `history-utils.js` (mirrors the module's existing `pad`/`localDayKey` private-helper pattern) rather than importing/repurposing `data.jsx`'s `orderTimeLabel`, keeping `history-utils.js`'s zero-react/zero-data.jsx-import invariant intact (stated explicitly in that file's header comment and reinforced by the Phase 07 decision log: "history-utils.js stays pure: no react/data.jsx/@charlyk imports").
 
 2. **CSV numeric formatting — plain `String(number)` vs `.toFixed(2)`**
    - What we know: D-09 specifies dot decimal separator, e.g. `145.00`. `normalizeOrder` already rounds most monetary fields to 2 decimals via `.toFixed(2)` parsing in a couple of spots (e.g. `discount`), but `subtotal`/`total`/`tax`/`tip`/`deliveryFee` are plain floats after division by 100 and are NOT guaranteed to already be exactly 2-decimal-clean (e.g. `10/100 * something` could produce a float like `14.499999999999998` in edge cases, though none observed in current test fixtures).
    - What's unclear: Whether `buildCsv` should call `.toFixed(2)` on every monetary field for safety, or trust the already-normalized values as-is.
-   - Recommendation: Apply `.toFixed(2)` to every monetary field inside `orderToCsvRow` regardless of the input's apparent cleanliness — cheap, deterministic, and matches the `145.00` example format in D-09 literally (two decimal places always shown, not just "however many the float happens to have").
+   - **RESOLVED (adopted in 11-02 Task 2):** apply `.toFixed(2)` to every monetary field inside `orderToCsvRow` regardless of the input's apparent cleanliness — cheap, deterministic, and matches the `145.00` example format in D-09 literally (two decimal places always shown, not just "however many the float happens to have").
 
 ## Environment Availability
 
