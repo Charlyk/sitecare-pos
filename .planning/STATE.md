@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 11
-current_plan: 3
+current_plan: 4
 status: executing
 stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed, verified & transitioned; ready to plan Phase 11
-last_updated: "2026-07-18T20:53:18.983Z"
+last_updated: "2026-07-18T21:00:36.514Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 23
   percent: 80
 ---
 
@@ -37,7 +37,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-18)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 11
-**Current Plan:** 3
+**Current Plan:** 4
 **Total Plans in Phase:** 4
 **Overall Status:** Phase 10 (Filters + Search) COMPLETE — 4/4 plans, HIST-07/08/09 sealed, UAT 2/2
 (both human-judgment checkpoints — two-row FilterBar wrap at 1440×900, and debounced-search "feels
@@ -49,7 +49,7 @@ before it: 5/5 plans, HIST-04 sealed (all four periods live). Phase 8: 5/5 plans
 Phase 7: 6/6 plans, UAT 26/26. Phase 11 (Reprint + CSV Export — HIST-11/12) is not yet planned.
 
 ```
-Progress: [█████████░] 92%
+Progress: [██████████] 96%
 Milestone v1.1 — one phase remaining: Phase 11 (Reprint + CSV Export), not yet planned
 ```
 
@@ -119,6 +119,7 @@ the plan-checker against source.
 | Phase 10 P04 | 18min | 2 tasks | 2 files |
 | Phase 11 P01 | 8min | 2 tasks | 6 files |
 | Phase 11 P02 | 4min | 2 tasks | 3 files |
+| Phase 11 P03 | 5min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -246,7 +247,7 @@ the plan-checker against source.
   derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 11-02-PLAN.md
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 11-03-PLAN.md — HIST-11 reprint wired (history-detail route onPrint + readOnly print row); 11-04 (CSV export UI) remaining in phase 11
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -258,7 +259,7 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-18T20:53:18.976Z
+**Last session:** 2026-07-18T21:00:36.507Z
 **Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
 **Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
 
@@ -334,3 +335,5 @@ the plan-checker against source.
 - [Phase ?]: [Phase 11-01]: capabilities/default.json grants only dialog:allow-save + fs:allow-write-text-file, no fs:scope — dialog plugin session-extends fs write scope to the picked path (T-11-CAP)
 - [Phase ?]: [Phase 11-01]: Cargo.lock regenerated via cargo check --lib (minimal 83-line diff) not cargo generate-lockfile (which bumped 517 unrelated packages) to keep the lockfile change scoped to the two new plugins
 - [Phase ?]: buildCsv: order_number mirrors screen-history.jsx orderNumberLabel; monetary fields distinguish missing (empty) from explicit zero (0.00); RFC-4180 quoting and T-11 formula-injection guard compose (guard-first, quote-second)
+- [Phase ?]: [Phase 11-03]: onPrint={handlePrint} added to the history-detail OrderDetailScreen block in app.jsx (Pitfall 1 closed); readOnly print row placed inside the existing order.items!=null right panel, gated as an added block (not a widened guard) so !readOnly Advance/Cancel stay hidden by construction (D-03)
+- [Phase ?]: [Phase 11-03]: printerConfigured mount effect mirrors screen-printer.jsx's own load('preferences.json')->store.get('printer')->!!config?.port pattern; disabled styling reuses screen-history.jsx's inert-Export convention (opacity 0.5/pointerEvents none/cursor not-allowed), not .btn-disabled-offline (D-05)
