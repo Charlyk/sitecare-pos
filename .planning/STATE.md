@@ -6,7 +6,7 @@ current_phase: 11 — Reprint + CSV Export
 current_plan: Not started
 status: planning
 stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed, verified & transitioned; ready to plan Phase 11
-last_updated: "2026-07-18T19:47:56.729Z"
+last_updated: "2026-07-18T19:59:32.224Z"
 progress:
   total_phases: 5
   completed_phases: 4
@@ -244,7 +244,7 @@ the plan-checker against source.
   derives that key from a body-level `Status:`/`**Status:**Ready to plan
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 10-04-PLAN.md
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Phase 11 context gathered
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -254,9 +254,9 @@ the plan-checker against source.
 
 ## Session Continuity
 
-**Resume file:** None
+**Resume file:** .planning/phases/11-reprint-csv-export/11-CONTEXT.md
 
-**Last session:** 2026-07-18
+**Last session:** 2026-07-18T19:59:32.217Z
 **Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
 **Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
 
