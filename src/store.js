@@ -52,6 +52,11 @@ export const useAppStore = create(
       // --- Session-only state (NOT persisted — reset on restart) ---
       selectedOrder: null,     // Set by openOrder(); consumed by screen-detail
       historyOrder: null,      // Set by openHistoryOrder(); consumed by screen-detail in readOnly mode; session-only (NOT persisted — mirrors selectedOrder)
+      // historySelection (D-01, Phase 12 Plan 03): session-only History UI selection state
+      // (period/status/type/search) lifted out of screen-history.jsx's local useState calls.
+      // Mirrors the selectedOrder/historyOrder session-only pattern exactly — set via an action,
+      // conditionally reset by setScreen (D-03 below), excluded from partialize. NOT persisted.
+      historySelection: { period: { id: '30' }, statusFilter: 'all', typeFilter: 'all', query: '' },
       toasts: [],              // Managed by pushToast/dismissToast
       acceptDialog: null,      // Set by setAcceptDialog(); consumed by AcceptDialog in app.jsx
       soundMuted: false,       // KDS mute toggle (D-07) — session-only, NOT in partialize
@@ -63,7 +68,25 @@ export const useAppStore = create(
 
       // --- Actions ---
       // setScreen resets selectedOrder and historyOrder so no detail route can show stale data
-      setScreen: (screen) => set({ screen, selectedOrder: null, historyOrder: null }),
+      // (unconditional, unchanged). D-03: historySelection is ADDITIVELY preserved when the
+      // target is 'history' or 'history-detail' (the History<->history-detail round-trip), and
+      // reset to defaults for any other target — so leaving History for Orders/KDS/POS clears the
+      // selection. Functional set() form reads current historySelection for the preserve branch.
+      setScreen: (screen) =>
+        set((s) => ({
+          screen,
+          selectedOrder: null,
+          historyOrder: null,
+          historySelection:
+            screen === 'history' || screen === 'history-detail'
+              ? s.historySelection
+              : { period: { id: '30' }, statusFilter: 'all', typeFilter: 'all', query: '' },
+        })),
+      // setHistorySelection performs a shallow merge of only the changed key(s) — keeps the
+      // period object reference stable on a status/type/query-only update (D-04, reference
+      // stability for settledPeriodRef comparison + the range useMemo in screen-history.jsx).
+      setHistorySelection: (patch) =>
+        set((s) => ({ historySelection: { ...s.historySelection, ...patch } })),
       setRole: (role) => set({ role }),
       setLang: (lang) => set({ lang }),
       setAccent: (accent) => set({ accent }),

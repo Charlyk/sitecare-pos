@@ -159,3 +159,85 @@ describe('HIST-01: openHistoryOrder / historyOrder / setScreen reset (D-07, D-08
     expect(persisted).not.toHaveProperty('historyOrder')
   })
 })
+
+// ── Phase 12 Plan 03: historySelection session-only slice (D-01/D-03/D-04) ───────
+
+const DEFAULT_HISTORY_SELECTION = { period: { id: '30' }, statusFilter: 'all', typeFilter: 'all', query: '' }
+
+describe('historySelection session-only slice (D-01/D-03/D-04)', () => {
+  beforeEach(() => {
+    useAppStore.setState({
+      selectedOrder: null,
+      historyOrder: null,
+      screen: 'orders',
+      historySelection: DEFAULT_HISTORY_SELECTION,
+    })
+  })
+
+  test('historySelection defaults to { period: { id: "30" }, statusFilter: "all", typeFilter: "all", query: "" } on a fresh store', () => {
+    expect(useAppStore.getState().historySelection).toEqual(DEFAULT_HISTORY_SELECTION)
+  })
+
+  test('setHistorySelection({ statusFilter: "completed" }) changes only statusFilter; the period reference is unchanged', () => {
+    const before = useAppStore.getState().historySelection
+    useAppStore.getState().setHistorySelection({ statusFilter: 'completed' })
+    const after = useAppStore.getState().historySelection
+    expect(after.statusFilter).toBe('completed')
+    expect(after.typeFilter).toBe('all')
+    expect(after.query).toBe('')
+    expect(after.period).toBe(before.period) // reference stability (D-04)
+  })
+
+  test('setScreen("history") preserves historySelection (unchanged reference)', () => {
+    useAppStore.getState().setHistorySelection({ statusFilter: 'refunded' })
+    const before = useAppStore.getState().historySelection
+    useAppStore.getState().setScreen('history')
+    const after = useAppStore.getState().historySelection
+    expect(after).toBe(before)
+  })
+
+  test('setScreen("history-detail") preserves historySelection (unchanged reference)', () => {
+    useAppStore.getState().setHistorySelection({ query: 'ana' })
+    const before = useAppStore.getState().historySelection
+    useAppStore.getState().setScreen('history-detail')
+    const after = useAppStore.getState().historySelection
+    expect(after).toBe(before)
+  })
+
+  test('History -> history-detail -> Back (history) round-trip preserves the full selection', () => {
+    useAppStore.getState().setHistorySelection({ period: { id: 'custom', customRange: { from: 'a', to: 'b' } } })
+    useAppStore.getState().setHistorySelection({ statusFilter: 'completed', typeFilter: 'delivery', query: 'pizza' })
+    useAppStore.getState().setScreen('history-detail')
+    useAppStore.getState().setScreen('history')
+    const state = useAppStore.getState().historySelection
+    expect(state).toEqual({
+      period: { id: 'custom', customRange: { from: 'a', to: 'b' } },
+      statusFilter: 'completed',
+      typeFilter: 'delivery',
+      query: 'pizza',
+    })
+  })
+
+  test('setScreen("orders") (a non-history target) resets historySelection to defaults', () => {
+    useAppStore.getState().setHistorySelection({ statusFilter: 'canceled', query: 'x' })
+    useAppStore.getState().setScreen('orders')
+    expect(useAppStore.getState().historySelection).toEqual(DEFAULT_HISTORY_SELECTION)
+  })
+
+  test('setScreen to any non-history target still sets selectedOrder=null and historyOrder=null (unconditional, unchanged)', () => {
+    useAppStore.getState().openOrder({ id: 'live-9' })
+    useAppStore.getState().openHistoryOrder({ id: 'hist-9' })
+    useAppStore.getState().setScreen('history')
+    const state = useAppStore.getState()
+    expect(state.selectedOrder).toBe(null)
+    expect(state.historyOrder).toBe(null)
+  })
+
+  test('historySelection is NOT included in the partialize output (session-only)', () => {
+    useAppStore.getState().setHistorySelection({ statusFilter: 'completed' })
+    const state = useAppStore.getState()
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+    expect(persisted).not.toHaveProperty('historySelection')
+  })
+})
