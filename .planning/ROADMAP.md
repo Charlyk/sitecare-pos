@@ -225,10 +225,14 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 12-01-PLAN.md — D-06 `normalizeOrder` fallback-total + percent-discount regression tests (verify-only backfill)
 - [ ] 12-02-PLAN.md — D-09 HIST-06 traceability fix in 07-VERIFICATION.md + 07-04-SUMMARY.md (doc-only)
 - [ ] 12-03-PLAN.md — D-01…D-04 lift History selection into a session-only `historySelection` store slice + setScreen reset + test-mock fix (the one code change)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 12-04-PLAN.md — D-05/D-07/D-08/D-10 verify pass + WR-01/return-from-detail live checkpoint + Nyquist 10/11 promotion + milestone-audit correction (autonomous: false)
 
 ---
