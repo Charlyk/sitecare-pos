@@ -96,9 +96,10 @@ No `scripts/*/tests/probe-*.sh` files exist in this project and none are declare
 | HIST-02 | 07-03 | History screen loads orders via `listAdminOrders({ from, to })`; filtering client-side | ✓ SATISFIED | `use-history-orders.js` calls `client.admin.orders.list`; `filterFinishedOrders` runs client-side in `screen-history.jsx` |
 | HIST-03 | 07-01, 07-03 | History screen defaults to the last 30 days on first open | ✓ SATISFIED | `getLast30DaysRange()` + lazy `useState` initializer, no user interaction required; human-verified against live API |
 | HIST-05 | 07-01, 07-04, 07-05, 07-06 | User can see orders grouped by calendar day, newest first, each day header showing count + revenue subtotal | ✓ SATISFIED | `groupOrdersByDay()` + `DayGroup` rendering; 27 unit tests + render tests |
+| HIST-06 | 07-04 | Period summary strip — orders, revenue, and average order value computed client-side from the same fetched list that backs the rows (D-15 — `getAdminDashboard` is not used); refunds tile is count-only | ✓ SATISFIED | `computeSummary(finished)` in 07-04's data-flow trace; 4-tile summary strip present, behaviorally verified as part of Phase 7's `screen-history.test.jsx` render tests (retargeted for free by Phase 9's period control per D-15) |
 | HIST-13 | 07-04 | User sees a clear empty state when no orders match the active filters | ✓ SATISFIED | `EmptyBlock` component, distinguishes empty-success from error via computed-zeros vs em-dash |
 
-No orphaned requirements found — `REQUIREMENTS.md`'s Phase 7 mapping (HIST-01, 02, 03, 05, 13) matches exactly the union of `requirements:` fields declared across all 6 plans. HIST-04 and HIST-06 through HIST-12 are correctly scoped to later phases (8-10) and are not claimed by any Phase 7 plan.
+No orphaned requirements found — `REQUIREMENTS.md`'s Phase 7 mapping (HIST-01, 02, 03, 05, 06, 13) matches exactly the union of `requirements:` fields declared across all 6 plans (HIST-06 traceability gap closed per D-09, Plan 12-02). HIST-04 and HIST-07 through HIST-12 are correctly scoped to later phases (8-10) and are not claimed by any Phase 7 plan.
 
 ### Anti-Patterns Found
 
