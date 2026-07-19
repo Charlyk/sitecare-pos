@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 11
-current_plan: Not started
-status: completed
+current_phase: 12
+current_plan: 2
+status: executing
 stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
-last_updated: "2026-07-18T22:31:40.852Z"
+last_updated: "2026-07-19T19:51:52.093Z"
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 24
-  completed_plans: 24
+  total_plans: 28
+  completed_plans: 25
   percent: 83
 ---
 
@@ -26,7 +26,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-18)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 11 — reprint-csv-export
+**Current focus:** Phase 12 — close-cr-01-tax-in-fallback-total-hist-06-traceability-wr-01
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -36,8 +36,8 @@ See: `.planning/PROJECT.md` (updated 2026-07-18)
 ## Current Position
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
-**Current Phase:** 11
-**Current Plan:** Not started
+**Current Phase:** 12
+**Current Plan:** 2
 **Total Plans in Phase:** 4
 **Overall Status:** Phase 10 (Filters + Search) COMPLETE — 4/4 plans, HIST-07/08/09 sealed, UAT 2/2
 (both human-judgment checkpoints — two-row FilterBar wrap at 1440×900, and debounced-search "feels
@@ -49,7 +49,7 @@ before it: 5/5 plans, HIST-04 sealed (all four periods live). Phase 8: 5/5 plans
 Phase 7: 6/6 plans, UAT 26/26. Phase 11 (Reprint + CSV Export — HIST-11/12) is not yet planned.
 
 ```
-Progress: [██████████] 100%
+Progress: [█████████░] 89%
 Milestone v1.1 — one phase remaining: Phase 11 (Reprint + CSV Export), not yet planned
 ```
 
@@ -121,6 +121,7 @@ the plan-checker against source.
 | Phase 11 P02 | 4min | 2 tasks | 3 files |
 | Phase 11 P03 | 5min | 2 tasks | 4 files |
 | Phase 11 P04 | ~15min | 2 tasks | 2 files |
+| Phase 12 P01 | ~6min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -245,10 +246,10 @@ the plan-checker against source.
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**All phases complete
+  derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Phase 12 context gathered — audit found stale (CR-01/WR-01/G-07-1 already fixed); phase scoped to verify + state-continuity fix + HIST-06 docs + Nyquist 10/11 + audit correction
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 12-01-PLAN.md
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -262,9 +263,9 @@ the plan-checker against source.
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/12-close-cr-01-tax-in-fallback-total-hist-06-traceability-wr-01/12-CONTEXT.md
+**Resume file:** None
 
-**Last session:** 2026-07-18T22:31:40.843Z
+**Last session:** 2026-07-19T19:51:52.086Z
 **Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
 **Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
 
@@ -345,3 +346,5 @@ the plan-checker against source.
 - [Phase ?]: [Phase 11-04]: Tasks 1 and 2 landed in a single feat commit — Task 1's click-driven tests require Task 2's onClick/disabled button wiring to exist, so they were not independently committable (same precedent as Phase 08-04)
 - [Phase ?]: [Phase 11-04]: rangeToFilenameDates() derives the export filename's end date as range.to minus one day (inclusive last day), never a raw slice of the exclusive range.to instant — mirrors formatDateRange's exclusive-to-inclusive-end conversion
 - [Phase ?]: [Phase 11-04]: Export button's disabled/dimmed/tooltip state is now fully data-driven (visible.length === 0), replacing Phase 10's permanently-inert flag
+- [Phase ?]: [Phase 12-01]: Verify-and-backfill only (D-05) — src/data.jsx left untouched; the CR-01/CR-02 fixes shipped earlier (30c89d8, 7d9810b), this plan adds the missing D-06 regression tests only
+- [Phase ?]: [Phase 12-01]: Third test case ties the total assertion to the same asserted component fields (subtotal/tax/deliveryFee/tip/discount) rather than a hardcoded total, making the internal-consistency check structurally enforced
