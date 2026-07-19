@@ -217,6 +217,20 @@ Plans:
 | 10. Filters + Search | v1.1 | 4/4 | Complete    | 2026-07-18 |
 | 11. Reprint + CSV Export | v1.1 | 4/4 | Complete    | 2026-07-19 |
 
+### Phase 12: Close CR-01 tax-in-fallback-total + HIST-06 traceability + WR-01 popover
+
+**Goal:** Close the v1.1 tech-debt surfaced by the milestone audit so v1.1 re-derives toward a clean `passed`: lift History's period/status/type/search selection into a session-only Zustand slice so it survives the History→detail→Back round-trip (resets on leave), backfill the missing `normalizeOrder` fallback-total + percent-discount regression tests, fix the HIST-06 verification traceability, verify CR-01/WR-01/G-07-1 are already fixed (code + live check), promote the Phase 10/11 Nyquist validations, and correct the milestone audit in place.
+**Requirements**: None (tech-debt closeout; traceability-only touch of HIST-06 via D-09; work tracked by CONTEXT decisions D-01…D-10)
+**Depends on:** Phase 11
+**Plans:** 4 plans
+
+Plans:
+
+- [ ] 12-01-PLAN.md — D-06 `normalizeOrder` fallback-total + percent-discount regression tests (verify-only backfill)
+- [ ] 12-02-PLAN.md — D-09 HIST-06 traceability fix in 07-VERIFICATION.md + 07-04-SUMMARY.md (doc-only)
+- [ ] 12-03-PLAN.md — D-01…D-04 lift History selection into a session-only `historySelection` store slice + setScreen reset + test-mock fix (the one code change)
+- [ ] 12-04-PLAN.md — D-05/D-07/D-08/D-10 verify pass + WR-01/return-from-detail live checkpoint + Nyquist 10/11 promotion + milestone-audit correction (autonomous: false)
+
 ---
 
 *Roadmap created: 2026-04-22*
