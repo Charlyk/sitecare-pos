@@ -2,18 +2,17 @@
 
 ## What This Is
 
-A Tauri v2 desktop application (macOS + Windows) for SiteCare restaurant staff to manage orders in real-time. The UI is a pixel-perfect port of the Claude Design prototype — same 7 screens, same design system, same brand — backed by the live SiteCare API via `@charlyk/admin-client`. v1.0 shipped on 2026-05-22 with all 41 requirements delivered. The app is production-ready: native installers, macOS notarization, silent auto-updates, and thermal printer integration are in place.
+A Tauri v2 desktop application (macOS + Windows) for SiteCare restaurant staff to manage orders in real-time. The UI is a pixel-perfect port of the Claude Design prototype — same design system, same brand — backed by the live SiteCare API via `@charlyk/admin-client`. v1.0 shipped on 2026-05-22 with all 41 requirements delivered; v1.1 shipped on 2026-07-19, adding a dedicated Orders History screen (browse, filter, search, reprint, CSV export) across 13 requirements. The app is production-ready: native installers, macOS notarization, silent auto-updates, and thermal printer integration are in place.
 
 ## Core Value
 
 Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks and feels exactly like the design prototype.
 
-## Current State (v1.0)
+## Current State (v1.1)
 
-**Shipped:** 2026-05-22
-**Tech stack:** Tauri 2.x · React 18 · Vite 6 · Zustand 5 · TanStack Query 5 · @charlyk/admin-client v1.1.29+
-**Source LOC:** ~7,961 JS/JSX
-**Tests:** 166 passing
+**Shipped:** v1.0 on 2026-05-22 · v1.1 on 2026-07-19
+**Tech stack:** Tauri 2.x · React 18 · Vite 6 · Zustand 5 · TanStack Query 5 · @charlyk/admin-client v1.1.59+
+**Tests:** 487 (3 pre-existing v1.0 failures documented + deferred)
 **Platforms:** macOS arm64 (notarized), Windows x64 (unsigned MSI)
 
 **What works in production:**
@@ -27,39 +26,27 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 - Offline resilience: banner, cached data, disabled mutations
 - Thermal printer: configure USB/TCP, test print, print receipts via ESC/POS
 - Auto-update: silent in-app update delivery via tauri-plugin-updater
+- **Orders History (v1.1):** day-grouped archive with a client-computed summary strip; Today/7/30/custom period control; client-side status/type/search filters with live faceted counts; read-only order detail hydrated via `getOrder(id)`; printer-gated receipt reprint; accounting-grade CSV export via native Save dialog
 
-## Current Milestone: v1.1 Orders History Screen
+## Shipped: v1.1 Orders History Screen (2026-07-19)
 
-**Goal:** Give restaurant staff a dedicated screen to browse, search, and export the full archive of past orders with receipt reprinting.
+**Delivered:** A dedicated Orders History screen — day-grouped archive with a client-computed summary strip,
+Today/7/30/custom period control, client-side status/type/search filters with live faceted counts, a read-only
+order detail hydrated via `getOrder(id)`, printer-gated receipt reprint, and accounting-grade CSV export.
+All 13/13 requirements (HIST-01…HIST-13) delivered and verified across Phases 7–12; milestone audit `passed`.
 
-**Replanned 2026-07-16** against the new design handoff (`sitecare-orders/`) and SDK v1.1.59. The original
-2026-05-27 scope assumed a paginated list with a side detail panel and no summary strip; the new design is a
-day-grouped scroll with an inline expandable receipt and a period summary strip.
+**Key design divergences (deliberate, API-driven):** tax/tip lines, refund amount and reason, order source
+channel, collapsed-row items count, address subtitle, and table number were all cut — no API field backs them.
+The summary strip is computed client-side from the same `listAdminOrders` result that backs the rows (D-15 —
+`getAdminDashboard` dropped), and the inline expandable receipt was replaced by a read-only detail view reusing
+`screen-detail.jsx` (D-07). Full rationale in `.planning/milestones/v1.1-REQUIREMENTS.md`.
 
-**Target features:**
-- New "History" sidebar item (same level as Orders, KDS, POS)
-- Period summary strip — orders, revenue, average — from the new `getAdminDashboard` endpoint
-- Period presets (Today / 7 / 30 / custom) driving a `listAdminOrders({from,to})` fetch
-- Orders grouped by calendar day with per-day count and revenue subtotal — no pagination
-- Filter by status (Completed / Refunded / Canceled) and order type (Delivery / Pickup / Dine-in)
-- Debounced search by order number or customer name
-- Inline expandable read-only receipt row, hydrated on demand via `getOrder(id)`
-- Reprint receipt from the expanded row
-- CSV export of the filtered list
+## Next Milestone: v1.2 (not yet scoped)
 
-**Scope boundary:** Desktop History screen only. The new design bundle also contains an owner dashboard,
-mobile screens, and a forgot-password flow — all deferred, not part of v1.1.
-
-**Known divergence from the design:** tax/tip lines, refund amount and reason, order source channel, the
-collapsed-row items count, address subtitle, and table number are all cut — no API field backs them. Tracked
-in REQUIREMENTS.md under "Design Elements Cut".
-
-**Progress:** Phase 7 (History Screen Foundation) complete 2026-07-17 — the History sidebar item opens a
-screen that auto-loads the last 30 days via `listAdminOrders({from,to})`, grouped by Romanian calendar day
-with per-day count and revenue subtotals, plus loading/empty/error states and a read-only order detail.
-The period and status filter bar is present but inert; Phase 8 makes it live. Two open v1.1 questions were
-closed by live-API human verification: the API's `from`/`to` params behave correctly for Romanian local
-calendar days, and `AdminOrder.total` is denominated in RON (not cents), so no `normalizeOrder` change is needed.
+Run `/gsd-new-milestone` to define v1.2 requirements and phases. Carry-forward candidates live under
+**Requirements → Active** below (Windows code signing, thermal-printer hardware validation, tax display), plus
+the deferred features listed in the v1.1 requirements archive (owner dashboard, mobile screens, forgot-password,
+PDF export).
 
 ---
 
@@ -163,6 +150,9 @@ calendar days, and `AdminOrder.total` is denominated in RON (not cents), so no `
 | Merge hydrated detail over the summary (D-03) | No field ever blanks mid-fetch; hydrated wins on conflict | ✓ Good — also degrades gracefully if `getOrder` ever 401s |
 | Generic detail error copy, no HTTP-status branching (D-08) | 401 is handled app-wide by the auth-refresh layer; raw SDK error strings must not reach the DOM | ✓ Accepted risk R-08-02 — deliberate simplification |
 | Derive prep time from `events[]`, never read `events[].actor` (D-09) | `actor` is `string \| null` with undocumented semantics; misreading would misattribute an order | ✓ Good — "handled-by" cut from ROADMAP/REQUIREMENTS; zero `.actor` reads in `src/` |
+| Client-computed summary strip; drop `getAdminDashboard` (D-15) | Strip derives from the same `listAdminOrders` result backing the rows, so tiles and day headers agree by construction | ✓ Good — one data source; no second loading/error state; shipped Phases 7–10 |
+| History period/filter/search selection in a session-only `historySelection` Zustand slice (D-01…D-04) | Selection must survive History→detail→Back but reset on any other exit; mirrors existing `selectedOrder`/`historyOrder` precedent | ✓ Good — Phase 12 lift; live-verified, resets correctly on leave |
+| Client-side CSV export with RFC-4180 + BOM + formula-injection guard | No server export endpoint; accounting opens in Excel with diacritics; user-authored columns are an injection surface | ✓ Good — Phase 11; `plugin-dialog`/`plugin-fs` with narrow capability grants |
 
 ## Evolution
 
@@ -183,5 +173,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-07-19 after Phase 11 — Reprint + CSV Export complete; HIST-11, HIST-12 validated. Milestone v1.1 (Orders History Screen) — all 5 phases (7–11) and 13 requirements delivered.*
-*Phase 12 (2026-07-19) — v1.1 tech-debt closeout: History filter/period/search selection lifted into a session-only Zustand slice (survives History→detail→Back, resets on leave); D-06 normalizeOrder fallback-total + percent-discount regression tests backfilled; HIST-06 traceability fixed; CR-01/WR-01/G-07-1 verified already-fixed (code + live check); Phase 10/11 Nyquist validations promoted; milestone audit re-derived to `passed`. No new requirements. v1.1 ready for `/gsd-complete-milestone`.*
+*Last updated: 2026-07-19 after v1.1 milestone — Orders History Screen shipped (Phases 7–12, 28 plans, 13/13 requirements, audit `passed`). Milestone archived to `.planning/milestones/v1.1-*`; ROADMAP/MILESTONES reorganized; next milestone (v1.2) not yet scoped — run `/gsd-new-milestone`.*

@@ -2,17 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
-current_phase: 12
-current_plan: Not started
-status: completed
-stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
-last_updated: "2026-07-19T20:24:30.331Z"
+current_plan: "—"
+status: milestone_complete
+stopped_at: "v1.1 Orders History Screen shipped and archived (Phases 7–12, 28 plans, 13/13 requirements, audit passed); awaiting /gsd-new-milestone for v1.2"
+last_updated: "2026-07-19T20:49:45.159Z"
+last_activity: 2026-07-19
+last_activity_desc: Milestone v1.1 completed and archived
 progress:
   total_phases: 6
   completed_phases: 6
   total_plans: 28
   completed_plans: 28
   percent: 100
+current_phase: 12
 ---
 
 # State: SiteCare POS Desktop App
@@ -23,46 +25,36 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-07-18)
+See: `.planning/PROJECT.md` (updated 2026-07-19 after v1.1 milestone)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 12 — close-cr-01-tax-in-fallback-total-hist-06-traceability-wr-01
+**Current focus:** Planning next milestone (v1.2) — run `/gsd-new-milestone`
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
 
 ---
 
-## Current Position
+## Deferred Items
 
-**Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
-**Current Phase:** 12
-**Current Plan:** Not started
-**Total Plans in Phase:** 4
-**Overall Status:** Phase 10 (Filters + Search) COMPLETE — 4/4 plans, HIST-07/08/09 sealed, UAT 2/2
-(both human-judgment checkpoints — two-row FilterBar wrap at 1440×900, and debounced-search "feels
-responsive" — passed 2026-07-18). Status (All/Completed/Refunded/Canceled) and type
-(All/Delivery/Pickup/Dine-in, with `orderType: 'local'` → Dine-in) filters carry live per-period
-counts; search is diacritic-folded and debounced; filters, search, and period compose so day headers
-reflect only visible rows, with a distinct filtered-empty variant + Clear Filters (D-13/D-14). Phase 9
-before it: 5/5 plans, HIST-04 sealed (all four periods live). Phase 8: 5/5 plans, UAT 20/20, HIST-10.
-Phase 7: 6/6 plans, UAT 26/26. Phase 11 (Reprint + CSV Export — HIST-11/12) is not yet planned.
+Items acknowledged and deferred at v1.1 milestone close on 2026-07-19 (`override_closeout`):
 
-```
-Progress: [██████████] 100%
-Milestone v1.1 — one phase remaining: Phase 11 (Reprint + CSV Export), not yet planned
-```
+| Category | Item | Status |
+|----------|------|--------|
+| quick_task | kitchen-ticket-data-mapping (20260424) | missing |
+| quick_task | order-card-item-groups (20260424) | missing |
+| verification | Phase 8 verification hash-stale (Phase 12 commits touched shared files after Phase 8's verify) | audit-authoritative: passed (9/9, UAT 20/0) |
 
-**Phase 8 planning note (F-01):** The planner disproved a premise carried by both `08-RESEARCH.md`
-and `08-CONTEXT.md` — that the `AdminOrder` summary reaches `screen-detail.jsx` with `items: null`.
-`normalizeOrder` (`src/data.jsx:246`) maps `items: (o.items ?? []).map(...)`, so items is always an
-array. Consequences the plans are built on: the Modify button is reachable on the shipped read-only
-route **today** (a live SC3 defect, tracked as T-08-01, severity high); the minimal-totals fallback at
-`screen-detail.jsx:191-204` is dead code; and pre-hydration is an *empty* receipt, not an absent one,
-so 08-04's state machine keys on query state rather than `items.length`. Confirmed independently by
-the plan-checker against source.
+Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v1.0 shipped 2026-05-22); v1.0 shipped complete with all 41 requirements. Phase 8's stale flag is benign git-hash staleness, not a functional gap — the milestone audit re-verified it as `passed`.
 
 ---
+
+## Current Position
+
+Phase: Milestone v1.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-19 — Milestone v1.1 completed and archived
 
 ## Phase Summary
 
@@ -249,7 +241,7 @@ the plan-checker against source.
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**All phases complete
+  derives that key from a body-level `Status:`/`**Status:**v1.1 milestone complete
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
   sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 12-04-PLAN.md — Phase 12 (4/4 plans) complete; v1.1-MILESTONE-AUDIT.md re-derived to status: passed
@@ -358,3 +350,7 @@ the plan-checker against source.
 - [Phase ?]: [Phase 12-04]: Cited CR-01/CR-02 fix commits by SHA + description rather than relabeling, since the audit's original 'CR-01' (tax) does not match 10-REVIEW.md's own CR-01(percent-discount)/CR-02(tax) numbering
 - [Phase ?]: [Phase 12-04]: Both /gsd-validate-phase runs (10, 11) found zero gaps and reconstructed VALIDATION.md directly from existing VERIFICATION.md/UAT.md evidence, no auditor subagent spawn needed
 - [Phase ?]: [Phase 12-04]: Re-derived v1.1-MILESTONE-AUDIT.md verdict from tech_debt to passed — every CRITICAL/WARNING item resolved with SHA citation and/or live re-verification; only the 3 pre-existing v1.0 test failures remain, explicitly deferred
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
