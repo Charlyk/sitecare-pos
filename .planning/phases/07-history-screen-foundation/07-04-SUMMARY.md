@@ -36,7 +36,7 @@ patterns-established:
   - "Screen-owns-its-hook for history-shaped screens: call the data hook directly in the screen component, no prop-drilling from App()"
   - "Client-computed summary strips derive from the exact same filtered list backing the table, so tiles and rows can never disagree (D-15)"
 
-requirements-completed: [HIST-05, HIST-13]
+requirements-completed: [HIST-05, HIST-06, HIST-13]
 
 coverage:
   - id: D1
