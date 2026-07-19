@@ -23,14 +23,43 @@ vi.mock('@tauri-apps/plugin-store', () => ({
 vi.mock('@tauri-apps/plugin-dialog', () => ({ save: vi.fn() }))
 vi.mock('@tauri-apps/plugin-fs', () => ({ writeTextFile: vi.fn() }))
 
-// vi.hoisted: pushToastMock must exist before the vi.mock('../store.js', ...) factory below runs
-// (factories are hoisted above imports) — this keeps ONE stable pushToast reference across every
-// HistoryScreen render in every test, rather than a fresh vi.fn() per render that assertions
-// could never reach.
-const { pushToastMock } = vi.hoisted(() => ({ pushToastMock: vi.fn() }))
-vi.mock('../store.js', () => ({
-  useAppStore: vi.fn((selector) => selector({ lang: 'ro', pushToast: pushToastMock })),
+// vi.hoisted: pushToastMock/setHistorySelectionMock must exist before the vi.mock('../store.js',
+// ...) factory below runs (factories are hoisted above imports) — this keeps ONE stable reference
+// across every HistoryScreen render in every test, rather than a fresh vi.fn() per render that
+// assertions could never reach.
+// Phase 12 Plan 03 (D-01/D-02/D-04, Pitfall 1): historySelection + setHistorySelection added to
+// the mocked store object in the SAME task that adds the selector in screen-history.jsx, so the
+// existing render tests below do not destructure `undefined`. The mocked store is backed by a
+// REAL zustand store (not a static object literal) — historySelection now drives HistoryScreen's
+// own re-renders via a subscribed hook (it used to be four component-local useState calls that
+// re-rendered on their own), so a static mock would freeze status/type/search/period clicks and
+// break every filter-interaction test below. setHistorySelectionMock still records every call for
+// tests that want to assert on it directly.
+const { pushToastMock, setHistorySelectionMock, DEFAULT_HISTORY_SELECTION } = vi.hoisted(() => ({
+  pushToastMock: vi.fn(),
+  setHistorySelectionMock: vi.fn(),
+  DEFAULT_HISTORY_SELECTION: { period: { id: '30' }, statusFilter: 'all', typeFilter: 'all', query: '' },
 }))
+vi.mock('../store.js', async () => {
+  const { create } = await import('zustand')
+  const useMockAppStore = create((set) => ({
+    lang: 'ro',
+    pushToast: pushToastMock,
+    historySelection: DEFAULT_HISTORY_SELECTION,
+    // Mirrors store.js's Rule-1 no-op guard: a redundant patch (e.g. re-clicking an
+    // already-selected filter pill) must not allocate a new historySelection reference, or
+    // HistoryScreen would re-render (and re-call useHistoryOrders) on a no-op click.
+    setHistorySelection: (patch) => {
+      setHistorySelectionMock(patch)
+      set((s) => {
+        const unchanged = Object.keys(patch).every((k) => s.historySelection[k] === patch[k])
+        if (unchanged) return {}
+        return { historySelection: { ...s.historySelection, ...patch } }
+      })
+    },
+  }))
+  return { useAppStore: useMockAppStore }
+})
 
 import { useHistoryOrders } from '../use-history-orders.js'
 import { HistoryScreen, historyStatusMeta, CustomRangePopover } from '../screen-history.jsx'
@@ -39,10 +68,15 @@ import { buildCsv } from '../history-utils.js'
 import { save } from '@tauri-apps/plugin-dialog'
 import { writeTextFile } from '@tauri-apps/plugin-fs'
 
-beforeEach(() => {
+beforeEach(async () => {
   pushToastMock.mockClear()
+  setHistorySelectionMock.mockClear()
   save.mockReset()
   writeTextFile.mockReset()
+  // Reset the mock store's historySelection to defaults between tests — each test's clicks would
+  // otherwise leak into the next (the mock store is real zustand state, not re-created per test).
+  const { useAppStore } = await import('../store.js')
+  useAppStore.setState({ historySelection: DEFAULT_HISTORY_SELECTION })
 })
 
 // Helper — build a POST-normalizeOrder-shaped fixture (RON totals, resolved dailyOrderNumber,

@@ -317,6 +317,16 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
   const t = useT(lang);
   const pushToast = useAppStore((s) => s.pushToast);
 
+  // Phase 12 Plan 03 (D-02/D-04): period/status/type/search selection now lives in the
+  // session-only historySelection store slice (added Task 1) instead of four component-local
+  // useState calls, so the selection survives the History -> history-detail -> Back round-trip
+  // (HistoryScreen unmounts on the history-detail route). One selector for the whole object (not
+  // an inline literal, which would allocate a new reference every render) plus a single
+  // destructure below.
+  const historySelection = useAppStore((s) => s.historySelection);
+  const setHistorySelection = useAppStore((s) => s.setHistorySelection);
+  const { period: selectedPeriod, statusFilter, typeFilter, query } = historySelection;
+
   // HIST-04: the active period is resolved to a { from, to } range exactly once per state
   // transition, memoized on the selected period — never recomputed inline in the render body
   // (RESEARCH Pitfall 1). getPresetRange returns null for 'custom' (09-05 territory) and any
@@ -324,7 +334,6 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
   // with undefined params.
   // 09-05: selectedPeriod is { id } for a preset, or { id: 'custom', customRange: {from,to} }
   // once a custom range has been applied — customRange is absent until Apply fires (D-02).
-  const [selectedPeriod, setSelectedPeriod] = useState({ id: '30' });
   const range = useMemo(() => {
     if (selectedPeriod.id === 'custom') return selectedPeriod.customRange ?? null;
     return getPresetRange(selectedPeriod.id);
@@ -350,28 +359,32 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
   }
   const settledPeriod = settledPeriodRef.current;
 
-  // 09-05/D-04: a preset click always clears any applied custom range — setSelectedPeriod({id})
-  // carries no customRange field, so the Custom pill reverts and a reopened popover starts blank.
-  // FilterBar owns the Custom pill's own click (it toggles the popover locally); this handler is
-  // only ever invoked with a preset id.
+  // 09-05/D-04: a preset click always clears any applied custom range — writing a `period` with
+  // no customRange field reverts the Custom pill and a reopened popover starts blank. FilterBar
+  // owns the Custom pill's own click (it toggles the popover locally); this handler is only ever
+  // invoked with a preset id. Phase 12 Plan 03: routed through setHistorySelection (D-02).
   const handleSelectPeriod = (id) => {
-    setSelectedPeriod({ id });
+    setHistorySelection({ period: { id } });
   };
 
-  // 09-05/D-03: fired by the popover's Apply button. This is the ONLY place selectedPeriod gets a
+  // 09-05/D-03: fired by the popover's Apply button. This is the ONLY place the period gets a
   // customRange — the pill's dates and the fetched range therefore cannot diverge by construction
-  // (T-09-19).
+  // (T-09-19). Phase 12 Plan 03: routed through setHistorySelection (D-02).
   const handleApplyCustomRange = (customRange) => {
-    setSelectedPeriod({ id: 'custom', customRange });
+    setHistorySelection({ period: { id: 'custom', customRange } });
   };
 
-  // Phase 10 (HIST-07/08/09): status/type/search filter state, colocated with the period state
-  // above but NOT keyed to it — D-12 requires all three to survive a period switch, so none of
-  // this is derived from or reset by `selectedPeriod`/`range`.
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [query, setQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  // Phase 10 (HIST-07/08/09): status/type/search filters, colocated with the period state above
+  // but NOT keyed to it — D-12 requires all three to survive a period switch, so none of this is
+  // derived from or reset by `selectedPeriod`/`range`. Phase 12 Plan 03: statusFilter/typeFilter/
+  // query now come from the historySelection destructure above; setters route through
+  // setHistorySelection (D-02/D-04). debouncedQuery stays LOCAL — it is a derived UI timing value,
+  // not shared selection — but is seeded from the restored query so the first post-Back render
+  // shows correctly-filtered rows with no one-frame unfiltered flash (Pitfall 4).
+  const [debouncedQuery, setDebouncedQuery] = useState(() => historySelection.query);
+  const setStatusFilter = (v) => setHistorySelection({ statusFilter: v });
+  const setTypeFilter = (v) => setHistorySelection({ typeFilter: v });
+  const setQuery = (v) => setHistorySelection({ query: v });
 
   // D-10: 250ms debounce on typing; clearing/emptying the box applies immediately (no timer) —
   // widening a result set has no cost, and waiting to see MORE reads as broken. Cleanup cancels a
@@ -443,9 +456,9 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
 
   // D-13/D-14: filtersActive selects EmptyBlock's Variant B (filtered-empty copy + Clear Filters)
   // over Variant A (period copy) — a simple boolean, not a new derivation layer. handleClearFilters
-  // resets the three filter axes ONLY; it must never touch selectedPeriod/setSelectedPeriod
-  // (D-12 — period and filters are separate axes; clearing filters must not silently retarget the
-  // fetch).
+  // resets the three filter axes ONLY; it must never touch selectedPeriod/setHistorySelection's
+  // period key (D-12 — period and filters are separate axes; clearing filters must not silently
+  // retarget the fetch).
   const filtersActive = statusFilter !== 'all' || typeFilter !== 'all' || query !== '';
   const handleClearFilters = () => {
     setStatusFilter('all');

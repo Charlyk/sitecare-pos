@@ -85,8 +85,17 @@ export const useAppStore = create(
       // setHistorySelection performs a shallow merge of only the changed key(s) — keeps the
       // period object reference stable on a status/type/query-only update (D-04, reference
       // stability for settledPeriodRef comparison + the range useMemo in screen-history.jsx).
+      // Rule-1 fix: no-op when every patched key already strictly equals its current value (e.g.
+      // re-clicking an already-selected filter pill) — returns {} so the historySelection
+      // reference itself is untouched and selector-subscribed components (HistoryScreen) do not
+      // re-render, matching the bail-out behavior the four local useState calls had before D-01's
+      // lift into this store slice.
       setHistorySelection: (patch) =>
-        set((s) => ({ historySelection: { ...s.historySelection, ...patch } })),
+        set((s) => {
+          const unchanged = Object.keys(patch).every((k) => s.historySelection[k] === patch[k]);
+          if (unchanged) return {};
+          return { historySelection: { ...s.historySelection, ...patch } };
+        }),
       setRole: (role) => set({ role }),
       setLang: (lang) => set({ lang }),
       setAccent: (accent) => set({ accent }),
