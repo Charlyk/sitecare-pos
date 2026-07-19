@@ -65,3 +65,64 @@ describe('normalizeOrder — type boundary mapping (F-02, D-08)', () => {
     expect(result.type).toBe('delivery')
   })
 })
+
+// D-06 backfill — CR-01 (percent-discount 100x-inflation) / CR-02 (tax dropped from fallback
+// total). The underlying fix already shipped (30c89d8 percent-discount, 7d9810b tax); this
+// describe block is test-only regression coverage so the fallback-total path (o.total absent)
+// can never silently regress. All assertions are on RON (post-cRON) outputs, never raw cents.
+describe('normalizeOrder — fallback total + discount (D-06 / CR-01 / CR-02)', () => {
+  test('fallback total INCLUDES tax when o.total is omitted', () => {
+    const result = normalizeOrder({
+      id: 'f1',
+      subtotal: 5000,    // 50.00 RON
+      tax: 500,          // 5.00 RON
+      deliveryFee: 200,  // 2.00 RON
+      // total omitted — forces the fallback recompute path
+    })
+    expect(result.subtotal).toBe(50)
+    expect(result.tax).toBe(5)
+    expect(result.deliveryFee).toBe(2)
+    expect(result.discount).toBe(0)
+    // Tax must NOT be dropped: 50 + 5 + 2 + 0 (tip) - 0 (discount) = 57
+    expect(result.total).toBe(57)
+  })
+
+  test('percent discount is cRON-scaled, not 100x inflated (10% of 96 RON = 9.60)', () => {
+    const result = normalizeOrder({
+      id: 'f2',
+      subtotal: 9600,          // 96.00 RON
+      discountType: 'percent',
+      discountAmount: 1000,    // 10.00% in the SDK's permyriad encoding
+      // total omitted — forces the fallback recompute path
+    })
+    expect(result.subtotal).toBe(96)
+    // The 100x-inflation regression would yield 960 here instead of 9.60
+    expect(result.discount).toBe(9.6)
+    // 96 + 0 (tax) + 0 (deliveryFee) + 0 (tip) - 9.6 (discount) = 86.4, NOT a large negative
+    // number that a 960 discount would produce (96 - 960 = -864).
+    expect(result.total).toBe(86.4)
+  })
+
+  test('combined: fallback total with tax AND percent discount is internally consistent', () => {
+    const result = normalizeOrder({
+      id: 'f3',
+      subtotal: 9600,          // 96.00 RON
+      tax: 500,                // 5.00 RON
+      deliveryFee: 300,        // 3.00 RON
+      tip: 200,                // 2.00 RON
+      discountType: 'percent',
+      discountAmount: 1000,    // 10.00% in the SDK's permyriad encoding
+      // total omitted — forces the fallback recompute path
+    })
+    expect(result.subtotal).toBe(96)
+    expect(result.tax).toBe(5)
+    expect(result.deliveryFee).toBe(3)
+    expect(result.tip).toBe(2)
+    expect(result.discount).toBe(9.6)
+    // Total must equal the sum of these same asserted RON components — closes the
+    // CR-01/CR-02 gap by tying the total assertion directly to the component assertions.
+    const expectedTotal = +(result.subtotal + result.tax + result.deliveryFee + result.tip - result.discount).toFixed(2)
+    expect(result.total).toBe(expectedTotal)
+    expect(result.total).toBe(96.4)
+  })
+})
