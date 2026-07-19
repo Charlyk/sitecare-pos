@@ -4,15 +4,15 @@ milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 12
 current_plan: 4
-status: executing
+status: verifying
 stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
-last_updated: "2026-07-19T20:01:41.653Z"
+last_updated: "2026-07-19T20:13:58.416Z"
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 28
-  completed_plans: 27
-  percent: 83
+  completed_plans: 28
+  percent: 100
 ---
 
 # State: SiteCare POS Desktop App
@@ -49,7 +49,7 @@ before it: 5/5 plans, HIST-04 sealed (all four periods live). Phase 8: 5/5 plans
 Phase 7: 6/6 plans, UAT 26/26. Phase 11 (Reprint + CSV Export — HIST-11/12) is not yet planned.
 
 ```
-Progress: [██████████] 96%
+Progress: [██████████] 100%
 Milestone v1.1 — one phase remaining: Phase 11 (Reprint + CSV Export), not yet planned
 ```
 
@@ -124,6 +124,7 @@ the plan-checker against source.
 | Phase 12 P01 | ~6min | 1 tasks | 1 files |
 | Phase 12 P02 | 4min | 2 tasks | 2 files |
 | Phase 12 P03 | 6min | 2 tasks | 4 files |
+| Phase 12 P04 | ~12min (incl. checkpoint pause) | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -248,10 +249,10 @@ the plan-checker against source.
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Ready to execute
+  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 12-03-PLAN.md
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 12-04-PLAN.md — Phase 12 (4/4 plans) complete; v1.1-MILESTONE-AUDIT.md re-derived to status: passed
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -267,7 +268,7 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-19T20:01:41.646Z
+**Last session:** 2026-07-19T20:13:58.409Z
 **Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
 **Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
 
@@ -354,3 +355,6 @@ the plan-checker against source.
 - [Phase ?]: [Phase 12-03]: historySelection added as a new session-only Zustand slice (add-alongside), mirroring selectedOrder/historyOrder precedent exactly — not a promotion/generalization
 - [Phase ?]: [Phase 12-03]: setScreen's D-03 reset is additive-conditional — screen/selectedOrder/historyOrder stay unconditional; only historySelection gets a target-keyed preserve/reset branch
 - [Phase ?]: [Phase 12-03]: Rule-1 fix — setHistorySelection no-ops when every patched key already strictly equals its current value, preventing spurious re-renders/useHistoryOrders calls on a redundant filter click (zustand's set() always allocates a new top-level object, unlike React's primitive-value setState bail-out)
+- [Phase ?]: [Phase 12-04]: Cited CR-01/CR-02 fix commits by SHA + description rather than relabeling, since the audit's original 'CR-01' (tax) does not match 10-REVIEW.md's own CR-01(percent-discount)/CR-02(tax) numbering
+- [Phase ?]: [Phase 12-04]: Both /gsd-validate-phase runs (10, 11) found zero gaps and reconstructed VALIDATION.md directly from existing VERIFICATION.md/UAT.md evidence, no auditor subagent spawn needed
+- [Phase ?]: [Phase 12-04]: Re-derived v1.1-MILESTONE-AUDIT.md verdict from tech_debt to passed — every CRITICAL/WARNING item resolved with SHA citation and/or live re-verification; only the 3 pre-existing v1.0 test failures remain, explicitly deferred
