@@ -144,3 +144,9 @@ v1.1's milestone audit now reads `status: passed` with zero open CRITICAL/WARNIN
 ---
 *Phase: 12-close-cr-01-tax-in-fallback-total-hist-06-traceability-wr-01*
 *Completed: 2026-07-19*
+
+## Self-Check: PASSED
+
+All claimed files found on disk (`v1.1-MILESTONE-AUDIT.md`, `10-VALIDATION.md`, `11-VALIDATION.md`,
+`12-04-SUMMARY.md`). All claimed commit hashes found in git log (`700ea0d`, `df11653`, `5c812f2`,
+`743e74e`).
