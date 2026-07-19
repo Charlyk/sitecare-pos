@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 12
-current_plan: 4
-status: verifying
+current_plan: Not started
+status: completed
 stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
-last_updated: "2026-07-19T20:13:58.416Z"
+last_updated: "2026-07-19T20:24:30.331Z"
 progress:
   total_phases: 6
   completed_phases: 6
@@ -37,7 +37,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-18)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 12
-**Current Plan:** 4
+**Current Plan:** Not started
 **Total Plans in Phase:** 4
 **Overall Status:** Phase 10 (Filters + Search) COMPLETE — 4/4 plans, HIST-07/08/09 sealed, UAT 2/2
 (both human-judgment checkpoints — two-row FilterBar wrap at 1440×900, and debounced-search "feels
@@ -249,7 +249,7 @@ the plan-checker against source.
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
+  derives that key from a body-level `Status:`/`**Status:**All phases complete
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
   sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 12-04-PLAN.md — Phase 12 (4/4 plans) complete; v1.1-MILESTONE-AUDIT.md re-derived to status: passed
