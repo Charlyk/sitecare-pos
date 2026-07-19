@@ -184,3 +184,4 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 
 *Last updated: 2026-07-19 after Phase 11 — Reprint + CSV Export complete; HIST-11, HIST-12 validated. Milestone v1.1 (Orders History Screen) — all 5 phases (7–11) and 13 requirements delivered.*
+*Phase 12 (2026-07-19) — v1.1 tech-debt closeout: History filter/period/search selection lifted into a session-only Zustand slice (survives History→detail→Back, resets on leave); D-06 normalizeOrder fallback-total + percent-discount regression tests backfilled; HIST-06 traceability fixed; CR-01/WR-01/G-07-1 verified already-fixed (code + live check); Phase 10/11 Nyquist validations promoted; milestone audit re-derived to `passed`. No new requirements. v1.1 ready for `/gsd-complete-milestone`.*
