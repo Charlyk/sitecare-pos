@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Orders History Screen
 current_phase: 12
-current_plan: 2
+current_plan: 3
 status: executing
 stopped_at: Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
-last_updated: "2026-07-19T19:51:52.093Z"
+last_updated: "2026-07-19T19:54:08.742Z"
 progress:
   total_phases: 6
   completed_phases: 5
   total_plans: 28
-  completed_plans: 25
+  completed_plans: 26
   percent: 83
 ---
 
@@ -37,7 +37,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-18)
 
 **Milestone:** v1.1 Orders History Screen — STARTED 2026-05-27, REPLANNED 2026-07-16, RESTRUCTURED 2026-07-17
 **Current Phase:** 12
-**Current Plan:** 2
+**Current Plan:** 3
 **Total Plans in Phase:** 4
 **Overall Status:** Phase 10 (Filters + Search) COMPLETE — 4/4 plans, HIST-07/08/09 sealed, UAT 2/2
 (both human-judgment checkpoints — two-row FilterBar wrap at 1440×900, and debounced-search "feels
@@ -49,7 +49,7 @@ before it: 5/5 plans, HIST-04 sealed (all four periods live). Phase 8: 5/5 plans
 Phase 7: 6/6 plans, UAT 26/26. Phase 11 (Reprint + CSV Export — HIST-11/12) is not yet planned.
 
 ```
-Progress: [█████████░] 89%
+Progress: [█████████░] 93%
 Milestone v1.1 — one phase remaining: Phase 11 (Reprint + CSV Export), not yet planned
 ```
 
@@ -122,6 +122,7 @@ the plan-checker against source.
 | Phase 11 P03 | 5min | 2 tasks | 4 files |
 | Phase 11 P04 | ~15min | 2 tasks | 2 files |
 | Phase 12 P01 | ~6min | 1 tasks | 1 files |
+| Phase 12 P02 | 4min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -249,7 +250,7 @@ the plan-checker against source.
   derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 12-01-PLAN.md
+  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Completed 12-02-PLAN.md
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -265,7 +266,7 @@ the plan-checker against source.
 
 **Resume file:** None
 
-**Last session:** 2026-07-19T19:51:52.086Z
+**Last session:** 2026-07-19T19:54:08.735Z
 **Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
 **Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
 
@@ -348,3 +349,4 @@ the plan-checker against source.
 - [Phase ?]: [Phase 11-04]: Export button's disabled/dimmed/tooltip state is now fully data-driven (visible.length === 0), replacing Phase 10's permanently-inert flag
 - [Phase ?]: [Phase 12-01]: Verify-and-backfill only (D-05) — src/data.jsx left untouched; the CR-01/CR-02 fixes shipped earlier (30c89d8, 7d9810b), this plan adds the missing D-06 regression tests only
 - [Phase ?]: [Phase 12-01]: Third test case ties the total assertion to the same asserted component fields (subtotal/tax/deliveryFee/tip/discount) rather than a hardcoded total, making the internal-consistency check structurally enforced
+- [Phase ?]: [Phase 12-02]: D-09 HIST-06 traceability gap closed — 07-VERIFICATION.md and 07-04-SUMMARY.md edited to match already-correct REQUIREMENTS.md; REQUIREMENTS.md left untouched

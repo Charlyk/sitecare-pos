@@ -222,13 +222,13 @@ Plans:
 **Goal:** Close the v1.1 tech-debt surfaced by the milestone audit so v1.1 re-derives toward a clean `passed`: lift History's period/status/type/search selection into a session-only Zustand slice so it survives the History→detail→Back round-trip (resets on leave), backfill the missing `normalizeOrder` fallback-total + percent-discount regression tests, fix the HIST-06 verification traceability, verify CR-01/WR-01/G-07-1 are already fixed (code + live check), promote the Phase 10/11 Nyquist validations, and correct the milestone audit in place.
 **Requirements**: None (tech-debt closeout; traceability-only touch of HIST-06 via D-09; work tracked by CONTEXT decisions D-01…D-10)
 **Depends on:** Phase 11
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 **Wave 1**
 
 - [x] 12-01-PLAN.md — D-06 `normalizeOrder` fallback-total + percent-discount regression tests (verify-only backfill)
-- [ ] 12-02-PLAN.md — D-09 HIST-06 traceability fix in 07-VERIFICATION.md + 07-04-SUMMARY.md (doc-only)
+- [x] 12-02-PLAN.md — D-09 HIST-06 traceability fix in 07-VERIFICATION.md + 07-04-SUMMARY.md (doc-only)
 - [ ] 12-03-PLAN.md — D-01…D-04 lift History selection into a session-only `historySelection` store slice + setScreen reset + test-mock fix (the one code change)
 
 **Wave 2** *(blocked on Wave 1 completion)*
