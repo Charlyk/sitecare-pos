@@ -15,22 +15,55 @@
 // loop (RESEARCH Anti-Patterns). The `keepPreviousData` placeholder option (D-05) means the raw
 // useQuery result is returned unwrapped, so callers can read `isPlaceholderData`/`isFetching`
 // directly during a range switch (D-05/D-06).
+//
+// TEMP DIAGNOSTIC (windows-history-network-error, .planning/debug/): the thrown Error is enriched
+// with a non-breaking `.diagnostic` property so screen-history.jsx's ErrorBlock can surface the
+// real failure on machines where DevTools is unavailable (a live production Windows box). Per the
+// SDK's own request() implementation (dist/index.mjs:655-777, throwOnError never set so always
+// falsy here — confirmed via grep, .npmrc/auth.jsx do not set it): a genuine network-level failure
+// (fetch() itself rejects — DNS, connection reset, CORS, a WebView2 net::ERR_* abort) resolves
+// `result.response` to `undefined`; a real HTTP response (2xx/4xx/5xx) always sets
+// `result.response` to the actual fetch Response with `.status`. That presence/absence is the
+// discriminator between "never reached the server" and "reached the server, got an error status" —
+// information the previous `throw new Error(result.error.error ?? 'Failed to load history')` threw
+// away entirely. The second optional arg (`enabled`) lets screen-history.jsx run this SAME hook a
+// second time, on-error, as a small-range diagnostic probe — see screen-history.jsx.
+// Remove this diagnostic (revert to the plain two-line queryFn) once the session resolves.
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useAuth } from './auth.jsx';
 import { normalizeOrder } from './data.jsx';
 
-export function useHistoryOrders({ from, to }) {
+export function useHistoryOrders({ from, to }, { enabled: extraEnabled = true } = {}) {
   const { client } = useAuth();
 
   return useQuery({
     queryKey: ['history-orders', from, to],
     queryFn: async () => {
+      const startedAt = Date.now();
       const result = await client.admin.orders.list({ query: { from, to } });
-      if (result.error) throw new Error(result.error.error ?? 'Failed to load history');
+      const ms = Date.now() - startedAt;
+      if (result.error) {
+        const status = result.response?.status;
+        const message =
+          (typeof result.error === 'string' ? result.error : result.error?.error) ??
+          result.error?.message ??
+          (status ? `HTTP ${status}` : 'Failed to load history');
+        const err = new Error(message);
+        err.diagnostic = {
+          // 'http' = request reached the server and got a real (non-2xx) response.
+          // 'network' = fetch() itself rejected before any response was received.
+          kind: result.response ? 'http' : 'network',
+          status,
+          statusText: result.response?.statusText,
+          errorName: result.error?.name,
+          ms,
+        };
+        throw err;
+      }
       return (result.data?.orders ?? []).map(normalizeOrder);
     },
-    enabled: !!client && !!from && !!to,
+    enabled: !!client && !!from && !!to && extraEnabled,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
   });

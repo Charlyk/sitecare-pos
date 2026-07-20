@@ -99,6 +99,19 @@ function makeOrder(overrides = {}) {
 
 const noop = () => {}
 
+// TEMP DIAGNOSTIC (windows-history-network-error, .planning/debug/): HistoryScreen now calls
+// useHistoryOrders a second time per render — the small-range diagnostic probe (see
+// screen-history.jsx) — in addition to the primary range call. The probe is always invoked with a
+// second argument (`{ enabled }`); the primary call is always invoked with exactly one argument.
+// This helper reads back only the latest PRIMARY-call argument, so probe-call entries appended
+// after it in `.mock.calls` (source order: primary call first, probe call second) never shadow it.
+// Remove this helper (and revert every call site below to the plain
+// `useHistoryOrders.mock.calls[...length - 1][0]` form) once the diagnostic is removed.
+function lastPrimaryCallArg() {
+  const primaryCalls = useHistoryOrders.mock.calls.filter((c) => c.length === 1)
+  return primaryCalls[primaryCalls.length - 1][0]
+}
+
 describe('HistoryScreen', () => {
   describe('loading state', () => {
     test('renders 6-8 skeleton rows, no day headers, tiles present, header labels render', () => {
@@ -272,7 +285,7 @@ describe('period pills — live (HIST-04)', () => {
     render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
 
     const expected = getPresetRange('30')
-    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const callArg = lastPrimaryCallArg()
     // The clock in getPresetRange('30') and the one HistoryScreen resolved with are both "now" —
     // assert same-day `to` boundary rather than exact string equality across two separate Date()
     // constructions (avoids test flakiness at a midnight boundary).
@@ -302,7 +315,7 @@ describe('period pills — live (HIST-04)', () => {
     fireEvent.click(sevenPill)
 
     const expected = getPresetRange('7')
-    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const callArg = lastPrimaryCallArg()
     expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
     expect(callArg.from.slice(0, 10)).toBe(expected.from.slice(0, 10))
 
@@ -319,7 +332,7 @@ describe('period pills — live (HIST-04)', () => {
     fireEvent.click(todayPill)
 
     const expected = getPresetRange('today')
-    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const callArg = lastPrimaryCallArg()
     expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
     expect(callArg.from.slice(0, 10)).toBe(expected.from.slice(0, 10))
   })
@@ -328,9 +341,9 @@ describe('period pills — live (HIST-04)', () => {
     useHistoryOrders.mockReturnValue({ data: [], isLoading: false, isError: false, isFetching: false, isPlaceholderData: false, isSuccess: true, refetch: vi.fn() })
     const { rerender } = render(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
 
-    const firstArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const firstArg = lastPrimaryCallArg()
     rerender(createElement(HistoryScreen, { lang: 'ro', onOpenOrder: noop, isOffline: false }))
-    const secondArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const secondArg = lastPrimaryCallArg()
 
     expect(secondArg.from).toBe(firstArg.from)
     expect(secondArg.to).toBe(firstArg.to)
@@ -673,7 +686,7 @@ describe('Custom range popover wiring — D-03/D-04 (09-05)', () => {
     applyRange('2026-03-03', '2026-03-17')
 
     const expected = customRangeToQuery('2026-03-03', '2026-03-17')
-    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const callArg = lastPrimaryCallArg()
     expect(callArg).toEqual(expected)
     expect(screen.queryByTestId('history-range-popover')).toBeNull()
   })
@@ -736,7 +749,7 @@ describe('Custom range popover wiring — D-03/D-04 (09-05)', () => {
 
     applyRange('2026-03-10', '2026-03-10')
 
-    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const callArg = lastPrimaryCallArg()
     expect(new Date(callArg.to).getTime() - new Date(callArg.from).getTime()).toBe(24 * 60 * 60 * 1000)
 
     const customPill = getCustomPill()
@@ -754,7 +767,7 @@ describe('Custom range popover wiring — D-03/D-04 (09-05)', () => {
     fireEvent.click(sevenPill)
 
     const expected = getPresetRange('7')
-    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const callArg = lastPrimaryCallArg()
     expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
     expect(callArg.from.slice(0, 10)).toBe(expected.from.slice(0, 10))
     expect(sevenPill.style.background).toBe('var(--sc-foreground)')
@@ -791,7 +804,7 @@ describe('Custom range popover wiring — D-03/D-04 (09-05)', () => {
     expect(customPill.textContent).toBe('Interval')
 
     const expected = getPresetRange('30')
-    const callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const callArg = lastPrimaryCallArg()
     expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
     expect(callArg.from.slice(0, 10)).toBe(expected.from.slice(0, 10))
   })
@@ -806,13 +819,13 @@ describe('Custom range popover wiring — D-03/D-04 (09-05)', () => {
     // Apply a custom range: Custom pill now shows dates, matching the live fetched range.
     applyRange('2026-03-03', '2026-03-17')
     expect(getCustomPill().textContent).toContain('–')
-    let callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    let callArg = lastPrimaryCallArg()
     expect(callArg).toEqual(customRangeToQuery('2026-03-03', '2026-03-17'))
 
     // Switch to a preset: Custom pill reverts to the static label, matching the (now preset) live range.
     fireEvent.click(screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile'))
     expect(getCustomPill().textContent).toBe('Interval')
-    callArg = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    callArg = lastPrimaryCallArg()
     const expected = getPresetRange('7')
     expect(callArg.to.slice(0, 10)).toBe(expected.to.slice(0, 10))
   })
@@ -925,7 +938,7 @@ describe('Phase 10 integration — faceting, debounce, filtered recompute, empty
     // Switch to the 7-day period first.
     const sevenPill = screen.getAllByTestId('history-period-pill').find((p) => p.textContent === '7 zile')
     fireEvent.click(sevenPill)
-    const rangeBeforeClear = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const rangeBeforeClear = lastPrimaryCallArg()
 
     // Land on the filtered-empty state (no completed orders in this fixture) and Clear Filters.
     // Selecting a status pill and clicking Clear Filters both re-render HistoryScreen (so
@@ -936,7 +949,7 @@ describe('Phase 10 integration — faceting, debounce, filtered recompute, empty
     expect(screen.getByText('Nicio comandă nu se potrivește cu filtrele active.')).toBeTruthy()
     fireEvent.click(screen.getByText('Șterge filtrele'))
 
-    const rangeAfterClear = useHistoryOrders.mock.calls[useHistoryOrders.mock.calls.length - 1][0]
+    const rangeAfterClear = lastPrimaryCallArg()
     expect(rangeAfterClear).toEqual(rangeBeforeClear)
     expect(sevenPill.style.background).toBe('var(--sc-foreground)')
   })

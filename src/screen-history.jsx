@@ -162,7 +162,16 @@ function SkeletonRow() {
   );
 }
 
-function ErrorBlock({ t, onRetry }) {
+// TEMP DIAGNOSTIC (windows-history-network-error, .planning/debug/): appends a small monospace
+// block below the existing (unchanged) "Couldn't load history / Check connection" copy, ONLY when
+// `error.diagnostic` is present (see use-history-orders.js). Never replaces or conditions the
+// existing two lines/retry button — this is strictly additive so normal UX is unaffected on every
+// other error path and every other screen. `probe*` props reflect a second, small-range
+// (getPresetRange('today')) fetch against the SAME endpoint, fired only once a real error has
+// occurred and only when the failing range wasn't already 'today' — see screen-history.jsx's
+// HistoryScreen body. Remove this block (and the probe wiring) once the session resolves.
+function ErrorBlock({ t, onRetry, error, probeEnabled, probeIsError, probeIsSuccess, probeError }) {
+  const diag = error?.diagnostic;
   return (
     <div style={{ textAlign: 'center', padding: 56, color: 'var(--sc-muted-foreground)' }}>
       <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--sc-foreground)' }}>{t('h_error_title')}</div>
@@ -170,6 +179,27 @@ function ErrorBlock({ t, onRetry }) {
       <button className="btn-secondary" style={{ marginTop: 16 }} onClick={onRetry}>
         <Icon name="refresh" size={14} /> {t('h_retry')}
       </button>
+      {diag && (
+        <div style={{ marginTop: 16, fontSize: 11, fontFamily: 'monospace', color: 'var(--sc-muted-foreground)', opacity: 0.75, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
+          <div>
+            {t('h_diag_prefix')} {diag.kind}
+            {diag.status ? ` ${diag.status}${diag.statusText ? ` ${diag.statusText}` : ''}` : ''}
+            {' · '}{error.message}
+            {diag.errorName ? ` (${diag.errorName})` : ''}
+            {' · '}{diag.ms}ms
+          </div>
+          {probeEnabled && probeIsSuccess && <div style={{ marginTop: 4 }}>{t('h_diag_probe_ok')}</div>}
+          {probeEnabled && probeIsError && (
+            <div style={{ marginTop: 4 }}>
+              {t('h_diag_probe_fail')} {probeError?.diagnostic?.kind ?? ''}
+              {probeError?.diagnostic?.status ? ` ${probeError.diagnostic.status}` : ''}
+              {' · '}{probeError?.message}
+              {probeError?.diagnostic?.errorName ? ` (${probeError.diagnostic.errorName})` : ''}
+              {' · '}{probeError?.diagnostic?.ms}ms
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -338,7 +368,20 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
     if (selectedPeriod.id === 'custom') return selectedPeriod.customRange ?? null;
     return getPresetRange(selectedPeriod.id);
   }, [selectedPeriod]);
-  const { data, isLoading, isError, isFetching, isPlaceholderData, isSuccess, refetch } = useHistoryOrders(range ?? {});
+  const { data, isLoading, isError, isFetching, isPlaceholderData, isSuccess, refetch, error } = useHistoryOrders(range ?? {});
+
+  // TEMP DIAGNOSTIC (windows-history-network-error, .planning/debug/): on a real fetch failure,
+  // silently re-run the SAME query hook against the smallest possible range (today only) to
+  // discriminate a response-size/duration-related failure from an endpoint-wide failure — without
+  // needing DevTools on the machine that's actually failing. Read-only GET, fires at most once per
+  // error (its own query key is cached independently), never retried (see useHistoryOrders's
+  // default retry behavior is untouched — TanStack Query's default IS retry:3, so this can fire up
+  // to 4 requests total on a genuine failure; acceptable for a diagnostic build, remove after).
+  // Guarded off when the failing range already IS 'today' — re-probing the identical range/key
+  // would just read back the same cached failure and prove nothing.
+  const probeRange = useMemo(() => getPresetRange('today'), []);
+  const probeEnabled = isError && selectedPeriod.id !== 'today';
+  const { isError: probeIsError, isSuccess: probeIsSuccess, error: probeError } = useHistoryOrders(probeRange, { enabled: probeEnabled });
 
   // D-06/WR-03 (09-REVIEW.md): settledPeriod tracks the range that actually PRODUCED the visible
   // data — advances only once the query succeeds with real (non-placeholder) data. Every
@@ -511,7 +554,17 @@ export function HistoryScreen({ lang, onOpenOrder, isOffline }) {
       <div className="card" style={{ overflow: 'hidden' }}>
         <TableHeaderRow t={t} />
         {isLoading && Array.from({ length: 7 }).map((_, i) => <SkeletonRow key={i} />)}
-        {!isLoading && isError && <ErrorBlock t={t} onRetry={() => refetch()} />}
+        {!isLoading && isError && (
+          <ErrorBlock
+            t={t}
+            onRetry={() => refetch()}
+            error={error}
+            probeEnabled={probeEnabled}
+            probeIsError={probeIsError}
+            probeIsSuccess={probeIsSuccess}
+            probeError={probeError}
+          />
+        )}
         {!isLoading && !isError && isEmpty && (
           <EmptyBlock
             t={t}
