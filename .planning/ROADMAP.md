@@ -10,7 +10,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1–6 (shipped 2026-05-22)
 - ✅ **v1.1 Orders History Screen** — Phases 7–12 (shipped 2026-07-19)
-- 📋 **v1.2** — planning next (`/gsd-new-milestone`)
+- 🚧 **v1.2 Branch Switching** — Phases 13–17 (in progress)
 
 ---
 
@@ -44,9 +44,81 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
 
 </details>
 
-### 📋 v1.2 (Planning)
+### 🚧 v1.2 Branch Switching (Phases 13–17, in progress)
 
-Next milestone not yet scoped. Run `/gsd-new-milestone` to define requirements and phases.
+**Milestone Goal:** Make the POS app branch-aware — staff can see and switch the active branch, and every screen plus the live SSE stream follow the selected branch. Built against the API's v2.6 "Tenant Branching" model, where the active branch is server-side session state — no header or param — so every existing SDK call auto-scopes to it.
+
+- [ ] **Phase 13: Branch State & Launch Seeding Foundation** - Seed the current branch and the accessible-branch list from the session on sign-in and cold start
+- [ ] **Phase 14: Branch-Scoped Cache Re-Scoping** - Key every branch-scoped data cache to the active branch
+- [ ] **Phase 15: SSE Branch-Aware Reconnect** - Reconnect the live order stream scoped to the new branch on every switch
+- [ ] **Phase 16: Branch Switcher UI, Switch Flow & Language Relocation** - Sidebar branch switcher with a non-optimistic switch flow; RO/EN control relocates to Settings
+- [ ] **Phase 17: Centralized Branch-Access Error Handling** - Route every branch-access 403, from the switch call or any later request, through one recovery path
+
+---
+
+## Phase Details
+
+### Phase 13: Branch State & Launch Seeding Foundation
+**Goal**: The app resolves and holds the current active branch — and the list of branches the user can switch to — from server session state on every sign-in and cold start, never from local persistence.
+**Depends on**: Nothing (first phase of v1.2)
+**Requirements**: BSTATE-01, BSTATE-02
+**Success Criteria** (what must be TRUE):
+  1. After an interactive sign-in, the current branch (from `client.auth.getMe().selectedBranch`) is held in session-only app state.
+  2. After restarting the app with a remembered session (no interactive sign-in), the current branch is populated the same way — the cold-start path gains this call rather than staying null.
+  3. The accessible-branches list loads via `client.me.branches.list()` and refetches on window focus and after any branch-access error; it is never cached indefinitely.
+  4. No branch field is written to persisted preferences — restarting always re-derives the branch from the server, never from a locally cached value.
+  5. Standing regression: a single-branch tenant's sign-in and cold-start flow behaves exactly as pre-v1.2, with no added delay or new blank state.
+**Plans**: TBD
+
+### Phase 14: Branch-Scoped Cache Re-Scoping
+**Goal**: Every branch-scoped data cache is keyed to the active branch, so no cached response can be served against the wrong branch once switching exists.
+**Depends on**: Phase 13
+**Requirements**: SCOPE-01
+**Success Criteria** (what must be TRUE):
+  1. Orders, order detail, stats, product availability, order history, restaurant settings, and delivery-area data are all cached per branch, so a branch change is guaranteed to produce a fresh fetch rather than a stale hit from another branch.
+  2. Order mutations (accept/advance/cancel, POS submit) invalidate only the active branch's cache entries, never a different branch's.
+  3. Every branch-scoped data-fetch error carries a matchable error code (e.g. `BRANCH_INACTIVE`) that a later centralized handler can act on.
+  4. Standing regression: a single-branch tenant's order list loads with no added delay versus pre-v1.2 — branch resolution never blocks the initial fetch.
+**Plans**: TBD
+
+**Planning note (decide during this phase, not before):** research offers two viable re-scoping mechanisms — branchId-keyed query keys (e.g. `['orders', branchId]`) vs. a blunt `queryClient.resetQueries()` on switch success. Pick one explicitly and apply it uniformly across all seven hooks; do not mix both ad hoc.
+
+### Phase 15: SSE Branch-Aware Reconnect
+**Goal**: The live order stream always reflects the currently active branch, reconnecting immediately on a switch rather than waiting on the library's passive retry.
+**Depends on**: Phase 14
+**Requirements**: SCOPE-02
+**Success Criteria** (what must be TRUE):
+  1. A branch switch causes the live connection to visibly reconnect (drop and recover) within about a second, scoped to the new branch — not on the library's own backoff timetable.
+  2. The Kitchen Display and the order list both receive the new branch's live events after a switch, confirmed against a second live session on that branch.
+  3. Reconnecting after a branch switch never fires the sound alert for orders that were already open on the new branch — the initial snapshot replay stays silent.
+  4. Standing regression: a single-branch tenant's live connection behaves exactly as before v2.6 — connects once, stays connected, no extra reconnect cycles.
+**Plans**: TBD
+
+**Planning note (flagged, not resolved here):** the exact 403 signal shape `fetchEventSource`'s `onopen`/`onerror` path surfaces for a branch-resolution failure (vs. a generic non-2xx or network drop) is unverified from documentation alone. If this phase's own testing surfaces it, note the shape for Phase 17; otherwise treat it as a Phase 17 build-time verification item.
+
+### Phase 16: Branch Switcher UI, Switch Flow & Language Relocation
+**Goal**: Staff can see and change the active branch from the sidebar footer, with every screen and the live stream following only after the server confirms the switch — and the vacated language control keeps working from Settings.
+**Depends on**: Phase 13, Phase 14, Phase 15
+**Requirements**: SWCH-01, SWCH-02, SWCH-03, SWCH-04, SCOPE-03, SCOPE-04, LANG-01
+**Success Criteria** (what must be TRUE):
+  1. The sidebar footer shows a branch selector in the exact position the RO/EN toggle used to occupy, displaying the current branch name and a "default" badge for the tenant's default branch.
+  2. For a single-branch tenant, the selector renders read-only with no dropdown affordance — pre-v2.6 behavior preserved exactly.
+  3. Selecting a different branch disables the control until `client.me.branches.switch` resolves; the displayed branch, every branch-scoped data view, and the live stream all update only after success — a rejected switch leaves the app on the old branch with nothing changed beyond an error notice.
+  4. A successful switch shows a "switched to `<branch>`" confirmation toast, exits any open order-detail view back to a neutral screen, and discards any in-progress POS cart so no prior-branch state carries forward; order-affecting actions (Ring Up, Accept, Advance, Cancel, Reprint) stay disabled for the duration of a pending switch.
+  5. The RO/EN language toggle no longer appears in the sidebar footer; language remains changeable from Settings → Afișaj with no loss of capability.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 17: Centralized Branch-Access Error Handling
+**Goal**: Any branch-access failure — from the switch call itself or from any later ordinary request — recovers through one consistent, visible path instead of surfacing as a generic or silent failure.
+**Depends on**: Phase 14, Phase 16
+**Requirements**: BERR-01, BERR-02, BERR-03, BERR-04
+**Success Criteria** (what must be TRUE):
+  1. A `BRANCH_INACTIVE` or `BRANCH_ACCESS_REVOKED` 403 returned by the switch call itself produces a toast, reopens the branch switcher, and refetches the branch list — the app stays on the previously selected branch with no other change.
+  2. The identical recovery (toast, reopened switcher, refetched branch list) also fires when the same 403 codes arrive from any later ordinary request — an order refetch, a mutation, a stream reconnect — not only from a switch attempt.
+  3. A `NO_BRANCH_ACCESS` 403 produces a distinct blocking state that takes over the entire app until access is restored, rather than the toast-and-reopen treatment used for the other two codes.
+  4. Returning to the app after it regains focus revalidates the selected branch, surfacing a branch change or access revocation made on another device through the same recovery path.
+**Plans**: TBD
 
 ---
 
@@ -66,8 +138,13 @@ Next milestone not yet scoped. Run `/gsd-new-milestone` to define requirements a
 | 10. Filters + Search | v1.1 | 4/4 | Complete | 2026-07-18 |
 | 11. Reprint + CSV Export | v1.1 | 4/4 | Complete | 2026-07-19 |
 | 12. Tech-Debt Closeout | v1.1 | 4/4 | Complete | 2026-07-19 |
+| 13. Branch State & Launch Seeding Foundation | v1.2 | 0/TBD | Not started | - |
+| 14. Branch-Scoped Cache Re-Scoping | v1.2 | 0/TBD | Not started | - |
+| 15. SSE Branch-Aware Reconnect | v1.2 | 0/TBD | Not started | - |
+| 16. Branch Switcher UI, Switch Flow & Language Relocation | v1.2 | 0/TBD | Not started | - |
+| 17. Centralized Branch-Access Error Handling | v1.2 | 0/TBD | Not started | - |
 
 ---
 
 *Roadmap created: 2026-04-22*
-*Last updated: 2026-07-19 — v1.1 Orders History Screen shipped (Phases 7–12); milestone archived to `.planning/milestones/v1.1-ROADMAP.md`*
+*Last updated: 2026-07-21 — v1.2 Branch Switching roadmap created (Phases 13–17); 15/15 requirements mapped, no orphans.*

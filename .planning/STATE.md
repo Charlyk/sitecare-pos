@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Branch Switching
-status: planning
-last_updated: "2026-07-21T11:15:02.684Z"
+status: ready_to_plan
+last_updated: "2026-07-21T12:00:00.000Z"
 last_activity: 2026-07-21
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,10 +21,10 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-07-19 after v1.1 milestone)
+See: `.planning/PROJECT.md` (updated 2026-07-21 — v1.2 Branch Switching milestone started)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Planning next milestone (v1.2) — run `/gsd-new-milestone`
+**Current focus:** v1.2 Branch Switching — roadmap created (Phases 13–17), ready to plan Phase 13
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -47,10 +47,12 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-07-21 — Milestone v1.2 started
+Phase: 13 of 17 (Branch State & Launch Seeding Foundation) — v1.2 roadmap created, not yet planned
+Plan: — (no plans yet; run `/gsd-plan-phase 13`)
+Status: Ready to plan
+Last activity: 2026-07-21 — v1.2 ROADMAP.md created: 5 phases (13–17), 15/15 requirements mapped, no orphans
+
+Progress: [░░░░░░░░░░] 0% (v1.2)
 
 ## Phase Summary
 
@@ -65,8 +67,14 @@ Last activity: 2026-07-21 — Milestone v1.2 started
 | 7 | History Screen Foundation | Complete — 6/6 plans, UAT 26/26, human-verified 2026-07-17 — HIST-01, HIST-02, HIST-03, HIST-05, HIST-06, HIST-13 |
 | 8 | Read-Only Order Detail View | Complete — 5/5 plans, UAT 20/20, security verified, human-verified 2026-07-17 — HIST-10 |
 | 9 | Period Control | Complete — 5/5 plans, human checkpoint approved 2026-07-17 — HIST-04 (all four periods live: Today/7/30/Custom) |
-| 10 | Filters + Search | Planned — 4 plans ready to execute — HIST-07, HIST-08, HIST-09 (was Phase 9) |
-| 11 | Reprint + CSV Export | Not started — HIST-11, HIST-12 (was Phase 10) |
+| 10 | Filters + Search | Complete — 4/4 plans, UAT 2/2 passed, human-verified 2026-07-18 — HIST-07, HIST-08, HIST-09 |
+| 11 | Reprint + CSV Export | Complete — 4/4 plans, human-verified 2026-07-19 — HIST-11, HIST-12 |
+| 12 | Tech-Debt Closeout | Complete — 4/4 plans, human-verified 2026-07-19 — milestone audit re-derived to `passed` |
+| 13 | Branch State & Launch Seeding Foundation | Not started — BSTATE-01, BSTATE-02 |
+| 14 | Branch-Scoped Cache Re-Scoping | Not started — SCOPE-01 |
+| 15 | SSE Branch-Aware Reconnect | Not started — SCOPE-02 |
+| 16 | Branch Switcher UI, Switch Flow & Language Relocation | Not started — SWCH-01, SWCH-02, SWCH-03, SWCH-04, SCOPE-03, SCOPE-04, LANG-01 |
+| 17 | Centralized Branch-Access Error Handling | Not started — BERR-01, BERR-02, BERR-03, BERR-04 |
 
 ---
 
@@ -75,9 +83,11 @@ Last activity: 2026-07-21 — Milestone v1.2 started
 | Metric | Value |
 |--------|-------|
 | Phases completed (v1.0) | 6 / 6 |
-| Phases completed (v1.1) | 2 / 5 |
+| Phases completed (v1.1) | 6 / 6 |
+| Phases completed (v1.2) | 0 / 5 |
 | Requirements done (v1.0) | 41 / 41 |
-| Requirements done (v1.1) | 8 / 13 |
+| Requirements done (v1.1) | 13 / 13 |
+| Requirements done (v1.2) | 0 / 15 |
 | Sessions | 14 |
 
 ---
@@ -176,6 +186,13 @@ Last activity: 2026-07-21 — Milestone v1.2 started
 - **Filter state resets on navigation** — acceptable for v1.1; document as known behavior, not a bug.
 - **History screen added to Zustand `screen` enum** — 'history' added alongside 'orders', 'kds', 'pos', 'menu', 'settings'; Zustand partialize rules carry forward unchanged.
 
+### v1.2 Key Decisions (roadmap-stage)
+
+- **Roadmap derived from reconciled research (SUMMARY/ARCHITECTURE/PITFALLS, all 2026-07-21)** — 5 phases (13–17), sequenced by the load-bearing dependency chain: state/seed → cache re-scoping → SSE reconnect → switcher UI/switch flow → centralized 403 handling. LANG-01 folded into Phase 16 (same sidebar-footer surface as the switcher) rather than given its own single-requirement phase, per granularity guidance; sequenced as the last item within that phase so it never blocks the functional branch work.
+- **Two decisions deliberately left open for phase planning, not resolved by the roadmap:** (a) Phase 14 — branchId-keyed query keys vs. `queryClient.resetQueries()` as the cache re-scoping mechanism; (b) Phase 15 — the exact 403 signal shape `fetchEventSource`'s `onopen`/`onerror` surfaces for a branch-resolution failure (may need a build-time spike).
+- **`currentBranch` and the accessible-branches list are session-only, never persisted** (mirrors D-09/D-10 from Pitfalls research) — always re-derived from `client.auth.getMe()` / `client.me.branches.list()`, never added to `store.js`'s `partialize`.
+- **Single-branch-tenant regression is a standing verification item across all 5 phases**, not a one-time check — re-run login → orders → KDS → POS after every phase using a one-branch fixture.
+
 ### Open Questions (from research)
 
 - ~~Does `@charlyk/admin-client` manage SSE auth internally (cookies) or expose a raw URL requiring Bearer?~~ — RESOLVED (Phase 2 context): SDK uses its own async-generator SSE client (not native `EventSource`), so Bearer headers can be sent through it. Safe for Phase 3 SSE wiring.
@@ -185,18 +202,25 @@ Last activity: 2026-07-21 — Milestone v1.2 started
 - ~~**v1.1:** Does the admin token have access to `/v1/orders/{id}` (kitchen endpoint)? If 401 on getOrder, detail view must fall back to AdminOrder summary fields only.~~ — RESOLVED (Phase 8 UAT, 2026-07-17): confirmed by human verification against the live API — opening a historical order hydrates via `getOrder(id)` and renders items, modifiers, phone, and address. No 401; no summary-only fallback needed. The merge-over-summary design (D-03) means a future 401 would degrade to summary fields rather than blanking.
 - ~~**v1.1:** What timezone does the API treat `from`/`to` date params as? Verify Romanian orders appear on the correct calendar day.~~ — RESOLVED (07-06 human verification, 2026-07-17): confirmed by human verification against the live API — orders land under their correct Romanian calendar day, and the oldest day header is ~30 days back. The API's `from`/`to` params behave correctly for Romanian local calendar days.
 - ~~**v1.1:** `AdminOrder.total` units (cents vs RON) — needs live API confirmation.~~ — RESOLVED (07-06 human verification, 2026-07-17): confirmed by human verification against the live API — total is in RON (the day-header revenue subtotal matched the SiteCare admin dashboard, i.e. NOT off by 100×). No `normalizeOrder` change needed.
+- **v1.2:** Phase 14 — branchId-keyed query keys vs. `queryClient.resetQueries()`; decide explicitly during that phase's planning (see v1.2 Key Decisions above).
+- **v1.2:** Phase 15 — confirm the actual `fetchEventSource` `onopen`/`onerror` 403 signal shape for a branch-resolution failure at build time.
+- **v1.2:** Phase 16 — confirm whether the order/receipt payload already carries enough branch identity to make a print-time re-read moot (Pitfall 7 print-snapshot question).
 
 ### Critical Watch-Outs (carry forward)
 
 - **CSP silently blocks everything** — `connect-src` in `tauri.conf.json` must include the API domain on day 1. Silent failure: screens empty, EventSource loops forever.
 - **GitHub Package Registry auth breaks CI** — `.npmrc` must commit scope routing (`@charlyk:registry=https://npm.pkg.github.com`); use `NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}` in Actions. Never commit a literal PAT.
 - **EventSource cannot send auth headers** — Using @microsoft/fetch-event-source for SSE. Confirmed in Phase 3 plan.
-- **React hook ordering in app.jsx** — useSSE and useOrders MUST be called before any conditional return (coldStartBusy, isAuthenticated guards). Violating this causes "rendered fewer hooks" runtime error.
+- **React hook ordering in app.jsx** — useSSE and useOrders MUST be called before any conditional return (coldStartBusy, isAuthenticated guards). Violating this causes "rendered fewer hooks" runtime error. **v1.2: `useBranches()`/`useBranchSwitch()` must join this same unconditional block (Phase 13/16).**
 - **macOS notarization is a hard distribution block** — Apple Developer account ($99/yr) required before Phase 6. Configure all CI secrets before the first release build.
 - **TanStack Query v5 API** — useQuery takes single options object; useMutation uses .isPending not .isLoading. All Phase 3 hooks use v5 syntax.
 - ~~**v1.1: Large result sets** — warn or limit if >500 orders returned for a wide date range~~ — SUPERSEDED by D-03 (2026-07-17): render every row, no cap, no warning, no virtualization. ~500 lightweight rows is within React's comfort; measure against real data before adding machinery. Virtualization deferred (see PROJECT.md deferred ideas).
 - **v1.1: CSV escaping** — wrap all fields in double-quotes; escape internal `"` as `""`.
 - **v1.1: Printer config check before Reprint** — reuse existing printer-configured guard; button greyed-out when not configured.
+- **v1.2: Cold start never calls `getMe()`/`getSession()` today** — `authUser` is only populated inside `signIn()`; Phase 13 must add the `getMe()` call to the cold-start restore path too, or the branch (and `role`) stay unpopulated after every app relaunch with a remembered session.
+- **v1.2: never persist `currentBranch`** — server re-validates `selected_branch_id` on every request; a persisted stale value would flash the wrong branch label before the first request self-corrects.
+- **v1.2: never invalidate/reconnect optimistically on switch click** — only after `client.me.branches.switch` resolves (`onSuccess`, not adjacent to `.mutate()`); a 403 must leave the UI on the old branch.
+- **v1.2: keep `enabled: !!client` as the sole gate on the 7 existing data hooks** — do not add a hard `!!branchId` block; single-branch tenants must see no first-paint delay (Pitfall 11).
 
 ### Quick Tasks Completed
 
@@ -251,14 +275,15 @@ Last activity: 2026-07-21 — Milestone v1.2 started
 ### Roadmap Evolution
 
 - Phase 12 added: Close CR-01 tax-in-fallback-total + HIST-06 traceability + WR-01 popover
+- v1.2 roadmap created 2026-07-21: Phases 13–17 (Branch State & Launch Seeding Foundation → Branch-Scoped Cache Re-Scoping → SSE Branch-Aware Reconnect → Branch Switcher UI/Switch Flow/Language Relocation → Centralized Branch-Access Error Handling), 15/15 requirements mapped, no orphans. LANG-01 folded into Phase 16 rather than standalone (single-requirement, cosmetic, same sidebar-footer surface as the switcher).
 
 ## Session Continuity
 
 **Resume file:** None
 
-**Last session:** 2026-07-19T20:13:58.409Z
-**Stopped at:** Phase 10 (Filters + Search) COMPLETE — UAT 2/2 passed (two-row FilterBar wrap, debounced search), verification canonicalized to `passed`, phase transitioned; Phase 10 marked complete in ROADMAP/STATE
-**Next action:** `/gsd-discuss-phase 11` — Reprint + CSV Export (HIST-11/12) has no CONTEXT.md yet; gather context before planning
+**Last session:** 2026-07-21T12:00:00.000Z
+**Stopped at:** v1.2 ROADMAP.md created — 5 phases (13–17), 15/15 requirements mapped; REQUIREMENTS.md traceability filled in; STATE.md updated
+**Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
 
@@ -280,7 +305,7 @@ Last activity: 2026-07-21 — Milestone v1.2 started
 
 ---
 *State initialized: 2026-04-22*
-*Last updated: 2026-07-16 — v1.1 roadmap replanned; 4 phases (7–10), 13 requirements*
+*Last updated: 2026-07-21 — v1.2 ROADMAP.md created (Phases 13–17); 15/15 requirements mapped*
 
 ## Decisions
 
@@ -346,7 +371,8 @@ Last activity: 2026-07-21 — Milestone v1.2 started
 - [Phase ?]: [Phase 12-04]: Cited CR-01/CR-02 fix commits by SHA + description rather than relabeling, since the audit's original 'CR-01' (tax) does not match 10-REVIEW.md's own CR-01(percent-discount)/CR-02(tax) numbering
 - [Phase ?]: [Phase 12-04]: Both /gsd-validate-phase runs (10, 11) found zero gaps and reconstructed VALIDATION.md directly from existing VERIFICATION.md/UAT.md evidence, no auditor subagent spawn needed
 - [Phase ?]: [Phase 12-04]: Re-derived v1.1-MILESTONE-AUDIT.md verdict from tech_debt to passed — every CRITICAL/WARNING item resolved with SHA citation and/or live re-verification; only the 3 pre-existing v1.0 test failures remain, explicitly deferred
+- [Roadmap]: [v1.2]: Roadmap derived from reconciled research (SUMMARY/ARCHITECTURE/PITFALLS) — 5 phases (13–17); LANG-01 folded into Phase 16 rather than a standalone single-requirement phase; two mechanism decisions (cache re-scoping approach in Phase 14, SSE 403 signal shape in Phase 15) deliberately left open for phase planning
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Plan Phase 13 with `/gsd-plan-phase 13` (Branch State & Launch Seeding Foundation — BSTATE-01, BSTATE-02)

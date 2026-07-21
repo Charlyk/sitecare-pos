@@ -64,27 +64,27 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BSTATE-01 | TBD | Pending |
-| BSTATE-02 | TBD | Pending |
-| SWCH-01 | TBD | Pending |
-| SWCH-02 | TBD | Pending |
-| SWCH-03 | TBD | Pending |
-| SWCH-04 | TBD | Pending |
-| SCOPE-01 | TBD | Pending |
-| SCOPE-02 | TBD | Pending |
-| SCOPE-03 | TBD | Pending |
-| SCOPE-04 | TBD | Pending |
-| BERR-01 | TBD | Pending |
-| BERR-02 | TBD | Pending |
-| BERR-03 | TBD | Pending |
-| BERR-04 | TBD | Pending |
-| LANG-01 | TBD | Pending |
+| BSTATE-01 | Phase 13 | Pending |
+| BSTATE-02 | Phase 13 | Pending |
+| SWCH-01 | Phase 16 | Pending |
+| SWCH-02 | Phase 16 | Pending |
+| SWCH-03 | Phase 16 | Pending |
+| SWCH-04 | Phase 16 | Pending |
+| SCOPE-01 | Phase 14 | Pending |
+| SCOPE-02 | Phase 15 | Pending |
+| SCOPE-03 | Phase 16 | Pending |
+| SCOPE-04 | Phase 16 | Pending |
+| BERR-01 | Phase 17 | Pending |
+| BERR-02 | Phase 17 | Pending |
+| BERR-03 | Phase 17 | Pending |
+| BERR-04 | Phase 17 | Pending |
+| LANG-01 | Phase 16 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 15 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 15 ⚠️ (resolved by roadmapper)
+- Mapped to phases: 15/15 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-07-21*
-*Last updated: 2026-07-21 after initial v1.2 definition*
+*Last updated: 2026-07-21 — roadmap created; all 15 requirements mapped across Phases 13–17 (Phase 13: BSTATE; Phase 14: SCOPE-01; Phase 15: SCOPE-02; Phase 16: SWCH, SCOPE-03/04, LANG-01; Phase 17: BERR).*
