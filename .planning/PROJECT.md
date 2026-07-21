@@ -41,12 +41,25 @@ The summary strip is computed client-side from the same `listAdminOrders` result
 `getAdminDashboard` dropped), and the inline expandable receipt was replaced by a read-only detail view reusing
 `screen-detail.jsx` (D-07). Full rationale in `.planning/milestones/v1.1-REQUIREMENTS.md`.
 
-## Next Milestone: v1.2 (not yet scoped)
+## Current Milestone: v1.2 Branch Switching
 
-Run `/gsd-new-milestone` to define v1.2 requirements and phases. Carry-forward candidates live under
-**Requirements → Active** below (Windows code signing, thermal-printer hardware validation, tax display), plus
-the deferred features listed in the v1.1 requirements archive (owner dashboard, mobile screens, forgot-password,
-PDF export).
+**Goal:** Make the POS app branch-aware — staff can see and switch the active branch, and every screen plus the live SSE stream follow the selected branch.
+
+**Target features:**
+- Branch switcher in the sidebar footer (replacing the RO/EN toggle, which moves into Settings → Afișaj where a language control already exists). Shows the current branch name and a "default" badge; renders read-only when the tenant has a single branch.
+- Load the current selected branch on launch from the session (`user.selectedBranch`); populate the switcher from `client.me.branches()`.
+- Switch flow: `client.me.branches.switch({branchId})` → reconnect SSE → invalidate all branch-scoped caches → "switched to X" confirmation toast.
+- Branch-scoped data: key orders / history / menu (and POS / KDS) TanStack Query caches on `branchId` so a switch cleanly re-scopes every screen.
+- SSE reconnect on switch: the server closes the user's streams on switch, so `useSSE` must reconnect scoped to the new branch.
+- 403 handling: `BRANCH_INACTIVE` / `BRANCH_ACCESS_REVOKED` on switch *or* any later request → toast + reopen switcher + refetch branch list.
+
+**Key context (API v2.6 "Tenant Branching", shipped 2026-07-18):**
+- The active branch is **server-side session state** (`user.selected_branch_id`) — no `X-Branch-Id` header, no `branchId` query param. Every existing session-authed call (`orders.list`, `getOrder`, kitchen menu, POS create, SSE) auto-scopes to it. Endpoint paths and response shapes are **unchanged**.
+- SDK `@charlyk/admin-client` v1.1.67 is already installed; the only net-new calls are `client.me.branches()` (`GET /v1/me/branches` → `AccessibleBranch[]`, staff-accessible) and `client.me.branches.switch({branchId})` (`POST /v1/me/branches/switch` → `{ok, branchId}`).
+- Backward compatible: a single-branch tenant returns a one-entry list → read-only switcher, behaves exactly as pre-v2.6.
+- Reference PRD: `~/Developer/sitecare-orders-api/docs/RESTAURANT_DASHBOARD_PRD.md` §5, §7, §11 (owner-dashboard doc, but the branch-selection model and staff SSE rules are identical for this app).
+
+**Carry-forward candidates** (not yet scoped into v1.2) live under **Requirements → Active** below (Windows code signing, thermal-printer hardware validation, tax display), plus deferred features in the v1.1 requirements archive (owner dashboard, mobile screens, forgot-password, PDF export).
 
 ---
 
@@ -173,4 +186,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-07-19 after v1.1 milestone — Orders History Screen shipped (Phases 7–12, 28 plans, 13/13 requirements, audit `passed`). Milestone archived to `.planning/milestones/v1.1-*`; ROADMAP/MILESTONES reorganized; next milestone (v1.2) not yet scoped — run `/gsd-new-milestone`.*
+*Last updated: 2026-07-21 — v1.2 Branch Switching milestone started. Scope: make the POS app branch-aware (sidebar branch switcher, per-branch cache scoping, SSE reconnect on switch, 403 branch-access handling) against the API's v2.6 Tenant Branching model. Requirements and roadmap to follow.*

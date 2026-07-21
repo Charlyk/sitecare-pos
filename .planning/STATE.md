@@ -1,20 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Orders History Screen
-current_plan: "—"
-status: milestone_complete
-stopped_at: "v1.1 Orders History Screen shipped and archived (Phases 7–12, 28 plans, 13/13 requirements, audit passed); awaiting /gsd-new-milestone for v1.2"
-last_updated: "2026-07-19T20:49:45.159Z"
-last_activity: 2026-07-19
-last_activity_desc: Milestone v1.1 completed and archived
+milestone: v1.2
+milestone_name: Branch Switching
+status: planning
+last_updated: "2026-07-21T11:15:02.684Z"
+last_activity: 2026-07-21
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 28
-  completed_plans: 28
-  percent: 100
-current_phase: 12
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # State: SiteCare POS Desktop App
@@ -51,10 +47,10 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 ## Current Position
 
-Phase: Milestone v1.1 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-07-19 — Milestone v1.1 completed and archived
+Status: Defining requirements
+Last activity: 2026-07-21 — Milestone v1.2 started
 
 ## Phase Summary
 
