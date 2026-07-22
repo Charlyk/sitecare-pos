@@ -81,13 +81,13 @@ export function useSSE(token, onLiveOrder) {
           }
         }
 
-        // order_status_changed: another client advanced an order — patch both list and detail caches
+        // order_status_changed: another client advanced an order — patch both list and detail caches (D-04)
         if (msg.event === 'order_status_changed') {
           try {
             const { orderId, fromStatus, toStatus } = JSON.parse(msg.data);
             const state = SDK_STATE_MAP[toStatus] ?? toStatus.toLowerCase();
 
-            queryClient.setQueryData(['orders'], (old) => {
+            queryClient.setQueryData(['orders', scopedBranchId], (old) => {
               if (!old?.orders) return old;
               return {
                 ...old,
@@ -98,15 +98,15 @@ export function useSSE(token, onLiveOrder) {
             });
 
             // Patch detail cache in-place so the detail screen doesn't flash a loading spinner
-            queryClient.setQueryData(['order', orderId], (old) => {
+            queryClient.setQueryData(['order', scopedBranchId, orderId], (old) => {
               if (!old) return old;
               return { ...old, status: toStatus, state };
             });
 
             // Invalidate status-filtered list caches and dashboard totals; they'll refetch if observed
-            queryClient.invalidateQueries({ queryKey: ['orders', fromStatus] });
-            queryClient.invalidateQueries({ queryKey: ['orders', toStatus] });
-            queryClient.invalidateQueries({ queryKey: ['stats'] });
+            queryClient.invalidateQueries({ queryKey: ['orders', scopedBranchId, fromStatus] });
+            queryClient.invalidateQueries({ queryKey: ['orders', scopedBranchId, toStatus] });
+            queryClient.invalidateQueries({ queryKey: ['stats', scopedBranchId] });
           } catch {
             // Malformed JSON — ignore silently
           }
