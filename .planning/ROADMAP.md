@@ -71,10 +71,10 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
   4. No branch field is written to persisted preferences — restarting always re-derives the branch from the server, never from a locally cached value.
   5. Standing regression: a single-branch tenant's sign-in and cold-start flow behaves exactly as pre-v1.2, with no added delay or new blank state.
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans executed
 
 - [x] 13-01-PLAN.md — Launch-seeding: session-only currentBranch store field + getMe() seeding at cold-start/signIn + focus-retry backstop + displayName fix (BSTATE-01)
-- [ ] 13-02-PLAN.md — useBranches() hook over client.me.branches.list() with finite staleTime + focus refetch (BSTATE-02)
+- [x] 13-02-PLAN.md — useBranches() hook over client.me.branches.list() with finite staleTime + focus refetch (BSTATE-02)
 
 ### Phase 14: Branch-Scoped Cache Re-Scoping
 
@@ -156,7 +156,7 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
 | 10. Filters + Search | v1.1 | 4/4 | Complete | 2026-07-18 |
 | 11. Reprint + CSV Export | v1.1 | 4/4 | Complete | 2026-07-19 |
 | 12. Tech-Debt Closeout | v1.1 | 4/4 | Complete | 2026-07-19 |
-| 13. Branch State & Launch Seeding Foundation | v1.2 | 1/2 | In Progress|  |
+| 13. Branch State & Launch Seeding Foundation | v1.2 | 2/2 | In Progress|  |
 | 14. Branch-Scoped Cache Re-Scoping | v1.2 | 0/TBD | Not started | - |
 | 15. SSE Branch-Aware Reconnect | v1.2 | 0/TBD | Not started | - |
 | 16. Branch Switcher UI, Switch Flow & Language Relocation | v1.2 | 0/TBD | Not started | - |
