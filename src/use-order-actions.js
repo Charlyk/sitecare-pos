@@ -1,14 +1,19 @@
 // useOrderActions — TanStack Query v5 useMutation wrappers for order status mutations (D-15)
-// On success: invalidateQueries(['orders']) — triggers fresh fetch from API to sync any
+// On success: invalidateQueries(['orders', branchId]) — triggers fresh fetch from API to sync any
 // server-side state changes (e.g., timestamps, computed fields) not in SSE payload.
+// branchId is read ONCE at the hook-body top (never inside onSuccess — Pitfall 4) and closed
+// over by both mutations' onSuccess callbacks, so invalidation only ever targets the currently
+// active branch's cache entries (SC2).
 // Use .isPending (v5), NOT .isLoading (v4 — removed).
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './auth.jsx';
+import { useAppStore } from './store.js';
 
 export function useOrderActions() {
   const { client } = useAuth();
   const queryClient = useQueryClient();
+  const branchId = useAppStore((s) => s.currentBranch?.id) ?? null;
 
   // updateStatus: accepts, advances, or cancels an order
   const updateStatus = useMutation({
@@ -23,9 +28,9 @@ export function useOrderActions() {
         },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['order'] });
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', branchId] });
+      queryClient.invalidateQueries({ queryKey: ['order', branchId] });
+      queryClient.invalidateQueries({ queryKey: ['stats', branchId] });
     },
   });
 
@@ -37,9 +42,9 @@ export function useOrderActions() {
         body: { estimatedMinutes },
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['order'] });
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', branchId] });
+      queryClient.invalidateQueries({ queryKey: ['order', branchId] });
+      queryClient.invalidateQueries({ queryKey: ['stats', branchId] });
     },
   });
 

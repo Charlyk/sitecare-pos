@@ -13,6 +13,7 @@ function MenuScreen({ lang, isOffline }) {
   const { client } = useAuth();
   const queryClient = useQueryClient();
   const pushToast = useAppStore((s) => s.pushToast);
+  const branchId = useAppStore((s) => s.currentBranch?.id) ?? null;
   const { data: menuData, isLoading } = useMenu();
 
   const cats = useMemo(() => (menuData?.categories ?? []).map(c => ({
@@ -37,7 +38,7 @@ function MenuScreen({ lang, isOffline }) {
   const toggleStock = useMutation({
     mutationFn: ({ productId, inStock }) =>
       client.kitchen.products.updateStock({ body: { productId, inStock } }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['menu'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['menu', branchId] }),
     onError: () => pushToast({
       id: Date.now(),
       kind: 'error',

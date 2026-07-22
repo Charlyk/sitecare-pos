@@ -66,7 +66,7 @@ describe('MenuScreen', () => {
     })
 
     useAppStore.mockImplementation((selector) => {
-      const state = { pushToast: mockPushToast }
+      const state = { pushToast: mockPushToast, currentBranch: null }
       return selector(state)
     })
 
@@ -128,7 +128,7 @@ describe('MenuScreen', () => {
       expect(callArgs).not.toHaveProperty('path')
     })
 
-    test('on success: invalidateQueries called with queryKey [menu]', async () => {
+    test('on success: invalidateQueries called with queryKey [menu, branchId]', async () => {
       // We need to verify that the onSuccess callback calls invalidateQueries
       // We use the QueryClient from the hook directly
       // Wire up the mock to call the onSuccess from the mutation
@@ -147,7 +147,7 @@ describe('MenuScreen', () => {
       })
 
       await waitFor(() => {
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['menu'] })
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['menu', null] })
       })
 
       invalidateSpy.mockRestore()

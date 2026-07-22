@@ -16,6 +16,7 @@ function PosScreen({ lang, isOffline }) {
   const { client } = useAuth();
   const queryClient = useQueryClient();
   const pushToast = useAppStore((s) => s.pushToast);
+  const branchId = useAppStore((s) => s.currentBranch?.id) ?? null;
   const { data: menuData } = useMenu();
   const { data: deliveryAreas = [] } = useDeliveryAreas();
 
@@ -169,7 +170,7 @@ function PosScreen({ lang, isOffline }) {
   const createOrder = useMutation({
     mutationFn: (orderData) => client.kitchen.orders.create({ body: orderData }),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', branchId] });
       pushToast({ id: Date.now(), kind: 'success', title: t('order_sent'), detail: `${result.data?.dailyOrderNumber ?? result.data?.dailyNumber ?? ''}` });
       setCart([]);
       setDiscountValue('');
