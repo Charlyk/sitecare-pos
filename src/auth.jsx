@@ -83,6 +83,22 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // WR-01: shared helper for the getMe()-seeding pattern that was previously duplicated across
+  // cold-start, the D-04 focus-retry backstop, and signIn (the root cause of CR-01 — three
+  // independently-maintained copies of "reset-then-reseed" made it easy for one to be missed).
+  // `me?.selectedBranch ?? null` also covers IN-01 (defensive null-check on `me` itself).
+  async function seedFromMe(adminClient, { onUnauthorized } = {}) {
+    try {
+      const me = await adminClient.auth.getMe();
+      setAuthUser(me);
+      setCurrentBranch(me?.selectedBranch ?? null);
+      return me;
+    } catch (meErr) {
+      if (meErr?.status === 401) onUnauthorized?.();
+      return null;
+    }
+  }
+
   function expireSession() {
     if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     setClient(null);
@@ -125,17 +141,9 @@ export function AuthProvider({ children }) {
         // getMe() has a throwing contract (resolves CurrentUser or throws w/ .status), NOT the
         // {data,error} fields style used elsewhere. Awaited inside this outer try so it completes
         // before the finally releases coldStartBusy (Pitfall 2 — no extra blank/spinner state).
-        try {
-          const me = await adminClient.auth.getMe();
-          setAuthUser(me);
-          setCurrentBranch(me.selectedBranch);
-        } catch (meErr) {
-          if (meErr?.status === 401) {
-            expireSession(); // D-03: only a true 401 ends the session
-          }
-          // else: non-401 (network/5xx) — stay signed in, currentBranch stays null; the D-04
-          // window-focus listener below is the backstop that retries later.
-        }
+        // D-03: only a true 401 ends the session; non-401 (network/5xx) failures leave
+        // currentBranch null — the D-04 window-focus listener below is the backstop that retries.
+        await seedFromMe(adminClient, { onUnauthorized: () => expireSession() });
       } catch (e) {
         console.error('[auth:cold] token read failed:', e?.message ?? e);
       } finally {
@@ -156,20 +164,9 @@ export function AuthProvider({ children }) {
     function handleFocus() {
       const { isAuthenticated, currentBranch } = useAppStore.getState();
       if (!isAuthenticated || currentBranch || !client) return;
-      client.auth.getMe()
-        .then((me) => {
-          setAuthUser(me);
-          setCurrentBranch(me?.selectedBranch ?? null);
-        })
-        .catch((meErr) => {
-          // WR-02: mirror the 401 handling used by the other two getMe() seams — a genuinely
-          // expired session must not be swallowed silently forever by this backstop.
-          if (meErr?.status === 401) {
-            expireSession();
-            return;
-          }
-          // else: non-fatal — will retry on next focus event
-        });
+      // WR-02: mirror the 401 handling used by the other two getMe() seams — a genuinely
+      // expired session must not be swallowed silently forever by this backstop.
+      seedFromMe(client, { onUnauthorized: () => expireSession() });
     }
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
@@ -198,13 +195,7 @@ export function AuthProvider({ children }) {
       // D-07/BSTATE-01: getMe() seeds authUser + currentBranch as the source of truth, replacing
       // the optimistic setAuthUser(user) above. Non-fatal — a failure here is not fatal to sign-in
       // (currentBranch stays null; the D-04 focus-retry listener is the backstop).
-      try {
-        const me = await adminClient.auth.getMe();
-        setAuthUser(me);
-        setCurrentBranch(me.selectedBranch);
-      } catch (meErr) {
-        console.warn('[auth] getMe after signIn failed (non-fatal):', meErr);
-      }
+      await seedFromMe(adminClient); // non-fatal; currentBranch stays null on failure (D-04 backstop retries)
       // Try to get session for refresh timer — non-fatal if it fails
       try {
         const { session } = await adminClient.auth.getSession();
