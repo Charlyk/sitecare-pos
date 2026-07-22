@@ -350,14 +350,14 @@ async onopen(response) {
 
 **Note:** Every other claim in this research was verified directly against `node_modules/@microsoft/fetch-event-source` source, the live `src/*.js` hook files, and `src/__tests__/use-sse.test.js` — not from training knowledge or web search. No `[ASSUMED]`-tagged package or API claims exist outside A1.
 
-## Open Questions
+## Open Questions (RESOLVED — neither blocks Phase 15 planning or execution)
 
-1. **Exact 403 body shape from `/v1/sse/orders`** (ROADMAP's own flagged item, D-06's reason for existing)
+1. **Exact 403 body shape from `/v1/sse/orders`** (ROADMAP's own flagged item, D-06's reason for existing) — **RESOLVED: deferred to live observation via the D-06 capture scaffold (realistically Phase 16/17 testing); genuinely unknowable pre-execution, do not guess a shape into Phase 17.**
    - What we know: the SDK's own generic `Error` type for *SDK-mediated* 403s (e.g., `client.me.branches.switch`) is `{ error: string }` (verified in `node_modules/@charlyk/admin-client/dist/index.d.ts`). The SSE route is fetched directly (not via the SDK client), so this convention is not guaranteed to apply.
    - What's unclear: whether the raw `/v1/sse/orders` 403 response body matches that shape, is empty, or differs — and whether `content-type` on that response is JSON, since `response.text()` is the only safe read (JSON parsing could throw on an unexpected body).
    - Recommendation: implement the D-06 capture exactly as scaffolded (status + best-effort `response.text()`, never `.json()` which could throw and mask the real signal) and treat the first real observation (Phase 15 UAT if a switcher exists by then, more realistically Phase 16/17 testing) as the actual answer — do not guess a shape into Phase 17's design before that.
 
-2. **`abortRef` is currently write-only, never read** (`use-sse.js:20,34`)
+2. **`abortRef` is currently write-only, never read** (`use-sse.js:20,34`) — **RESOLVED: leave as-is (out of scope; not a hint for an imperative trigger — D-01 rejected that approach).**
    - What we know: `abortRef.current = ctrl` is assigned every effect run but nothing in the file ever reads `abortRef.current` (confirmed by grep across `src/`).
    - What's unclear: whether this is vestigial from an earlier design (e.g., an imperative `reconnect()` that was never built) or intentionally reserved for a future phase.
    - Recommendation: leave it as-is (removing it is out of scope and not required by any locked decision); the planner should not treat its presence as a hint that an imperative trigger is expected — D-01 explicitly rejected that approach.

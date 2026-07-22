@@ -5,15 +5,15 @@ milestone_name: Branch Switching
 current_phase: 15
 current_phase_name: SSE Branch-Aware Reconnect
 current_plan: Not started
-status: planning
+status: executing
 stopped_at: Phase 15 context gathered
-last_updated: "2026-07-22T20:18:11.714Z"
+last_updated: "2026-07-22T20:50:47.682Z"
 last_activity: 2026-07-22
 last_activity_desc: Phase 14 complete, transitioned to Phase 15
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 6
+  total_plans: 7
   completed_plans: 6
   percent: 40
 ---
@@ -54,7 +54,7 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 Phase: 15 — SSE Branch-Aware Reconnect
 Plan: 4 of 4
-Status: Phase complete — ready for verification
+Status: Ready to execute
 Last activity: 2026-07-22 — Phase 14 complete, transitioned to Phase 15
 
 Progress: [██████████] 100% (v1.2)
@@ -272,7 +272,7 @@ Progress: [██████████] 100% (v1.2)
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Ready to plan
+  derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
   sync correctly via their own body fields (`**Current Plan:**Not started
