@@ -14,6 +14,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { useSSE } from '../use-sse.js'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
+import { useAppStore } from '../store.js'
+
+beforeEach(() => {
+  useAppStore.setState({ currentBranch: null })
+})
 
 function wrapper({ children }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -56,6 +61,7 @@ describe('U9b — useSSE upserts order_new event into TanStack Query cache (KDS-
   beforeEach(() => { vi.clearAllMocks() })
 
   test('order_new event with new order id appends to cache', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
     let capturedOnMessage
     fetchEventSource.mockImplementation((_url, opts) => {
       capturedOnMessage = opts.onmessage
@@ -63,13 +69,15 @@ describe('U9b — useSSE upserts order_new event into TanStack Query cache (KDS-
     })
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['orders'], { orders: [] })
+    queryClient.setQueryData(['orders', 'branch-a'], { orders: [] })
 
     function testWrapper({ children }) {
       return createElement(QueryClientProvider, { client: queryClient }, children)
     }
 
     renderHook(() => useSSE('test-token'), { wrapper: testWrapper })
+
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
 
     const order = { id: 'ord-001', status: 'NEW', customerName: 'Test' }
     await act(async () => {
@@ -78,12 +86,14 @@ describe('U9b — useSSE upserts order_new event into TanStack Query cache (KDS-
       }
     })
 
-    const cached = queryClient.getQueryData(['orders'])
+    const cached = queryClient.getQueryData(['orders', 'branch-a'])
     expect(cached.orders).toHaveLength(1)
     expect(cached.orders[0].id).toBe('ord-001')
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['stats', 'branch-a'] })
   })
 
   test('order_new event with existing order id updates (not duplicates) in cache', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
     let capturedOnMessage
     fetchEventSource.mockImplementation((_url, opts) => {
       capturedOnMessage = opts.onmessage
@@ -91,7 +101,7 @@ describe('U9b — useSSE upserts order_new event into TanStack Query cache (KDS-
     })
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['orders'], { orders: [{ id: 'ord-001', status: 'NEW' }] })
+    queryClient.setQueryData(['orders', 'branch-a'], { orders: [{ id: 'ord-001', status: 'NEW' }] })
 
     function testWrapper({ children }) {
       return createElement(QueryClientProvider, { client: queryClient }, children)
@@ -106,9 +116,54 @@ describe('U9b — useSSE upserts order_new event into TanStack Query cache (KDS-
       }
     })
 
-    const cached = queryClient.getQueryData(['orders'])
+    const cached = queryClient.getQueryData(['orders', 'branch-a'])
     expect(cached.orders).toHaveLength(1)
     expect(cached.orders[0].status).toBe('ACCEPTED')
+  })
+})
+
+// ── D-01/SC1/SC4: branch-aware reconnect ───────────────────────────────────
+
+describe('branch-aware reconnect', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  test('branchId change triggers reconnect: fetchEventSource called twice with distinct signals, isConnected flips false', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
+    let capturedOnOpen
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnOpen = opts.onopen
+      return Promise.resolve()
+    })
+
+    const { result, rerender } = renderHook(() => useSSE('test-token'), { wrapper })
+
+    await act(async () => {
+      if (capturedOnOpen) await capturedOnOpen({ ok: true, status: 200 })
+    })
+    expect(result.current.isConnected).toBe(true)
+
+    act(() => {
+      useAppStore.setState({ currentBranch: { id: 'branch-b' } })
+    })
+    rerender()
+
+    expect(fetchEventSource).toHaveBeenCalledTimes(2)
+    const signal1 = fetchEventSource.mock.calls[0][1].signal
+    const signal2 = fetchEventSource.mock.calls[1][1].signal
+    expect(signal1).not.toBe(signal2)
+    expect(result.current.isConnected).toBe(false)
+  })
+
+  test('SC4: single-branch tenant — branchId unchanged across rerenders connects exactly once', () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
+    fetchEventSource.mockImplementation(() => Promise.resolve())
+
+    const { rerender } = renderHook(() => useSSE('test-token'), { wrapper })
+    rerender()
+    rerender()
+    rerender()
+
+    expect(fetchEventSource).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -376,6 +431,51 @@ describe('KDS-04: snapshot detection — sound plays only on live events', () =>
     })
 
     expect(onLiveOrder).toHaveBeenCalledTimes(1)
+
+    vi.useRealTimers()
+  })
+
+  test('onLiveOrder is NOT called for order_new fired immediately after a branch-triggered reconnect (SC3 snapshot silence)', async () => {
+    vi.useFakeTimers()
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
+    const onLiveOrder = vi.fn()
+    let capturedOnOpen
+    let capturedOnMessage
+
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnOpen = opts.onopen
+      capturedOnMessage = opts.onmessage
+      return Promise.resolve()
+    })
+
+    renderHook(() => useSSE('test-token', onLiveOrder), { wrapper })
+
+    await act(async () => {
+      if (capturedOnOpen) await capturedOnOpen({ ok: true, status: 200 })
+    })
+
+    // Clear the initial connect's snapshot window
+    await act(async () => {
+      vi.advanceTimersByTime(150)
+    })
+
+    // Branch-triggered reconnect — snapshotDone resets to false
+    await act(async () => {
+      useAppStore.setState({ currentBranch: { id: 'branch-b' } })
+    })
+
+    await act(async () => {
+      if (capturedOnOpen) await capturedOnOpen({ ok: true, status: 200 })
+    })
+
+    // Fire order_new immediately after the reconnect's onopen — still within the fresh 100ms window
+    await act(async () => {
+      if (capturedOnMessage) {
+        capturedOnMessage({ event: 'order_new', data: JSON.stringify({ id: 'reconnect-1', status: 'NEW' }) })
+      }
+    })
+
+    expect(onLiveOrder).not.toHaveBeenCalled()
 
     vi.useRealTimers()
   })
