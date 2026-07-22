@@ -5,17 +5,17 @@ milestone_name: Branch Switching
 current_phase: 14
 current_phase_name: branch-scoped-cache-re-scoping
 current_plan: 1
-status: executing
-stopped_at: Completed 14-03-PLAN.md
-last_updated: "2026-07-22T18:36:28.017Z"
+status: verifying
+stopped_at: Completed 14-04-PLAN.md (final plan of Phase 14 — branch-scoped-cache-re-scoping)
+last_updated: "2026-07-22T18:41:08.571Z"
 last_activity: 2026-07-22
 last_activity_desc: Phase 14 execution started
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
-  percent: 20
+  completed_plans: 6
+  percent: 40
 ---
 
 # State: SiteCare POS Desktop App
@@ -54,10 +54,10 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 Phase: 14 (branch-scoped-cache-re-scoping) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-22 — Phase 14 execution started
 
-Progress: [████████░░] 83% (v1.2)
+Progress: [██████████] 100% (v1.2)
 
 ## Phase Summary
 
@@ -133,6 +133,7 @@ Progress: [████████░░] 83% (v1.2)
 | Phase 14 P01 | ~10min | 2 tasks | 5 files |
 | Phase 14 P02 | ~5min | 2 tasks | 6 files |
 | Phase 14 P03 | ~4min | 2 tasks | 6 files |
+| Phase 14 P04 | ~12min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -271,7 +272,7 @@ Progress: [████████░░] 83% (v1.2)
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Ready to execute
+  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
   sync correctly via their own body fields (`**Current Plan:**1
@@ -291,8 +292,8 @@ Progress: [████████░░] 83% (v1.2)
 
 **Resume file:** None
 
-**Last session:** 2026-07-22T18:36:28.009Z
-**Stopped at:** Completed 14-03-PLAN.md
+**Last session:** 2026-07-22T18:41:08.563Z
+**Stopped at:** Completed 14-04-PLAN.md (final plan of Phase 14 — branch-scoped-cache-re-scoping)
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -396,6 +397,8 @@ Progress: [████████░░] 83% (v1.2)
 - [Phase ?]: [Phase 14-02]: All three hooks (use-order-detail, use-stats, use-menu) route error path through shared unwrapSdkResult() helper from Plan 14-01
 - [Phase ?]: [Phase 14-03]: use-history-orders.js stays KEY-ONLY per Pitfall 5 — debug session windows-history-network-error.md is status: investigating (OPEN), so .diagnostic error enrichment is NOT routed through unwrapSdkResult
 - [Phase ?]: [Phase 14-03]: use-delivery-areas.js's cents->units .fee mapping preserved byte-for-byte; only its error-unwrap line changed to route through unwrapSdkResult
+- [Phase ?]: Mutation-side invalidation lockstep: branchId read once at hook/component-body top, closed over in onSuccess (never re-read inside onSuccess), matching all 7 branch-scoped query keys from Plans 01-03
+- [Phase ?]: SC2 (sibling branch untouched) proven by automated test in use-order-actions.test.js; Rule 1 fix applied to screen-menu.test.jsx's stale invalidation-key assertion
 
 ## Operator Next Steps
 
