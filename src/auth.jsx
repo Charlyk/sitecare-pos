@@ -36,6 +36,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const setIsAuthenticated = useAppStore((s) => s.setIsAuthenticated);
   const setAuthUser = useAppStore((s) => s.setAuthUser);
+  const setCurrentBranch = useAppStore((s) => s.setCurrentBranch);
   const pushToast = useAppStore((s) => s.pushToast);
   const setScreen = useAppStore((s) => s.setScreen);
 
@@ -115,6 +116,22 @@ export function AuthProvider({ children }) {
         setClient(adminClient);
         setIsAuthenticated(true);
         console.log('[auth:cold] auth restored ✓');
+        // D-05/D-07/BSTATE-01: seed authUser + currentBranch from the server session on cold
+        // start (the pre-existing gap this plan closes — authUser was only ever set in signIn()).
+        // getMe() has a throwing contract (resolves CurrentUser or throws w/ .status), NOT the
+        // {data,error} fields style used elsewhere. Awaited inside this outer try so it completes
+        // before the finally releases coldStartBusy (Pitfall 2 — no extra blank/spinner state).
+        try {
+          const me = await adminClient.auth.getMe();
+          setAuthUser(me);
+          setCurrentBranch(me.selectedBranch);
+        } catch (meErr) {
+          if (meErr?.status === 401) {
+            expireSession(); // D-03: only a true 401 ends the session
+          }
+          // else: non-401 (network/5xx) — stay signed in, currentBranch stays null; the D-04
+          // window-focus listener below is the backstop that retries later.
+        }
       } catch (e) {
         console.error('[auth:cold] token read failed:', e?.message ?? e);
       } finally {
@@ -126,6 +143,25 @@ export function AuthProvider({ children }) {
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // D-04: window 'focus' retry backstop. Re-seeds authUser/currentBranch via getMe() whenever
+  // the window regains focus AND isAuthenticated is true AND currentBranch is still null AND a
+  // client exists — the backstop for a non-401 getMe() failure at either seam above. Removes
+  // itself on unmount / client change.
+  useEffect(() => {
+    function handleFocus() {
+      const { isAuthenticated, currentBranch } = useAppStore.getState();
+      if (!isAuthenticated || currentBranch || !client) return;
+      client.auth.getMe()
+        .then((me) => {
+          setAuthUser(me);
+          setCurrentBranch(me.selectedBranch);
+        })
+        .catch(() => { /* non-fatal — will retry on next focus event */ });
+    }
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [client]);
 
   // signIn: called by LoginScreen's onSubmit prop (AUTH-01)
   async function signIn(email, pass, remember) {
@@ -144,7 +180,17 @@ export function AuthProvider({ children }) {
       const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
       setClient(adminClient);
       setIsAuthenticated(true);
-      setAuthUser(user);
+      setAuthUser(user); // optimistic fill from the signIn response; getMe() below is the source of truth
+      // D-07/BSTATE-01: getMe() seeds authUser + currentBranch as the source of truth, replacing
+      // the optimistic setAuthUser(user) above. Non-fatal — a failure here is not fatal to sign-in
+      // (currentBranch stays null; the D-04 focus-retry listener is the backstop).
+      try {
+        const me = await adminClient.auth.getMe();
+        setAuthUser(me);
+        setCurrentBranch(me.selectedBranch);
+      } catch (meErr) {
+        console.warn('[auth] getMe after signIn failed (non-fatal):', meErr);
+      }
       // Try to get session for refresh timer — non-fatal if it fails
       try {
         const { session } = await adminClient.auth.getSession();
