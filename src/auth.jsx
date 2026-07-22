@@ -65,6 +65,12 @@ export function AuthProvider({ children }) {
   async function doRefresh(adminClient) {
     try {
       const { session } = await adminClient.auth.getSession();
+      // WR-03: make the "no session" case explicit instead of relying on the incidental
+      // TypeError from `session.expiresAt` on a null session falling through to this catch.
+      if (!session) {
+        expireSession();
+        return;
+      }
       // If the API rotated the token, update store and rebuild the client (AUTH-04)
       if (session?.token && session.token !== tokenRef.current) {
         tokenRef.current = session.token;
