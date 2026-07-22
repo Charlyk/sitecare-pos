@@ -68,7 +68,9 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
   3. The accessible-branches list loads via `client.me.branches.list()` and refetches on window focus and after any branch-access error; it is never cached indefinitely.
   4. No branch field is written to persisted preferences — restarting always re-derives the branch from the server, never from a locally cached value.
   5. Standing regression: a single-branch tenant's sign-in and cold-start flow behaves exactly as pre-v1.2, with no added delay or new blank state.
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 13-01-PLAN.md — Launch-seeding: session-only currentBranch store field + getMe() seeding at cold-start/signIn + focus-retry backstop + displayName fix (BSTATE-01)
+- [ ] 13-02-PLAN.md — useBranches() hook over client.me.branches.list() with finite staleTime + focus refetch (BSTATE-02)
 
 ### Phase 14: Branch-Scoped Cache Re-Scoping
 **Goal**: Every branch-scoped data cache is keyed to the active branch, so no cached response can be served against the wrong branch once switching exists.
