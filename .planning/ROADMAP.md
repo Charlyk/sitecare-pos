@@ -89,10 +89,19 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
   4. Standing regression: a single-branch tenant's order list loads with no added delay versus pre-v1.2 — branch resolution never blocks the initial fetch.
 
 **Plans**: 4 plans
+**Wave 1**
+
 - [ ] 14-01-PLAN.md — Tracer: unwrapSdkResult helper + use-orders branch-key + screen-orders invalidation + SC3/SC4 tests
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 14-02-PLAN.md — Expand fetch hooks A: use-order-detail, use-stats, use-menu + SC1 tests
 - [ ] 14-03-PLAN.md — Expand fetch hooks B: use-restaurant-settings, use-delivery-areas, use-history-orders (key-only) + SC1 tests
 - [ ] 14-04-PLAN.md — Mutation invalidation lockstep (use-order-actions, screen-pos, screen-menu) + SC2 sibling-untouched test
+
+**Cross-cutting constraints:**
+
+- In all three hooks branchId = `useAppStore((s) => s.currentBranch?.id) ?? null` and is the first variable segment immediately after the resource name. (D-07)
 
 **Planning note (RESOLVED during Phase 14 planning):** D-01 picks **branchId-keyed query keys** (`['orders', branchId]`, etc.) over `queryClient.resetQueries()`, applied uniformly across all seven hooks — chosen for race-safety by construction (immune to Pitfall 4) and future-proofing. No ad-hoc mixing.
 
