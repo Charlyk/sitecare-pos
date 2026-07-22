@@ -1,22 +1,23 @@
 ---
 phase: 14-branch-scoped-cache-re-scoping
 verified: 2026-07-22T18:53:36Z
-status: human_needed
-score: 3/4 roadmap success criteria fully verified (1 partial — human decision requested)
+status: passed
+score: 4/4 roadmap success criteria verified (SC3 closed by human-directed fast-follow)
 behavior_unverified: 0
 overrides_applied: 0
-human_verification:
+human_verification_resolved:
   - test: "Decide whether use-history-orders.js's exclusion from the unwrapSdkResult/err.code mechanism is an acceptable, scoped deviation from ROADMAP SC3, or must be closed before Phase 17 depends on it."
-    expected: "Either (a) accept the deviation via a VERIFICATION.md override, given the documented rationale (protecting the OPEN windows-history-network-error debug investigation from disruption), or (b) require a fast-follow that adds `err.code` to use-history-orders.js's existing `.diagnostic` error block (a non-conflicting, additive change) so all 7 branch-scoped resources satisfy SC3 uniformly before Phase 17 (BERR) builds its centralized `onError` handler."
-    why_human: "This is a deliberate, well-reasoned, plan-level scope decision (14-03-PLAN.md's explicit 'enforced' prohibition), not a code defect — grep/test evidence can confirm the fact (err.code is absent on this one hook) but cannot judge whether the trade-off is acceptable. That is a product/engineering judgment call about phase-completion bar and Phase 17 dependency risk."
+    decision: "Option (b) — fast-follow. Human chose to close the gap now rather than defer to Phase 17."
+    resolution: "commit ae08341 adds `err.code` to use-history-orders.js's queryFn error path, additively alongside the byte-unchanged `.diagnostic` block, mirroring unwrapSdkResult's contract (bare string when result.error is a string, else result.error.error). Two new passing tests assert `.code` on both the object-error (BRANCH_INACTIVE) and bare-string (BRANCH_ACCESS_REVOKED) shapes, and that `.diagnostic` remains intact. All 7 branch-scoped resources now satisfy SC3 uniformly; Phase 17's centralized onError handler can act on every branch-access failure. Full suite 543/544 (sole failure = pre-existing build-pipeline.test.js)."
+    resolved: 2026-07-22
 ---
 
 # Phase 14: Branch-Scoped Cache Re-Scoping Verification Report
 
 **Phase Goal:** Every branch-scoped data cache is keyed to the active branch, so no cached response can be served against the wrong branch once switching exists. (Orders, order detail, stats, product availability, order history, restaurant settings, delivery-area data all cached per branch; mutations invalidate only the active branch's cache entries; every branch-scoped data-fetch error carries a matchable error code; single-branch tenant order list loads with no added delay — branch resolution never blocks the initial fetch.)
-**Verified:** 2026-07-22T18:53:36Z
-**Status:** human_needed
-**Re-verification:** No — initial verification
+**Verified:** 2026-07-22T18:53:36Z (SC3 resolved 2026-07-22 via fast-follow ae08341)
+**Status:** passed
+**Re-verification:** SC3 re-checked after human-directed fast-follow — now fully met
 
 ## Goal Achievement
 
@@ -26,10 +27,10 @@ human_verification:
 |---|-------|--------|----------|
 | 1 | Orders, order detail, stats, product availability, order history, restaurant settings, and delivery-area data are all cached per branch, so a branch change is guaranteed to produce a fresh fetch rather than a stale hit from another branch. | ✓ VERIFIED | All 7 hooks read `branchId = useAppStore((s) => s.currentBranch?.id) ?? null` and fold it as the first variable segment: `use-orders.js:18` (`['orders', branchId, status?]`), `use-order-detail.js:10` (`['order', branchId, id]`), `use-stats.js:10` (`['stats', branchId]`), `use-menu.js:17` (`['menu', branchId]`), `use-restaurant-settings.js:11` (`['restaurant-settings', branchId]`), `use-delivery-areas.js:11` (`['delivery-areas', branchId]`), `use-history-orders.js:44` (`['history-orders', branchId, from, to]`). Each has a passing SC1 test asserting `'branch-a'` appears as the key segment after the resource name (7 test files, all green in the full suite run). |
 | 2 | Order mutations (accept/advance/cancel, POS submit) invalidate only the active branch's cache entries, never a different branch's. | ✓ VERIFIED | `use-order-actions.js:31-33,45-47` invalidates `['orders', branchId]`, `['order', branchId]`, `['stats', branchId]` for both `updateStatus` and `updateEstimatedTime`, with `branchId` read once at hook-body top (not inside `onSuccess` — no stale-closure risk). `screen-pos.jsx:173` invalidates `['orders', branchId]`; `screen-menu.jsx:41` invalidates `['menu', branchId]`; `screen-orders.jsx:283` (manual refresh) invalidates `['orders', branchId]` + `['stats', branchId]`. `use-order-actions.test.js`'s SC2 test explicitly seeds `['orders','branch-a']` and `['orders','branch-b']`, mutates for branch-a, and asserts `qc.getQueryData(['orders','branch-b'])` is unchanged — passes. `grep -rn "resetQueries" src/` returns zero matches. |
-| 3 | Every branch-scoped data-fetch error carries a matchable error code (e.g. `BRANCH_INACTIVE`) that a later centralized handler can act on. | ⚠️ PARTIAL | `unwrapSdkResult()` (`src/data.jsx:200-209`) sets `err.code` from `result.error.error`/bare-string, confirmed by 3 passing unit tests including a simulated `BRANCH_INACTIVE` case. 6 of 7 fetch hooks route through it (`use-orders`, `use-order-detail`, `use-stats`, `use-menu`, `use-restaurant-settings`, `use-delivery-areas`) — verified by grep and read. **`use-history-orders.js` is explicitly excluded** (`src/use-history-orders.js:45-66`): its queryFn throws its own `Error` with `.diagnostic` and `.message` but never sets `.code`. This is a deliberate, documented plan-time decision (14-03-PLAN.md must_haves.prohibitions, status "enforced") to protect the OPEN debug investigation `windows-history-network-error`. Order history is one of the 7 resources explicitly named in SC1, so as literally worded, SC3 is not 100% true today — see Human Verification. |
+| 3 | Every branch-scoped data-fetch error carries a matchable error code (e.g. `BRANCH_INACTIVE`) that a later centralized handler can act on. | ✓ VERIFIED | `unwrapSdkResult()` (`src/data.jsx:200-209`) sets `err.code` from `result.error.error`/bare-string, confirmed by passing unit tests including a simulated `BRANCH_INACTIVE` case. All 7 fetch hooks now carry `err.code`: 6 route through `unwrapSdkResult` (`use-orders`, `use-order-detail`, `use-stats`, `use-menu`, `use-restaurant-settings`, `use-delivery-areas`), and **`use-history-orders.js` now sets `err.code` directly** (`src/use-history-orders.js`, commit `ae08341`) additively alongside its byte-unchanged `.diagnostic` block — closing the earlier documented exclusion by human-directed fast-follow. Two new tests assert `.code` on both object-error (`BRANCH_INACTIVE`) and bare-string (`BRANCH_ACCESS_REVOKED`) shapes plus `.diagnostic` intactness. SC3 now uniformly true across all 7 branch-scoped resources; Phase 17's centralized handler has complete plumbing. |
 | 4 | Standing regression: a single-branch tenant's order list loads with no added delay versus pre-v1.2 — branch resolution never blocks the initial fetch. | ✓ VERIFIED | Every hook's `enabled` gate is unchanged from pre-phase form (`enabled: !!client` only, or `!!client && !!id` for order-detail — no `branchId` term added). `grep -n "branchId" src/use-orders.js` and equivalents show `branchId` only in the selector/key, never in `enabled`. SC4 tests (`use-orders.test.js`, `use-stats.test.js`, `use-menu.test.js`, `use-restaurant-settings.test.js`, `use-delivery-areas.test.js`) assert `fetchStatus !== 'idle'` with `currentBranch: null` and a present client — all pass. |
 
-**Score:** 3/4 fully verified, 1 partial (flagged for human decision, not a code defect)
+**Score:** 4/4 verified (SC3 closed 2026-07-22 by human-directed fast-follow `ae08341`; originally flagged as a scope-decision, resolved by adding `err.code` to `use-history-orders.js`)
 
 ### Required Artifacts
 
