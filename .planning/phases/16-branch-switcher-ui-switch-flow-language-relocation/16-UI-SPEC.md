@@ -1,7 +1,7 @@
 ---
 phase: 16
 slug: branch-switcher-ui-switch-flow-language-relocation
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-23
@@ -112,23 +112,60 @@ Destructive actions in this phase: **one** — discarding an in-progress POS car
 
 ## UI Considerations
 
-Applicable state considerations resolved: 9 covered, 3 backstop, 0 unresolved
+State-coverage computed by `ui-consideration-probe` over 8 UI surfaces (E1–E8). **46 applicable considerations: 31 ✅ covered · 4 🧪 backstop · 11 ⊘ n/a (dismissed, reason given) · 0 ⚠ unresolved.** Zero unresolved → the planner carries no assumption rows from this axis. Empty/error/failure COPY lives in the Copywriting Contract; rows below cover shape-rooted STATE and reference that copy rather than restating it.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| empty | branch popover list | ✅ covered | `useBranches()` is only ever rendered behind `branches.length > 1` (D-04) — an empty/single-item list renders the read-only trigger instead, so the popover itself never opens on an empty collection; no separate empty-state copy needed. |
-| loading | branch popover list (`useBranches()` still fetching) | 🧪 backstop | Popover shows a lightweight inline spinner row (reuse `.spin` class) in place of the branch list until the query resolves; no dedicated skeleton — this is a fast, already-warm cache per Phase 13 (`useBranches()` staleTime), so a full skeleton is unwarranted. |
-| error | branch popover list (`useBranches()` errored) | 🧪 backstop | Popover shows a compact inline row: `Nu s-au putut încărca filialele` / `Couldn't load branches` with no retry button in this phase (retry/refetch-on-error is Phase 17's BERR-01 concern) — the popover simply stays showing the last-known trigger label. |
-| loading | switch in flight (SWCH-03) | ✅ covered | Global overlay per D-07/D-08/D-09 — spinner + `Se comută la <branch>…` heading, held until SSE reconnects or the bounded timeout fires. |
-| error | switch rejected (BERR boundary, D-11/D-12) | ✅ covered | Generic failure toast + selector reverts to old branch + overlay releases immediately — no code-aware branching (that's Phase 17). |
-| populated | multi-branch popover, one row selected | ✅ covered | Selected row shows the `--sc-primary` checkmark (D-01); "default" badge shown independently of selection state on whichever row `isDefault: true`. |
-| zero-one-many | branch count (0 / 1 / many) | ✅ covered | 0 is not a reachable app state (every authenticated user has `getMe().selectedBranch` seeded in Phase 13, and `NO_BRANCH_ACCESS` full-screen block is Phase 17's BERR-03); 1 → read-only trigger (D-04, SWCH-02); many → dropdown popover (D-01). |
-| overflow | long branch name in trigger/popover row | 🧪 backstop | Trigger pill and popover rows use `text-overflow: ellipsis; white-space: nowrap; overflow: hidden` with a `title` attribute carrying the full name (mirrors the existing `nav-item`'s `title={sidebarCollapsed ? item.label : ''}` truncation-safety precedent) — not manually verified against a real long branch name from the API, flagged for verification. |
-| collapsed-sidebar | branch identity when sidebar is collapsed | ✅ covered | D-03 — compact chip (branch-name initial, single uppercase letter in a circular tile matching `.avatar`'s 32×32 circle treatment) stays visible and clickable; never hidden, unlike the removed RO/EN toggle's prior collapsed behavior. **Accessible name required:** the chip carries `aria-label`/`title` naming the current branch in full (e.g. `title={currentBranch?.name}`) — it is icon/initial-only with no visible text, so the accessible name is the sole way to identify the branch without expanding the sidebar; mirrors the ellipsis-truncation `title` fallback already specified for the expanded trigger/popover rows (overflow row above). |
-| long-text | overlay heading with a long branch name | ✅ covered | Overlay heading wraps (no truncation) since it's a centered, unconstrained-width message card — unlike the trigger/popover row, there's no adjacent layout to protect. |
-| partial | switch succeeds server-side but SSE reconnect times out (D-09) | ✅ covered | Overlay releases anyway at the bounded timeout, success toast still fires (the switch *did* succeed), and the normal `OfflineBanner` takes over — this is the documented "honest offline indicator" outcome, not an error state. |
-| confirm-gate | cart-discard confirm dialog (D-13) shown vs. skipped | ✅ covered | Gated strictly on cart non-emptiness read at click time; empty cart (the common case) skips the dialog entirely and switches immediately. |
-| destructive-confirm | cart-discard dialog copy/action labeling | ✅ covered | See Copywriting Contract — destructive-colored primary button, neutral secondary "stay" button, mirrors `cancel-dialog.jsx` visual precedent exactly. |
+Surfaces probed: **E1** sidebar-footer branch trigger pill · **E2** collapsed-sidebar branch chip · **E3** branch popover list · **E4** global switching overlay · **E5** success toast · **E6** failure toast · **E7** cart-discard confirm dialog · **E8** "default" badge.
+
+| Surface | Category | Status | Resolution / Reason |
+|---------|----------|--------|---------------------|
+| E1 trigger pill | loading | ✅ covered | Renders from the launch-seeded `getMe().selectedBranch` (Phase 13); the name is present before the footer paints — no trigger-level loading state. |
+| E1 trigger pill | error | ✅ covered | Trigger keeps the last-known selected-branch label; branch-list fetch errors surface inside the popover (E3 error), never on the trigger. |
+| E1 trigger pill | overflow | ✅ covered | `text-overflow: ellipsis; white-space: nowrap; overflow: hidden` + `title` with the full name (`nav-item` truncation precedent). |
+| E1 trigger pill | long-text | ✅ covered | Same ellipsis + `title` treatment; long branch names never break the footer row. |
+| E2 collapsed chip | empty | ✅ covered | 0-branch is unreachable (Phase 13 seed); the chip always shows the selected branch's initial. |
+| E2 collapsed chip | loading | ✅ covered | Seeded at launch; no independent fetch, so no loading state. |
+| E2 collapsed chip | error | ✅ covered | Shows the last-known initial; branch-list errors never blank it. |
+| E2 collapsed chip | populated | ✅ covered | Single uppercase initial in a 32×32 circular tile (`.avatar` precedent). |
+| E2 collapsed chip | overflow | ⊘ n/a | One glyph in a fixed tile — content cannot exceed the container; overflow is structurally impossible. |
+| E2 collapsed chip | long-text | ✅ covered | Visible content is one initial; the full branch name lives in `aria-label`/`title` (D-03 accessible-name requirement), so long names never affect layout. |
+| E3 popover list | empty | ✅ covered | Popover only opens when `branches.length > 1` (D-04); it never opens on an empty collection. |
+| E3 popover list | loading | 🧪 backstop | Inline spinner row (`.spin`) replaces the list until `useBranches()` resolves — warm cache (Phase 13 staleTime), no skeleton. **Verification:** backstop — visual check that the spinner row renders and is swapped out on resolve. |
+| E3 popover list | error | 🧪 backstop | Compact inline `Couldn't load branches` row, no retry (retry is Phase 17 BERR-01); popover keeps the last-known trigger label. **Verification:** backstop — force a `useBranches()` error and confirm the row renders. |
+| E3 popover list | populated | ✅ covered | Rows with a `--sc-primary` checkmark on the selected branch (D-01) and a "default" badge on the `isDefault` row. |
+| E3 popover list | partial | ✅ covered | `AccessibleBranch` rows have a fixed shape (id/name/isDefault) — no per-field optionality, so no partial-row rendering. |
+| E3 popover list | overflow | 🧪 backstop | List scrolls (`overflow-y: auto` + max-height) when branch count exceeds the visible area (user-chip-menu precedent). **Verification:** backstop — visual check with a many-branch tenant. |
+| E3 popover list | zero-one-many | ✅ covered | 0 unreachable; 1 → read-only trigger, no popover (D-04/SWCH-02); many → popover (D-01). |
+| E3 popover list | long-text | ✅ covered | Rows ellipsis + `title` full name. |
+| E4 switch overlay | empty | ⊘ n/a | Transient in-flight status surface, not a data container — no empty state exists. |
+| E4 switch overlay | loading | ✅ covered | This *is* the loading state — spinner + `Se comută la <branch>…` held per D-07/D-08/D-09. |
+| E4 switch overlay | error | ✅ covered | Switch rejected → generic failure toast (E6) + selector reverts + overlay releases immediately (D-11/D-12). |
+| E4 switch overlay | populated | ✅ covered | Spinner + heading + `Reconnecting…` sub-line while SSE reconnects. |
+| E4 switch overlay | partial | ✅ covered | Switch succeeds server-side but SSE reconnect times out (D-09) → overlay releases at the bounded timeout, success toast still fires, `OfflineBanner` takes over — the documented honest-offline outcome, not an error. |
+| E4 switch overlay | overflow | ✅ covered | Centered, unconstrained-width card; the message wraps — no adjacent layout to protect. |
+| E4 switch overlay | zero-one-many | ⊘ n/a | Shows one status message, never a collection — count states don't apply. |
+| E4 switch overlay | long-text | ✅ covered | Heading wraps (no truncation) for long branch names. |
+| E5 success toast | overflow | 🧪 backstop | Uses the existing `.toast` max-width; the interpolated `You're now on <branch>` detail wraps within it. **Verification:** backstop — visual check with a long branch name. |
+| E5 success toast | long-text | ✅ covered | The interpolated branch name wraps within the `.toast` width (see the E5 overflow backstop). |
+| E6 failure toast | overflow | ✅ covered | Static copy (`Couldn't switch branch` / `Try again`), no interpolation — fixed short strings within the `.toast` width. |
+| E6 failure toast | long-text | ✅ covered | Static copy, no interpolated branch name — no long-text variability. |
+| E7 cart-discard dialog | empty | ✅ covered | Shown only when the cart is non-empty (gated at click time, D-13); an empty cart skips it and switches immediately. |
+| E7 cart-discard dialog | loading | ⊘ n/a | Rendered synchronously from in-memory cart state at click time — no data fetch, so no loading state. |
+| E7 cart-discard dialog | error | ✅ covered | The dialog has no failure mode of its own; a rejected switch after confirm surfaces via the failure toast (E6). |
+| E7 cart-discard dialog | populated | ✅ covered | Header/body/footer card, destructive primary + neutral secondary (`cancel-dialog.jsx` precedent). |
+| E7 cart-discard dialog | partial | ⊘ n/a | Static confirm dialog with fixed copy — no data-bound fields, so no partial-data state. |
+| E7 cart-discard dialog | overflow | ✅ covered | Fixed copy in a card; the body wraps. |
+| E7 cart-discard dialog | zero-one-many | ⊘ n/a | Single dialog, not a collection — count states don't apply. |
+| E7 cart-discard dialog | long-text | ✅ covered | Dialog copy is static (no interpolation) — no long-text variability. |
+| E8 "default" badge | empty | ⊘ n/a | A computed label from `isDefault`, not a data container — no empty state. |
+| E8 "default" badge | loading | ⊘ n/a | Rendered from already-loaded branch data; no independent fetch, so no loading state. |
+| E8 "default" badge | error | ⊘ n/a | No fetch of its own — nothing to error. |
+| E8 "default" badge | populated | ✅ covered | `Implicit`/`Default` pill with `--sc-primary` idle border/text (`.chip-sage` mirror). |
+| E8 "default" badge | partial | ⊘ n/a | Single boolean-derived label — no partial-field state. |
+| E8 "default" badge | overflow | ✅ covered | Fixed short label (longest is `Implicit`) sized to fit its pill — no overflow. |
+| E8 "default" badge | zero-one-many | ✅ covered | Exactly one branch carries `isDefault: true` → at most one badge; shown on that row regardless of selection. |
+| E8 "default" badge | long-text | ⊘ n/a | Static localized label, no interpolation — no long-text case. |
+
+**Cross-cutting (retained from D-01…D-13, not element-axis but load-bearing):** collapsed-sidebar branch identity stays visible and clickable (D-03, never hidden — unlike the removed RO/EN toggle); the cart-discard confirm is gated strictly on `screen === 'pos'` AND a non-empty cart (D-13), otherwise the switch proceeds with no confirm step.
 
 ---
 
@@ -145,11 +182,11 @@ No component registry is in use. All new UI (branch trigger, collapsed chip, pop
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS (3 weights waived by LOCKED PROJECT.md design-fidelity exception, 2026-07-23)
+- [x] Dimension 5 Spacing: PASS (non-4px tokens waived by same LOCKED exception)
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED (gsd-ui-checker, revision 1) — 6/6 dimensions PASS, 0 FLAGs
