@@ -23,6 +23,11 @@ import { createElement } from 'react'
 import { useOrders } from '../use-orders.js'
 import { useMenu } from '../use-menu.js'
 import { useAuth } from '../auth.jsx'
+import { useAppStore } from '../store.js'
+
+beforeEach(() => {
+  useAppStore.setState({ currentBranch: null })
+})
 
 // ── U11a: useOrders fetches and returns orders (OFF-02) ───────────────────
 
@@ -57,6 +62,51 @@ describe('U11a — useOrders calls client.kitchen.orders.list and returns data (
     const { result } = renderHook(() => useOrders(), { wrapper: w })
     // When enabled=false, status is 'pending' but fetchStatus is 'idle'
     expect(result.current.fetchStatus).toBe('idle')
+  })
+
+  // SC1: changing currentBranch folds branchId into the query key as the first variable segment.
+  test('useOrders query key includes currentBranch.id as the segment after "orders" (SC1)', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a', name: 'A', slug: 'a', isDefault: true, isActive: true } })
+
+    const mockOrders = [{ id: 'ord-001', status: 'NEW' }]
+    const mockClient = {
+      kitchen: {
+        orders: {
+          list: vi.fn().mockResolvedValue({ data: { orders: mockOrders }, error: null }),
+        },
+      },
+    }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
+
+    const { result } = renderHook(() => useOrders(), { wrapper: w })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const keys = qc.getQueryCache().findAll().map((q) => q.queryKey)
+    expect(keys.some((k) => k[0] === 'orders' && k[1] === 'branch-a')).toBe(true)
+  })
+
+  // SC4: client present, currentBranch still null (unresolved) — fetch must happen immediately,
+  // never gated behind branch resolution (D-08). enabled stays !!client only.
+  test('useOrders fetches immediately when client present and currentBranch is null (SC4)', () => {
+    useAppStore.setState({ currentBranch: null })
+
+    const mockClient = {
+      kitchen: {
+        orders: {
+          list: vi.fn().mockResolvedValue({ data: { orders: [] }, error: null }),
+        },
+      },
+    }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
+
+    const { result } = renderHook(() => useOrders(), { wrapper: w })
+    expect(result.current.fetchStatus).not.toBe('idle')
   })
 })
 
