@@ -1,14 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from './auth.jsx';
+import { useAppStore } from './store.js';
+import { unwrapSdkResult } from './data.jsx';
 
 export function useDeliveryAreas() {
   const { client } = useAuth();
+  const branchId = useAppStore((s) => s.currentBranch?.id) ?? null;
+
   return useQuery({
-    queryKey: ['delivery-areas'],
+    queryKey: ['delivery-areas', branchId],
     queryFn: async () => {
       const result = await client.kitchen.deliveryAreas.list({});
-      if (result.error) throw new Error(result.error.error ?? 'Failed to fetch delivery areas');
-      return (result.data?.deliveryAreas ?? []).map((a) => ({
+      const data = unwrapSdkResult(result, 'Failed to fetch delivery areas');
+      return (data?.deliveryAreas ?? []).map((a) => ({
         id: String(a.id ?? ''),
         name: String(a.name ?? ''),
         fee: (a.fee ?? 0) / 100, // API returns cents
