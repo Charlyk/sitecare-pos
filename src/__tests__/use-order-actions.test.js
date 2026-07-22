@@ -19,11 +19,17 @@ import { renderHook, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { useAuth } from '../auth.jsx'
+import { useAppStore } from '../store.js'
 import { useOrderActions } from '../use-order-actions.js'
 
 // ── U11c: useOrderActions mutation wrappers (D-15) ────────────────────────
 
 describe('U11c — useOrderActions mutation wrappers (D-15)', () => {
+  beforeEach(() => {
+    useAppStore.setState({ currentBranch: null })
+  })
+
+
   test('updateStatus calls SDK with correct path and body args', async () => {
     const mockUpdateStatus = vi.fn().mockResolvedValue({ data: {}, error: null })
     const mockClient = {
@@ -56,7 +62,9 @@ describe('U11c — useOrderActions mutation wrappers (D-15)', () => {
     })
   })
 
-  test('updateStatus invalidates [\'orders\'] cache on success', async () => {
+  test('updateStatus invalidates [\'orders\', branchId] cache on success', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a', name: 'A', slug: 'a', isDefault: true, isActive: true } })
+
     const mockUpdateStatus = vi.fn().mockResolvedValue({ data: {}, error: null })
     const mockClient = {
       kitchen: {
@@ -71,7 +79,7 @@ describe('U11c — useOrderActions mutation wrappers (D-15)', () => {
 
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     // Pre-populate cache so invalidation has something to act on
-    qc.setQueryData(['orders'], [{ id: 'ord-001', status: 'NEW' }])
+    qc.setQueryData(['orders', 'branch-a'], [{ id: 'ord-001', status: 'NEW' }])
 
     const invalidateSpy = vi.spyOn(qc, 'invalidateQueries')
 
@@ -87,7 +95,40 @@ describe('U11c — useOrderActions mutation wrappers (D-15)', () => {
       })
     })
 
-    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['orders'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['orders', 'branch-a'] })
+  })
+
+  test('updateStatus invalidates only current branch — sibling branch cache untouched (SC2)', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a', name: 'A', slug: 'a', isDefault: true, isActive: true } })
+
+    const mockClient = {
+      kitchen: {
+        orders: {
+          updateStatus: vi.fn().mockResolvedValue({ data: {}, error: null }),
+          updateEstimatedTime: vi.fn().mockResolvedValue({ data: {}, error: null }),
+        },
+      },
+    }
+
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    qc.setQueryData(['orders', 'branch-a'], [{ id: 'ord-001' }])
+    qc.setQueryData(['orders', 'branch-b'], [{ id: 'ord-002' }]) // sibling branch
+
+    function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
+
+    const { result } = renderHook(() => useOrderActions(), { wrapper: w })
+
+    await act(async () => {
+      await result.current.updateStatus.mutateAsync({
+        id: 'ord-001',
+        currentStatus: 'NEW',
+        toStatus: 'IN_PROGRESS',
+      })
+    })
+
+    expect(qc.getQueryData(['orders', 'branch-b'])).toEqual([{ id: 'ord-002' }]) // untouched
   })
 
   test('updateEstimatedTime calls SDK with correct path and body args', async () => {
