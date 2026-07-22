@@ -1,7 +1,7 @@
 ---
 phase: 13
 slug: branch-state-launch-seeding-foundation
-status: draft
+status: verified
 shadcn_initialized: false
 preset: none
 created: 2026-07-21
@@ -123,25 +123,33 @@ This phase introduces **no new CTA, no new empty state, no new error state, and 
 | Empty state body | N/A — same as above |
 | Error state | N/A — no new visible error UI; D-03/D-04 failure handling is deliberately silent (background focus-retry only). The user-visible 403 recovery path is explicitly Phase 17's scope, not this phase's |
 | Destructive confirmation | N/A — no destructive action in this phase |
-| **Sidebar identity fallback label** *(new, defaulted — not explicit in CONTEXT.md D-06)* | When `authUser` is entirely unresolved at paint time (a non-401 cold-start `getMe()` failure per D-03, or the brief pre-`getMe()` instant on the `signIn()` path), `displayName` must **not** fall back to a hardcoded personal name (removing the pre-existing `'Eduard Albu'` bug is the whole point of D-06). Recommended fallback: a generic, role-neutral literal — **"Staff"** (en) / **"Personal"** (ro) — not a real name. Flag for planner confirmation; not locked by CONTEXT.md. |
+| **Sidebar identity fallback (unresolved `authUser`)** *(locked by UI-probe user decision 2026-07-22)* | When `authUser` is entirely unresolved at paint time (a non-401 cold-start `getMe()` failure per D-03, or the brief pre-`getMe()` instant on the `signIn()` path), the identity label must **render nothing** — an empty name row (or a hidden chip) — until `authUser` resolves. It must **not** show a hardcoded personal name (the pre-existing `'Eduard Albu'` bug D-06 removes) and must **not** invent a generic literal. The row fills in once `getMe()` populates `authUser` (backstopped by the D-04 focus-retry). No new copy string is introduced. |
 
 Composition rule for the populated case (locked by D-06): `[firstName, lastName].filter(Boolean).join(' ').trim()`,
-else `authUser.email`, else the generic fallback above. Initials continue to derive from whatever string
-`displayName` resolves to (existing `split(' ').map(w=>w[0])...` logic, unchanged).
+else `authUser.email`, else **empty** (per the row above — render nothing, no literal fallback). Initials
+continue to derive from whatever string `displayName` resolves to (existing `split(' ').map(w=>w[0])...`
+logic, unchanged); when `displayName` is empty the initials are correspondingly empty until resolution.
 
 ---
 
 ## UI Considerations
 
-Applicable state considerations resolved: 2 covered, 1 backstop, 1 unresolved, 1 explicitly out-of-scope-dismissed.
+Probe run 2026-07-22 — 19 applicable considerations across 4 surfaces (E1 cold-start gate, E2 sidebar
+identity label, E3 `getMe()` auth flow, E4 `currentBranch`/`useBranches()`). Resolved via user decisions:
+**4 covered, 0 backstop, 2 unresolved (planner assumptions), 13 dismissed (out of scope this phase).**
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| loading | Cold-start app-shell gate (nav) | ✅ covered | Existing `coldStartBusy` blank white screen (`app.jsx:224-227`) is reused unchanged; D-01/D-02 lock that one `getMe()` round-trip may extend it slightly, but no new spinner/skeleton/text is introduced. |
-| empty | Sidebar identity label (static-content) | 🧪 backstop | `authUser` can be entirely `null` when `Shell` paints (non-401 cold-start `getMe()` failure per D-03, or the brief pre-resolution instant). `displayName` must render the generic fallback in the Copywriting Contract above, not a hardcoded name. Verify with a held-out render test: `Shell` with `authUser=null` shows the generic fallback, never a specific person's name. |
-| long-text | Sidebar identity label (static-content) | ⚠ unresolved | Real `firstName`/`lastName` values (replacing the short `'Eduard Albu'` fallback) may run longer than the 240px sidebar allows. The existing `.user-chip` name `<div>` (`shell.jsx:171`) has no `text-overflow`/`white-space` guard today. Not fixed in this phase — layout is explicitly out of scope (D-06: "keep the change minimal and additive"). Flagged as a planner assumption: accept as-is (matches pre-existing sidebar behavior for other long strings) or add a one-line ellipsis rule if it proves visually broken during execution. |
-| error | `getMe()` call on cold start / sign-in (auth flow) | ✅ covered | D-03/D-04 fully define the failure handling and it is intentionally silent by design (no toast, no inline error, no new UI): a non-401 failure leaves the app authenticated with `currentBranch: null`, backstopped only by a focus-triggered retry. No visible error UI is added this phase; Phase 17 owns the user-visible 403 recovery path. |
-| empty / loading / error / populated | `currentBranch`, `useBranches()` branch list | dismissed | No consumer reads `currentBranch` or calls `useBranches()`'s data anywhere in the UI this phase (CONTEXT.md §domain, explicit). All state coverage for branch data is out of scope until Phase 16 (switcher UI) and Phase 17 (403 handling) build actual consumers — raising it here would invent UI that doesn't exist. |
+| # | Element / Category | Status | Resolution / Reason |
+|---|--------------------|--------|---------------------|
+| E1·loading | Cold-start app-shell gate | ✅ covered | Existing `coldStartBusy` blank white screen (`app.jsx:224-227`) is reused unchanged; D-01/D-02 permit the one `getMe()` round-trip to extend it slightly — **no** new spinner/skeleton/text. Truth: launch shows the existing blank gate, never a new loading state. |
+| E1·error / overflow / long-text | Cold-start app-shell gate | dismissed | A blank launch gate has no content surface of its own — nothing to fail-render, overflow, or wrap. Its only failure mode is the `getMe()` call, resolved under E3. |
+| E2·empty | Sidebar identity label | ✅ covered | When `authUser` is unresolved (D-03 non-401 failure / pre-`getMe()` instant) the identity label **renders nothing** (empty name row / hidden chip) until `authUser` resolves — never a hardcoded name, never a generic literal *(user decision 2026-07-22)*. Row fills once `getMe()` resolves (D-04 focus-retry backstop). |
+| E2·partial | Sidebar identity label | ✅ covered | Partial identity (firstName only, missing lastName, or name-less-but-email) is handled by the D-06 composition rule `[firstName,lastName].filter(Boolean).join(' ').trim()` → else `email` → else empty. See Copywriting Contract. |
+| E2·loading | Sidebar identity label | dismissed | No distinct loading treatment — the sidebar only paints after the `coldStartBusy` gate (E1) clears; a still-null `authUser` at that point is the E2·empty case (render nothing), not a separate spinner. |
+| E2·error | Sidebar identity label | dismissed | The identity label has no error state; an auth/`getMe()` failure is handled silently under E3 (D-03/D-04), not surfaced on the label. |
+| E2·overflow | Sidebar identity label | ⚠ unresolved | Planner assumption — **accept as-is, no overflow guard this phase** *(user decision 2026-07-22)*. Real names may exceed the ~240px sidebar; `.user-chip` name `<div>` (`shell.jsx:171`) has no `text-overflow` guard. Left as-is per D-06 ("minimal and additive"); revisit in Phase 16 when the switcher reworks this region. |
+| E2·long-text | Sidebar identity label | ⚠ unresolved | Same decision as E2·overflow — accept as-is, defer. No `white-space`/`text-overflow`/ellipsis rule added this phase. Planner treats as an accepted assumption, not a task. |
+| E3·(auth flow) | `getMe()` on cold start / sign-in | ✅ covered | Probe left this `unclassified` (an auth flow, not a rendered surface — a manual-review nudge, resolved here). D-03/D-04 fully specify the failure handling and it is intentionally **silent**: a non-401 failure stays authenticated with `currentBranch: null`, backstopped by a window-focus retry; a 401 routes to login via `expireSession()`. No visible error UI this phase — the user-visible 403 recovery path is Phase 17. |
+| E4·empty / loading / error / populated / partial / overflow / zero-one-many / long-text | `currentBranch`, `useBranches()` branch list | dismissed | No UI consumer reads `currentBranch` or `useBranches()` data anywhere this phase (CONTEXT.md §domain, explicit). Every branch-data state — the switcher's empty/loading/error/populated list, zero-one-many branch counts, long branch names — is deliberately deferred to Phase 16 (switcher UI) / Phase 17 (403 handling), which build the actual consumers. Raising them here would invent UI that does not exist. |
 
 <!-- Status vocabulary (locked by probe-core projectTruths):
      ✅ covered   → a plain truth string lifted into must_haves.truths
@@ -163,11 +171,13 @@ Applicable state considerations resolved: 2 covered, 1 backstop, 1 unresolved, 1
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: FLAG (non-blocking) — fallback label now locked via UI-probe (render nothing until resolved)
+- [x] Dimension 2 Visuals: FLAG (non-blocking) — long-name overflow accepted as-is (planner assumption, see UI Considerations)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: FLAG (non-blocking) — pre-existing off-scale chrome correctly scoped out
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED (gsd-ui-checker, 2026-07-22) — 3 PASS / 3 non-blocking FLAG. UI-probe resolutions applied post-verification.
+
+**Status:** verified
