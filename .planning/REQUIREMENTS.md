@@ -9,7 +9,7 @@
 
 ### Branch State & Launch (BSTATE)
 
-- [ ] **BSTATE-01**: On sign-in and on cold-start session restore, the app resolves the current selected branch from `client.auth.getMe().selectedBranch` and holds it in session-only state (never client-persisted). Cold start currently sets `isAuthenticated` without any `getMe()` call, so this adds that call.
+- [x] **BSTATE-01**: On sign-in and on cold-start session restore, the app resolves the current selected branch from `client.auth.getMe().selectedBranch` and holds it in session-only state (never client-persisted). Cold start currently sets `isAuthenticated` without any `getMe()` call, so this adds that call.
 - [ ] **BSTATE-02**: The set of accessible branches loads via `client.me.branches.list()`; the list is refetched on window focus and after any branch-access error, and is never cached indefinitely.
 
 ### Branch Switcher UI (SWCH)
@@ -64,7 +64,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BSTATE-01 | Phase 13 | Pending |
+| BSTATE-01 | Phase 13 | Complete |
 | BSTATE-02 | Phase 13 | Pending |
 | SWCH-01 | Phase 16 | Pending |
 | SWCH-02 | Phase 16 | Pending |
@@ -81,6 +81,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | LANG-01 | Phase 16 | Pending |
 
 **Coverage:**
+
 - v1.2 requirements: 15 total
 - Mapped to phases: 15/15 ✓
 - Unmapped: 0

@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Branch Switching
 current_phase: 13
-current_phase_name: Branch State & Launch Seeding Foundation
-current_plan: "`, `**Stopped At:**Phase 13 context gathered"
-status: ready_to_plan
-stopped_at: v1.2 ROADMAP.md created — 5 phases (13–17), 15/15 requirements mapped; REQUIREMENTS.md traceability filled in; STATE.md updated
-last_updated: "2026-07-22T11:14:20.744Z"
-last_activity: 2026-07-21
-last_activity_desc: "v1.2 ROADMAP.md created: 5 phases (13–17), 15/15 requirements mapped, no orphans"
+current_phase_name: branch-state-launch-seeding-foundation
+current_plan: 1
+status: executing
+stopped_at: Completed 13-01-PLAN.md — currentBranch launch-seeding foundation shipped
+last_updated: "2026-07-22T11:29:10.566Z"
+last_activity: 2026-07-22
+last_activity_desc: Phase 13 execution started
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-21 — v1.2 Branch Switching milestone started)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** v1.2 Branch Switching — roadmap created (Phases 13–17), ready to plan Phase 13
+**Current focus:** Phase 13 — branch-state-launch-seeding-foundation
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -52,12 +52,12 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 ## Current Position
 
-Phase: 13 of 17 (Branch State & Launch Seeding Foundation) — v1.2 roadmap created, not yet planned
-Plan: — (no plans yet; run `/gsd-plan-phase 13`)
+Phase: 13 (branch-state-launch-seeding-foundation) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-07-21 — v1.2 ROADMAP.md created: 5 phases (13–17), 15/15 requirements mapped, no orphans
+Last activity: 2026-07-22 — Phase 13 execution started
 
-Progress: [░░░░░░░░░░] 0% (v1.2)
+Progress: [█████░░░░░] 50% (v1.2)
 
 ## Phase Summary
 
@@ -128,6 +128,7 @@ Progress: [░░░░░░░░░░] 0% (v1.2)
 | Phase 12 P02 | 4min | 2 tasks | 2 files |
 | Phase 12 P03 | 6min | 2 tasks | 4 files |
 | Phase 12 P04 | ~12min (incl. checkpoint pause) | 3 tasks | 3 files |
+| Phase 13 P01 | 6min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -266,10 +267,10 @@ Progress: [░░░░░░░░░░] 0% (v1.2)
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**v1.1 milestone complete
+  derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**`, `**Stopped At:**Phase 13 context gathered
+  sync correctly via their own body fields (`**Current Plan:**1
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -284,10 +285,10 @@ Progress: [░░░░░░░░░░] 0% (v1.2)
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/13-branch-state-launch-seeding-foundation/13-UI-SPEC.md
+**Resume file:** None
 
-**Last session:** 2026-07-22T10:22:42.989Z
-**Stopped at:** v1.2 ROADMAP.md created — 5 phases (13–17), 15/15 requirements mapped; REQUIREMENTS.md traceability filled in; STATE.md updated
+**Last session:** 2026-07-22T11:29:10.559Z
+**Stopped at:** Completed 13-01-PLAN.md — currentBranch launch-seeding foundation shipped
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -377,6 +378,10 @@ Progress: [░░░░░░░░░░] 0% (v1.2)
 - [Phase ?]: [Phase 12-04]: Both /gsd-validate-phase runs (10, 11) found zero gaps and reconstructed VALIDATION.md directly from existing VERIFICATION.md/UAT.md evidence, no auditor subagent spawn needed
 - [Phase ?]: [Phase 12-04]: Re-derived v1.1-MILESTONE-AUDIT.md verdict from tech_debt to passed — every CRITICAL/WARNING item resolved with SHA citation and/or live re-verification; only the 3 pre-existing v1.0 test failures remain, explicitly deferred
 - [Roadmap]: [v1.2]: Roadmap derived from reconciled research (SUMMARY/ARCHITECTURE/PITFALLS) — 5 phases (13–17); LANG-01 folded into Phase 16 rather than a standalone single-requirement phase; two mechanism decisions (cache re-scoping approach in Phase 14, SSE 403 signal shape in Phase 15) deliberately left open for phase planning
+- [Phase ?]: currentBranch is session-only and never persisted (D-10) — re-derived from getMe() every cold start
+- [Phase ?]: Only a true 401 from getMe() expires the session; non-401 stays signed in with currentBranch null (D-03)
+- [Phase ?]: signIn()'s optimistic setAuthUser(user) is superseded by a getMe()-sourced CurrentUser as source of truth (D-07)
+- [Phase ?]: shell.jsx displayName composes firstName/lastName -> name -> email -> empty string; hardcoded 'Eduard Albu' literal fully removed (D-06)
 
 ## Operator Next Steps
 
