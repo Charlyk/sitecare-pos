@@ -1,5 +1,6 @@
 // useHistoryOrders — TanStack Query v5 wrapper for admin.orders.list (HIST-02, HIST-03, HIST-04).
-// Cache key: ['history-orders', from, to] — a root DISTINCT from ['orders']. `use-sse.js` writes
+// Cache key: ['history-orders', branchId, from, to] (Phase 14, D-01/D-07) — a root DISTINCT from
+// ['orders']. `use-sse.js` writes
 // live order data directly into ['orders'] via setQueryData, and `use-order-actions.js`
 // invalidates that same root; sharing a root here would let live SSE writes corrupt History's
 // admin-shaped AdminOrder[] cache (RESEARCH Pitfall 4, STATE.md). staleTime: 30s — History is a
@@ -32,13 +33,15 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useAuth } from './auth.jsx';
+import { useAppStore } from './store.js';
 import { normalizeOrder } from './data.jsx';
 
 export function useHistoryOrders({ from, to }, { enabled: extraEnabled = true } = {}) {
   const { client } = useAuth();
+  const branchId = useAppStore((s) => s.currentBranch?.id) ?? null;
 
   return useQuery({
-    queryKey: ['history-orders', from, to],
+    queryKey: ['history-orders', branchId, from, to],
     queryFn: async () => {
       const startedAt = Date.now();
       const result = await client.admin.orders.list({ query: { from, to } });

@@ -24,7 +24,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { useHistoryOrders } from '../use-history-orders.js'
 import { useAuth } from '../auth.jsx'
+import { useAppStore } from '../store.js'
 import { getLast30DaysRange } from '../history-utils.js'
+
+beforeEach(() => {
+  useAppStore.setState({ currentBranch: null })
+})
 
 function makeWrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -83,6 +88,26 @@ describe('useHistoryOrders — calls the admin endpoint only (HIST-02)', () => {
     // verbatim, with no transformation.
     expect(callArg.query.from).toBe(distinctiveRange.from)
     expect(callArg.query.to).toBe(distinctiveRange.to)
+  })
+})
+
+describe('useHistoryOrders — branch-scoped cache key (Phase 14, SC1)', () => {
+  test('query key includes currentBranch.id as the segment after "history-orders" (SC1)', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a', name: 'A', slug: 'a', isDefault: true, isActive: true } })
+
+    const mockClient = {
+      admin: { orders: { list: vi.fn().mockResolvedValue({ data: { orders: [] }, error: null }) } },
+    }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
+
+    const { result } = renderHook(() => useHistoryOrders(FIXTURE_RANGE), { wrapper: w })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    const keys = qc.getQueryCache().findAll().map((q) => q.queryKey)
+    expect(keys.some((k) => k[0] === 'history-orders' && k[1] === 'branch-a')).toBe(true)
   })
 })
 
