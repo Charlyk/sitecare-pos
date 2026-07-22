@@ -12,9 +12,16 @@ vi.mock('@charlyk/admin-client', () => ({ signIn: vi.fn(), createAdminClient: vi
 vi.mock('@tauri-apps/plugin-opener', () => ({ open: vi.fn(), openUrl: vi.fn() }))
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 
+import { createElement } from 'react'
 import { render } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OrdersScreen } from '../screen-orders.jsx'
 import { KitchenScreen } from '../screen-kitchen.jsx'
+
+// OrdersScreen calls useQueryClient() at the top level (branch-scoped invalidation,
+// Phase 14) so its renders must be wrapped in a QueryClientProvider.
+const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
 
 // Minimal order fixture matching the Order type from the SDK
 const mockOrder = {
@@ -49,7 +56,8 @@ describe('U12 — mutating buttons have disabled attribute and .btn-disabled-off
         onAdvance={vi.fn()}
         onPrint={vi.fn()}
         isOffline={true}
-      />
+      />,
+      { wrapper: w }
     )
     const disabledButtons = container.querySelectorAll('.btn-disabled-offline')
     expect(disabledButtons.length).toBeGreaterThan(0)
@@ -67,7 +75,8 @@ describe('U12 — mutating buttons have disabled attribute and .btn-disabled-off
         onAdvance={vi.fn()}
         onPrint={vi.fn()}
         isOffline={false}
-      />
+      />,
+      { wrapper: w }
     )
     const disabledButtons = container.querySelectorAll('.btn-disabled-offline')
     expect(disabledButtons.length).toBe(0)
