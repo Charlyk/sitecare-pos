@@ -117,9 +117,9 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
   3. Reconnecting after a branch switch never fires the sound alert for orders that were already open on the new branch — the initial snapshot replay stays silent.
   4. Standing regression: a single-branch tenant's live connection behaves exactly as before v2.6 — connects once, stays connected, no extra reconnect cycles.
 
-**Plans**: 1 plan
+**Plans**: 1/1 plans executed
 
-- [ ] 15-01-PLAN.md — Tracer: branch-aware SSE reconnect (currentBranch?.id selector + effect dep + explicit isConnected reset) → re-key all 7 cache writes to Phase 14 branch-scoped keys (captured scopedBranchId, D-03/D-04) → D-06 non-2xx onopen capture scaffold (SCOPE-02)
+- [x] 15-01-PLAN.md — Tracer: branch-aware SSE reconnect (currentBranch?.id selector + effect dep + explicit isConnected reset) → re-key all 7 cache writes to Phase 14 branch-scoped keys (captured scopedBranchId, D-03/D-04) → D-06 non-2xx onopen capture scaffold (SCOPE-02)
 
 **Planning note (flagged, not resolved here):** the exact 403 signal shape `fetchEventSource`'s `onopen`/`onerror` path surfaces for a branch-resolution failure (vs. a generic non-2xx or network drop) is unverified from documentation alone. If this phase's own testing surfaces it, note the shape for Phase 17; otherwise treat it as a Phase 17 build-time verification item.
 
@@ -173,7 +173,7 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
 | 12. Tech-Debt Closeout | v1.1 | 4/4 | Complete | 2026-07-19 |
 | 13. Branch State & Launch Seeding Foundation | v1.2 | 2/2 | Complete    | 2026-07-22 |
 | 14. Branch-Scoped Cache Re-Scoping | v1.2 | 4/4 | Complete    | 2026-07-22 |
-| 15. SSE Branch-Aware Reconnect | v1.2 | 0/1 | Not started | - |
+| 15. SSE Branch-Aware Reconnect | v1.2 | 1/1 | In Progress|  |
 | 16. Branch Switcher UI, Switch Flow & Language Relocation | v1.2 | 0/TBD | Not started | - |
 | 17. Centralized Branch-Access Error Handling | v1.2 | 0/TBD | Not started | - |
 

@@ -3,19 +3,19 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Branch Switching
 current_phase: 15
-current_phase_name: SSE Branch-Aware Reconnect
-current_plan: Not started
-status: executing
-stopped_at: Phase 15 context gathered
-last_updated: "2026-07-22T20:50:47.682Z"
+current_phase_name: sse-branch-aware-reconnect
+current_plan: 1
+status: verifying
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-07-22T21:02:25.390Z"
 last_activity: 2026-07-22
-last_activity_desc: Phase 14 complete, transitioned to Phase 15
+last_activity_desc: Phase 15 execution started
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
-  percent: 40
+  completed_plans: 7
+  percent: 60
 ---
 
 # State: SiteCare POS Desktop App
@@ -29,7 +29,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-21 — v1.2 Branch Switching milestone started)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 14 — branch-scoped-cache-re-scoping
+**Current focus:** Phase 15 — sse-branch-aware-reconnect
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -52,10 +52,10 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 ## Current Position
 
-Phase: 15 — SSE Branch-Aware Reconnect
-Plan: 4 of 4
-Status: Ready to execute
-Last activity: 2026-07-22 — Phase 14 complete, transitioned to Phase 15
+Phase: 15 (sse-branch-aware-reconnect) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-07-22 — Phase 15 execution started
 
 Progress: [██████████] 100% (v1.2)
 
@@ -134,6 +134,7 @@ Progress: [██████████] 100% (v1.2)
 | Phase 14 P02 | ~5min | 2 tasks | 6 files |
 | Phase 14 P03 | ~4min | 2 tasks | 6 files |
 | Phase 14 P04 | ~12min | 2 tasks | 5 files |
+| Phase 15 P01 | ~7min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -272,10 +273,10 @@ Progress: [██████████] 100% (v1.2)
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Ready to execute
+  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**Not started
+  sync correctly via their own body fields (`**Current Plan:**1
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -290,10 +291,10 @@ Progress: [██████████] 100% (v1.2)
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/15-sse-branch-aware-reconnect/15-CONTEXT.md
+**Resume file:** None
 
-**Last session:** 2026-07-22T20:18:11.704Z
-**Stopped at:** Phase 15 context gathered
+**Last session:** 2026-07-22T21:02:25.382Z
+**Stopped at:** Completed 15-01-PLAN.md
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -399,6 +400,10 @@ Progress: [██████████] 100% (v1.2)
 - [Phase ?]: [Phase 14-03]: use-delivery-areas.js's cents->units .fee mapping preserved byte-for-byte; only its error-unwrap line changed to route through unwrapSdkResult
 - [Phase ?]: Mutation-side invalidation lockstep: branchId read once at hook/component-body top, closed over in onSuccess (never re-read inside onSuccess), matching all 7 branch-scoped query keys from Plans 01-03
 - [Phase ?]: SC2 (sibling branch untouched) proven by automated test in use-order-actions.test.js; Rule 1 fix applied to screen-menu.test.jsx's stale invalidation-key assertion
+- [Phase ?]: [Phase 15-01]: branch-aware SSE reconnect is dependency-driven (branchId in effect deps, never a ref) — D-01/D-02 satisfied by construction since currentBranch is only set post-switch-resolution
+- [Phase ?]: [Phase 15-01]: scopedBranchId captured once per SSE connection and closed over by every handler (D-03) — no handler ever reads useAppStore.getState(), preventing stale-connection cross-branch cache bleed
+- [Phase ?]: [Phase 15-01]: setIsConnected(false) added at top of every SSE effect run (D-05) — ctrl.abort() fires neither onerror nor onclose, so the reconnect drop must be explicit to stay visible
+- [Phase ?]: [Phase 15-01]: shared test wrapper() must hold QueryClient via useRef, not construct new QueryClient() in the render body — otherwise renderHook's rerender() gives every dependent hook a fresh queryClient identity and defeats dependency-array assertions
 
 ## Operator Next Steps
 
