@@ -88,10 +88,10 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
   3. Every branch-scoped data-fetch error carries a matchable error code (e.g. `BRANCH_INACTIVE`) that a later centralized handler can act on.
   4. Standing regression: a single-branch tenant's order list loads with no added delay versus pre-v1.2 — branch resolution never blocks the initial fetch.
 
-**Plans**: 4 plans
+**Plans**: 1/4 plans executed
 **Wave 1**
 
-- [ ] 14-01-PLAN.md — Tracer: unwrapSdkResult helper + use-orders branch-key + screen-orders invalidation + SC3/SC4 tests
+- [x] 14-01-PLAN.md — Tracer: unwrapSdkResult helper + use-orders branch-key + screen-orders invalidation + SC3/SC4 tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -170,7 +170,7 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
 | 11. Reprint + CSV Export | v1.1 | 4/4 | Complete | 2026-07-19 |
 | 12. Tech-Debt Closeout | v1.1 | 4/4 | Complete | 2026-07-19 |
 | 13. Branch State & Launch Seeding Foundation | v1.2 | 2/2 | Complete    | 2026-07-22 |
-| 14. Branch-Scoped Cache Re-Scoping | v1.2 | 0/TBD | Not started | - |
+| 14. Branch-Scoped Cache Re-Scoping | v1.2 | 1/4 | In Progress|  |
 | 15. SSE Branch-Aware Reconnect | v1.2 | 0/TBD | Not started | - |
 | 16. Branch Switcher UI, Switch Flow & Language Relocation | v1.2 | 0/TBD | Not started | - |
 | 17. Centralized Branch-Access Error Handling | v1.2 | 0/TBD | Not started | - |

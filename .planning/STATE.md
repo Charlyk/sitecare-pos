@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Branch Switching
 current_phase: 14
-current_phase_name: Branch-Scoped Cache Re-Scoping
-current_plan: Not started
+current_phase_name: branch-scoped-cache-re-scoping
+current_plan: 1
 status: executing
-stopped_at: Phase 14 context gathered
-last_updated: "2026-07-22T14:33:00.014Z"
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-07-22T18:27:46.043Z"
 last_activity: 2026-07-22
-last_activity_desc: Phase 13 complete, transitioned to Phase 14
+last_activity_desc: Phase 14 execution started
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 2
+  completed_plans: 3
   percent: 20
 ---
 
@@ -29,7 +29,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-21 — v1.2 Branch Switching milestone started)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 13 — branch-state-launch-seeding-foundation
+**Current focus:** Phase 14 — branch-scoped-cache-re-scoping
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -52,12 +52,12 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 ## Current Position
 
-Phase: 14 — Branch-Scoped Cache Re-Scoping
-Plan: 2 of 2
+Phase: 14 (branch-scoped-cache-re-scoping) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-07-22 — Phase 13 complete, transitioned to Phase 14
+Last activity: 2026-07-22 — Phase 14 execution started
 
-Progress: [██████████] 100% (v1.2)
+Progress: [█████░░░░░] 50% (v1.2)
 
 ## Phase Summary
 
@@ -130,6 +130,7 @@ Progress: [██████████] 100% (v1.2)
 | Phase 12 P04 | ~12min (incl. checkpoint pause) | 3 tasks | 3 files |
 | Phase 13 P01 | 6min | 3 tasks | 6 files |
 | Phase 13 P02 | 8min | 1 tasks | 2 files |
+| Phase 14 P01 | ~10min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -271,7 +272,7 @@ Progress: [██████████] 100% (v1.2)
   derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**Not started
+  sync correctly via their own body fields (`**Current Plan:**1
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
@@ -286,10 +287,10 @@ Progress: [██████████] 100% (v1.2)
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/14-branch-scoped-cache-re-scoping/14-CONTEXT.md
+**Resume file:** None
 
-**Last session:** 2026-07-22T13:26:56.000Z
-**Stopped at:** Phase 14 context gathered
+**Last session:** 2026-07-22T18:27:46.035Z
+**Stopped at:** Completed 14-01-PLAN.md
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -386,6 +387,9 @@ Progress: [██████████] 100% (v1.2)
 - [Phase ?]: queryKey is ['branches'] (not branch-prefixed) — re-keying deferred to Phase 14 (D-09)
 - [Phase ?]: enabled: !!client only for useBranches — no branchId/currentBranch gate, preserving SC5 single-branch first-paint
 - [Phase ?]: No useBranchSwitch() and no app.jsx wiring this phase — deferred to Phase 16 (D-08)
+- [Phase ?]: [Phase 14-01]: branchId is always present in the key shape (currentBranch?.id ?? null), never a variable-length fork (D-07) — scoped/unscoped key shapes never coexist
+- [Phase ?]: [Phase 14-01]: unwrapSdkResult reads err.code from result.error.error (or the bare string), never a nonexistent result.error.code — matches the installed SDK's actual { error: string } envelope (build-time correction of D-05's literal text)
+- [Phase ?]: [Phase 14-01]: enabled: !!client stays the sole gate on useOrders, never !!branchId (D-08) — preserves no first-paint delay for single-branch tenants and the non-401 cold-start null-branch state
 
 ## Operator Next Steps
 
