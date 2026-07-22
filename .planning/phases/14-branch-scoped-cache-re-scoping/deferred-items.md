@@ -1,19 +1,19 @@
-# Phase 14 — Deferred Items (out of scope for Plan 14-02)
+# Phase 14 — Deferred Items
 
-Logged during Plan 14-02 execution. Full-suite `npx vitest run` shows 2 pre-existing failing
-test files, both confirmed via `git diff 17b4c00 HEAD` to be untouched by any Plan 14-02 commit
-(17b4c00 is the tip of Plan 14-01, before this plan's changes):
+Logged during Plan 14-02 execution; reconciled at the phase-level post-merge test gate.
 
-1. **`src/__tests__/offline-buttons.test.jsx`** — 2 failures: `OrdersScreen` renders without a
-   `QueryClientProvider` wrapper in this test file, but `screen-orders.jsx` started calling
-   `useQueryClient()` in Plan 14-01 (commit `93083f9`) to support branch-scoped invalidation.
-   The test file itself was never updated to wrap `OrdersScreen` in a `QueryClientProvider`.
-   Out of scope for 14-02 (touches `screen-orders.jsx`/its test, not the 3 hooks this plan owns).
+1. **`src/__tests__/offline-buttons.test.jsx`** — status: resolved.
+   Root cause: Plan 14-01 (commit `93083f9`) hoisted `useQueryClient()` to the `OrdersScreen`
+   top level for branch-scoped invalidation, but this test rendered `OrdersScreen` without a
+   `QueryClientProvider`, so the hook threw `No QueryClient set`. This was an **in-phase
+   regression introduced by Phase 14**, NOT a pre-existing failure (the earlier 14-02 note
+   mislabeled it). Fixed at the post-merge gate by wrapping both `OrdersScreen` renders in the
+   standard `QueryClientProvider` wrapper convention (commit `0a33570`). 3/3 tests now pass.
 
-2. **`src/__tests__/build-pipeline.test.js`** — 1 failure: `bundle.createUpdaterArtifacts`
-   expected `true`, got `undefined`/other in `tauri.conf.json`. Unrelated to branch-scoped
-   cache work entirely; pre-existing config drift.
-
-Both are pre-existing conditions, not introduced by Plan 14-02's `src/use-order-detail.js`,
-`src/use-stats.js`, `src/use-menu.js`, or their new test files. Not fixed here per the
-executor's scope-boundary rule (fix only issues directly caused by the current task's changes).
+2. **`src/__tests__/build-pipeline.test.js`** — status: deferred (genuinely pre-existing).
+   `bundle.createUpdaterArtifacts` is `"v1Compatible"` (a string) in `src-tauri/tauri.conf.json`,
+   but the test asserts `.toBe(true)`. Verified pre-existing: neither the test file nor
+   `tauri.conf.json` changed between the phase-start commit (`bc2e75c`) and phase completion
+   (`git log bc2e75c..HEAD` for both paths is empty). Entirely unrelated to branch-scoped cache
+   work. Not fixed in Phase 14 — out of scope; belongs to build-pipeline/updater config, not
+   SCOPE-01. Full suite is 541/542 with this as the sole remaining failure.
