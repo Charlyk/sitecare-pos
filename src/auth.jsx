@@ -134,14 +134,16 @@ export function AuthProvider({ children }) {
     (async () => {
       try {
         const token = await readToken();
-        console.log('[auth:cold] readToken →', token ? `present (${String(token).length} chars)` : 'null — will show login');
+        if (import.meta.env.DEV) {
+          console.log('[auth:cold] readToken →', token ? `present (${String(token).length} chars)` : 'null — will show login');
+        }
         if (!token) return;
         tokenRef.current = token;
         setToken(token);
         const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
         setClient(adminClient);
         setIsAuthenticated(true);
-        console.log('[auth:cold] auth restored ✓');
+        if (import.meta.env.DEV) console.log('[auth:cold] auth restored ✓');
         // D-05/D-07/BSTATE-01: seed authUser + currentBranch from the server session on cold
         // start (the pre-existing gap this plan closes — authUser was only ever set in signIn()).
         // getMe() has a throwing contract (resolves CurrentUser or throws w/ .status), NOT the
@@ -151,7 +153,7 @@ export function AuthProvider({ children }) {
         // currentBranch null — the D-04 window-focus listener below is the backstop that retries.
         await seedFromMe(adminClient, { onUnauthorized: () => expireSession() });
       } catch (e) {
-        console.error('[auth:cold] token read failed:', e?.message ?? e);
+        if (import.meta.env.DEV) console.error('[auth:cold] token read failed:', e?.message ?? e);
       } finally {
         setColdStartBusy(false);
       }
@@ -207,11 +209,11 @@ export function AuthProvider({ children }) {
         const { session } = await adminClient.auth.getSession();
         if (session?.expiresAt) scheduleRefresh(session.expiresAt, adminClient);
       } catch (sessionErr) {
-        console.warn('[auth] getSession after signIn failed (non-fatal):', sessionErr);
+        if (import.meta.env.DEV) console.warn('[auth] getSession after signIn failed (non-fatal):', sessionErr);
       }
       setScreen('orders'); // D-09: always navigate to orders after login
     } catch (err) {
-      console.error('[auth] signIn error:', err);
+      if (import.meta.env.DEV) console.error('[auth] signIn error:', err);
       const status = err?.status;
       if (status === 401 || status === 403) {
         setError('creds');
