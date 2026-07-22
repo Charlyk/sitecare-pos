@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAppStore } from './store.js';
 import { normalizeOrder, SDK_STATE_MAP } from './data.jsx';
 
 // Dev: Vite proxy intercepts /v1/* → https://api.restaurant.sitecare.ro
@@ -16,6 +17,8 @@ const SSE_URL = import.meta.env.DEV
 
 export function useSSE(token, onLiveOrder) {
   const queryClient = useQueryClient();
+  // D-01: branch-aware reconnect trigger — a dependency, never a ref (a ref would defeat the reconnect)
+  const branchId = useAppStore((s) => s.currentBranch?.id) ?? null;
   const [isConnected, setIsConnected] = useState(false);
   const abortRef = useRef(null);
   const snapshotDone = useRef(false);
@@ -30,8 +33,12 @@ export function useSSE(token, onLiveOrder) {
     }
 
     snapshotDone.current = false; // reset so each (re)connect gets a fresh 100ms window
+    // D-05: ctrl.abort() fires neither onerror nor onclose in @microsoft/fetch-event-source,
+    // so isConnected must be explicitly dropped here (no-op on first connect, visible flash on reconnect).
+    setIsConnected(false);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
+    const scopedBranchId = branchId; // D-03: captured once per connection, closed over by every handler — never a live read
 
     fetchEventSource(SSE_URL, {
       headers: { Authorization: `Bearer ${token}` }, // Bearer token in header only — NEVER in URL (T-3-01)
@@ -52,11 +59,11 @@ export function useSSE(token, onLiveOrder) {
         // D-04: ping events are no-ops — keepalive only, ignore
         if (msg.event === 'ping') return;
 
-        // D-03: order_new events → upsert into ['orders'] cache (no network refetch)
+        // D-03/D-04: order_new events → upsert into ['orders', scopedBranchId] cache (no network refetch)
         if (msg.event === 'order_new') {
           try {
             const order = normalizeOrder(JSON.parse(msg.data));
-            queryClient.setQueryData(['orders'], (old) => {
+            queryClient.setQueryData(['orders', scopedBranchId], (old) => {
               const list = old?.orders ?? [];
               const idx = list.findIndex((o) => o.id === order.id);
               const next = idx >= 0
@@ -64,7 +71,7 @@ export function useSSE(token, onLiveOrder) {
                 : [order, ...list];                                  // prepend new
               return { orders: next };
             });
-            queryClient.invalidateQueries({ queryKey: ['stats'] });
+            queryClient.invalidateQueries({ queryKey: ['stats', scopedBranchId] });
             // D-06: only call onLiveOrder for live events, not initial snapshot
             if (snapshotDone.current && onLiveOrderRef.current) {
               onLiveOrderRef.current(order);
@@ -120,7 +127,7 @@ export function useSSE(token, onLiveOrder) {
 
     // Cleanup: abort SSE on unmount (prevents memory leak — server unregisters client on abort)
     return () => ctrl.abort();
-  }, [token, queryClient]); // onLiveOrder intentionally excluded — stored in ref to avoid reconnection on every render
+  }, [token, queryClient, branchId]); // onLiveOrder intentionally excluded — stored in ref to avoid reconnection on every render; branchId IS a dependency (D-01) — the sole reconnect trigger
 
   return { isConnected };
 }

@@ -1,7 +1,13 @@
 // Tests for useSSE hook — U9 (KDS-01)
 // Wave 0 stub: tests fail RED until src/use-sse.js is implemented.
 
-vi.mock('@tauri-apps/plugin-store', () => ({ load: vi.fn() }))
+vi.mock('@tauri-apps/plugin-store', () => ({
+  load: vi.fn().mockResolvedValue({
+    get: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
 vi.mock('@charlyk/admin-client', () => ({ signIn: vi.fn(), createAdminClient: vi.fn() }))
 vi.mock('@tauri-apps/plugin-opener', () => ({ open: vi.fn(), openUrl: vi.fn() }))
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
@@ -11,7 +17,7 @@ vi.mock('@microsoft/fetch-event-source', () => ({
 
 import { renderHook, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createElement } from 'react'
+import { createElement, useRef } from 'react'
 import { useSSE } from '../use-sse.js'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { useAppStore } from '../store.js'
@@ -20,9 +26,16 @@ beforeEach(() => {
   useAppStore.setState({ currentBranch: null })
 })
 
+// Stable QueryClient identity across rerender() calls — constructing `new QueryClient()`
+// directly in the function body would give it a fresh identity on every render, which
+// would spuriously trigger useSSE's effect (queryClient is a dependency) independent of
+// any branchId change, defeating reconnect-count assertions.
 function wrapper({ children }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return createElement(QueryClientProvider, { client }, children)
+  const clientRef = useRef(null)
+  if (!clientRef.current) {
+    clientRef.current = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  }
+  return createElement(QueryClientProvider, { client: clientRef.current }, children)
 }
 
 // ── U9a: isConnected state transitions (KDS-01) ────────────────────────────
