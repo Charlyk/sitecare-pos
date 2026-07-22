@@ -192,6 +192,22 @@ export const SDK_STATE_MAP = {
   COMPLETED: 'done',
 };
 
+// unwrapSdkResult — shared SDK {data,error} envelope unwrap (D-05, Phase 14).
+// Corrected per RESEARCH Pitfall 1: the installed SDK's generic error type is
+// `{ error: string }` — there is no separate `.code` field at runtime for these
+// hooks' declared error unions. err.code is populated from result.error.error
+// (or the bare string itself), never from a nonexistent result.error.code.
+export function unwrapSdkResult(result, fallbackMessage) {
+  if (result.error) {
+    const raw = result.error;
+    const message = (typeof raw === 'string' ? raw : raw?.error) ?? fallbackMessage;
+    const err = new Error(message);
+    err.code = message; // same string serves as the matchable code (Phase 17 consumes err.code)
+    throw err;
+  }
+  return result.data;
+}
+
 export function normalizeOrder(o) {
   const cRON = (v) => (v ?? 0) / 100; // SDK returns monetary values in cents
   const rawState = o.state ?? o.status ?? '';
