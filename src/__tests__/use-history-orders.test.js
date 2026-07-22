@@ -194,6 +194,35 @@ describe('useHistoryOrders — error handling', () => {
 
     expect(result.current.error.message).toBe('Failed to load history')
   })
+
+  // Phase 14 SC3: the thrown Error carries a matchable .code (mirrors unwrapSdkResult's contract)
+  // so Phase 17's centralized branch-access onError handler can act on it uniformly. The
+  // .diagnostic enrichment (windows-history-network-error session) is preserved alongside it.
+  test('populates err.code from the object error field (SC3)', async () => {
+    const mockClient = {
+      admin: { orders: { list: vi.fn().mockResolvedValue({ data: null, error: { error: 'BRANCH_INACTIVE' } }) } },
+    }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const { result } = renderHook(() => useHistoryOrders(FIXTURE_RANGE), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    expect(result.current.error.code).toBe('BRANCH_INACTIVE')
+    // .diagnostic enrichment remains intact alongside the new .code (additive change)
+    expect(result.current.error.diagnostic).toBeDefined()
+  })
+
+  test('populates err.code from a bare-string error (SC3)', async () => {
+    const mockClient = {
+      admin: { orders: { list: vi.fn().mockResolvedValue({ data: null, error: 'BRANCH_ACCESS_REVOKED' }) } },
+    }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const { result } = renderHook(() => useHistoryOrders(FIXTURE_RANGE), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+
+    expect(result.current.error.code).toBe('BRANCH_ACCESS_REVOKED')
+  })
 })
 
 describe('useHistoryOrders — disabled when client is null', () => {

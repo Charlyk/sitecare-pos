@@ -62,6 +62,11 @@ export function useHistoryOrders({ from, to }, { enabled: extraEnabled = true } 
           errorName: result.error?.name,
           ms,
         };
+        // SC3 (Phase 14): carry a matchable error code so Phase 17's centralized branch-access
+        // onError handler can act on it uniformly across all 7 branch-scoped resources. Mirrors
+        // unwrapSdkResult's contract (data.jsx) — the bare string when result.error is a string,
+        // else result.error.error. Additive only; the .diagnostic block above is unchanged.
+        err.code = typeof result.error === 'string' ? result.error : result.error?.error;
         throw err;
       }
       return (result.data?.orders ?? []).map(normalizeOrder);
