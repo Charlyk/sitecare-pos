@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Branch Switching
-current_phase: 14
-current_phase_name: branch-scoped-cache-re-scoping
-current_plan: 1
-status: verifying
+current_phase: 15
+current_phase_name: SSE Branch-Aware Reconnect
+current_plan: Not started
+status: planning
 stopped_at: Completed 14-04-PLAN.md (final plan of Phase 14 — branch-scoped-cache-re-scoping)
-last_updated: "2026-07-22T18:41:08.571Z"
+last_updated: "2026-07-22T20:01:16.864Z"
 last_activity: 2026-07-22
-last_activity_desc: Phase 14 execution started
+last_activity_desc: Phase 14 complete, transitioned to Phase 15
 progress:
   total_phases: 5
   completed_phases: 2
@@ -52,10 +52,10 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 ## Current Position
 
-Phase: 14 (branch-scoped-cache-re-scoping) — EXECUTING
+Phase: 15 — SSE Branch-Aware Reconnect
 Plan: 4 of 4
 Status: Phase complete — ready for verification
-Last activity: 2026-07-22 — Phase 14 execution started
+Last activity: 2026-07-22 — Phase 14 complete, transitioned to Phase 15
 
 Progress: [██████████] 100% (v1.2)
 
@@ -272,10 +272,10 @@ Progress: [██████████] 100% (v1.2)
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
+  derives that key from a body-level `Status:`/`**Status:**Ready to plan
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
-  sync correctly via their own body fields (`**Current Plan:**1
+  sync correctly via their own body fields (`**Current Plan:**Not started
   disk-scanned plan/summary counts) — only the top-level `status:` enum is affected. Left as
   `ready_to_execute` rather than force-written; the body's "Overall Status" prose and the Phase
   Summary table below are the accurate, human-facing source of truth for Phase 9's completion.
