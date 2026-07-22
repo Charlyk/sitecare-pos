@@ -47,6 +47,7 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null);
   const refreshTimerRef = useRef(null);
   const tokenRef = useRef(null); // tracks current session token so doRefresh can detect rotation
+  const rememberRef = useRef(false); // CR-02: tracks the "remember me" choice for the life of the session
 
   // Schedules a proactive refresh timer per D-08.
   // expiresAt is an ISO-8601 string from session.expiresAt.
@@ -68,7 +69,9 @@ export function AuthProvider({ children }) {
       if (session?.token && session.token !== tokenRef.current) {
         tokenRef.current = session.token;
         setToken(session.token);
-        try { await persistToken(session.token); } catch { /* non-fatal */ }
+        if (rememberRef.current) {
+          try { await persistToken(session.token); } catch { /* non-fatal */ }
+        }
         const newClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: session.token });
         setClient(newClient);
         scheduleRefresh(session.expiresAt, newClient);
@@ -174,9 +177,10 @@ export function AuthProvider({ children }) {
       const user = signInResult.user ?? signInResult.profile ?? null;
       if (!token) throw new Error('No token in signIn response: ' + JSON.stringify(Object.keys(signInResult)));
       setToken(token);
+      tokenRef.current = token; // CR-02: always track current token for rotation detection, regardless of remember
+      rememberRef.current = remember; // CR-02: remember the opt-out choice for the life of the session
       if (remember) {
         await persistToken(token); // AUTH-02
-        tokenRef.current = token;
       }
       const adminClient = createAdminClient({ baseUrl: BASE_URL, sessionToken: token });
       setClient(adminClient);
