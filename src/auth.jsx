@@ -159,9 +159,17 @@ export function AuthProvider({ children }) {
       client.auth.getMe()
         .then((me) => {
           setAuthUser(me);
-          setCurrentBranch(me.selectedBranch);
+          setCurrentBranch(me?.selectedBranch ?? null);
         })
-        .catch(() => { /* non-fatal — will retry on next focus event */ });
+        .catch((meErr) => {
+          // WR-02: mirror the 401 handling used by the other two getMe() seams — a genuinely
+          // expired session must not be swallowed silently forever by this backstop.
+          if (meErr?.status === 401) {
+            expireSession();
+            return;
+          }
+          // else: non-fatal — will retry on next focus event
+        });
     }
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
