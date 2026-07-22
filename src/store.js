@@ -65,6 +65,7 @@ export const useAppStore = create(
       // --- Auth state (session-only, NOT persisted — set by AuthProvider on cold start) ---
       isAuthenticated: false,
       authUser: null,
+      currentBranch: null,     // SelectedBranch | null (from getMe()); session-only; NEVER in partialize (D-10)
 
       // --- Actions ---
       // setScreen resets selectedOrder and historyOrder so no detail route can show stale data
@@ -112,6 +113,7 @@ export const useAppStore = create(
       setUpdateReady: (v) => set({ updateReady: v }),
       setIsAuthenticated: (v) => set({ isAuthenticated: v }),
       setAuthUser: (user) => set({ authUser: user }),
+      setCurrentBranch: (branch) => set({ currentBranch: branch }),
     }),
     {
       name: 'sc-ui-prefs',                           // Key name in preferences.json

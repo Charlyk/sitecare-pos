@@ -61,6 +61,56 @@ describe('U5 — partialize excludes auth state from persistence (AUTH-02)', () 
     expect(persisted).not.toHaveProperty('selectedOrder')
     expect(persisted).not.toHaveProperty('acceptDialog')
   })
+
+  test('partialize result does NOT contain currentBranch key (D-10, BSTATE-01)', () => {
+    useAppStore.getState().setCurrentBranch({ id: 'b1', name: 'Branch 1', slug: 'b1', isDefault: true, isActive: true })
+    const state = useAppStore.getState()
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+
+    expect(persisted).not.toHaveProperty('currentBranch')
+    // reset
+    useAppStore.getState().setCurrentBranch(null)
+  })
+
+  test('partialize result still contains exactly the 6 expected persisted keys after currentBranch is set (D-10)', () => {
+    useAppStore.getState().setCurrentBranch({ id: 'b1', name: 'Branch 1', slug: 'b1', isDefault: true, isActive: true })
+    const state = useAppStore.getState()
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+
+    const persistedKeys = Object.keys(persisted).sort()
+    expect(persistedKeys).toEqual([
+      'accent',
+      'density',
+      'lang',
+      'role',
+      'screen',
+      'sidebarCollapsed',
+    ])
+    // reset
+    useAppStore.getState().setCurrentBranch(null)
+  })
+})
+
+describe('currentBranch session-only field (BSTATE-01)', () => {
+  test('store default currentBranch value is null', () => {
+    expect(useAppStore.getState().currentBranch).toBe(null)
+  })
+
+  test('setCurrentBranch(branchObj) sets currentBranch on the store', () => {
+    const branch = { id: 'b1', name: 'Branch 1', slug: 'b1', isDefault: true, isActive: true }
+    useAppStore.getState().setCurrentBranch(branch)
+    expect(useAppStore.getState().currentBranch).toBe(branch)
+    // reset
+    useAppStore.getState().setCurrentBranch(null)
+  })
+
+  test('setCurrentBranch(null) sets currentBranch back to null (nullable resolved state)', () => {
+    useAppStore.getState().setCurrentBranch({ id: 'b2', name: 'Branch 2', slug: 'b2', isDefault: false, isActive: true })
+    useAppStore.getState().setCurrentBranch(null)
+    expect(useAppStore.getState().currentBranch).toBe(null)
+  })
 })
 
 describe('soundMuted state (KDS-04, D-07)', () => {
