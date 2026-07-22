@@ -66,6 +66,33 @@ describe('U9a — useSSE sets isConnected=true on open, false on error (KDS-01)'
     expect(fetchEventSource).not.toHaveBeenCalled()
     expect(result.current.isConnected).toBe(false)
   })
+
+  test('D-06: a non-2xx onopen logs status + best-effort body before the unchanged throw, and does not connect', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let capturedOnOpen
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnOpen = opts.onopen
+      return Promise.resolve()
+    })
+    const { result } = renderHook(() => useSSE('test-token'), { wrapper })
+
+    const badResponse = { ok: false, status: 403, text: () => Promise.resolve('{"error":"branch not resolved"}') }
+    await act(async () => {
+      if (capturedOnOpen) {
+        await expect(capturedOnOpen(badResponse)).rejects.toThrow('SSE: server returned 403')
+      }
+    })
+
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+    expect(warnSpy).toHaveBeenCalledWith('[SSE] non-2xx onopen', expect.objectContaining({
+      status: 403,
+      body: '{"error":"branch not resolved"}',
+    }))
+    // Non-ok onopen never flips isConnected true — the throw→onerror→retry path is preserved
+    expect(result.current.isConnected).toBe(false)
+
+    warnSpy.mockRestore()
+  })
 })
 
 // ── U9b: order_new event upserts into ['orders'] cache (KDS-01) ───────────

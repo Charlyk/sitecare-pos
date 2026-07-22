@@ -51,6 +51,17 @@ export function useSSE(token, onLiveOrder) {
           setTimeout(() => { snapshotDone.current = true; }, 100); // absorb initial snapshot batch silently (D-06)
           return;
         }
+        // Phase 15 D-06: capture scaffold — record the real branch-resolution 403 signal
+        // shape (for Phase 17) before the existing throw. Console only, never a remote
+        // telemetry sink (T-15-02). response.text() (never .json()) so an unexpected
+        // non-JSON body can't throw and mask the real status.
+        let body;
+        try {
+          body = await response.text();
+        } catch {
+          body = undefined;
+        }
+        console.warn('[SSE] non-2xx onopen', { status: response.status, body });
         // Non-2xx: throw so fetchEventSource routes to onerror and retries
         throw new Error(`SSE: server returned ${response.status}`);
       },
