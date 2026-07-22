@@ -88,9 +88,13 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
   3. Every branch-scoped data-fetch error carries a matchable error code (e.g. `BRANCH_INACTIVE`) that a later centralized handler can act on.
   4. Standing regression: a single-branch tenant's order list loads with no added delay versus pre-v1.2 — branch resolution never blocks the initial fetch.
 
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 14-01-PLAN.md — Tracer: unwrapSdkResult helper + use-orders branch-key + screen-orders invalidation + SC3/SC4 tests
+- [ ] 14-02-PLAN.md — Expand fetch hooks A: use-order-detail, use-stats, use-menu + SC1 tests
+- [ ] 14-03-PLAN.md — Expand fetch hooks B: use-restaurant-settings, use-delivery-areas, use-history-orders (key-only) + SC1 tests
+- [ ] 14-04-PLAN.md — Mutation invalidation lockstep (use-order-actions, screen-pos, screen-menu) + SC2 sibling-untouched test
 
-**Planning note (decide during this phase, not before):** research offers two viable re-scoping mechanisms — branchId-keyed query keys (e.g. `['orders', branchId]`) vs. a blunt `queryClient.resetQueries()` on switch success. Pick one explicitly and apply it uniformly across all seven hooks; do not mix both ad hoc.
+**Planning note (RESOLVED during Phase 14 planning):** D-01 picks **branchId-keyed query keys** (`['orders', branchId]`, etc.) over `queryClient.resetQueries()`, applied uniformly across all seven hooks — chosen for race-safety by construction (immune to Pitfall 4) and future-proofing. No ad-hoc mixing.
 
 ### Phase 15: SSE Branch-Aware Reconnect
 
