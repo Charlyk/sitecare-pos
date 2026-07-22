@@ -48,7 +48,7 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
 
 **Milestone Goal:** Make the POS app branch-aware — staff can see and switch the active branch, and every screen plus the live SSE stream follow the selected branch. Built against the API's v2.6 "Tenant Branching" model, where the active branch is server-side session state — no header or param — so every existing SDK call auto-scopes to it.
 
-- [ ] **Phase 13: Branch State & Launch Seeding Foundation** - Seed the current branch and the accessible-branch list from the session on sign-in and cold start
+- [x] **Phase 13: Branch State & Launch Seeding Foundation** - Seed the current branch and the accessible-branch list from the session on sign-in and cold start (completed 2026-07-22)
 - [ ] **Phase 14: Branch-Scoped Cache Re-Scoping** - Key every branch-scoped data cache to the active branch
 - [ ] **Phase 15: SSE Branch-Aware Reconnect** - Reconnect the live order stream scoped to the new branch on every switch
 - [ ] **Phase 16: Branch Switcher UI, Switch Flow & Language Relocation** - Sidebar branch switcher with a non-optimistic switch flow; RO/EN control relocates to Settings
@@ -156,7 +156,7 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
 | 10. Filters + Search | v1.1 | 4/4 | Complete | 2026-07-18 |
 | 11. Reprint + CSV Export | v1.1 | 4/4 | Complete | 2026-07-19 |
 | 12. Tech-Debt Closeout | v1.1 | 4/4 | Complete | 2026-07-19 |
-| 13. Branch State & Launch Seeding Foundation | v1.2 | 2/2 | In Progress|  |
+| 13. Branch State & Launch Seeding Foundation | v1.2 | 2/2 | Complete    | 2026-07-22 |
 | 14. Branch-Scoped Cache Re-Scoping | v1.2 | 0/TBD | Not started | - |
 | 15. SSE Branch-Aware Reconnect | v1.2 | 0/TBD | Not started | - |
 | 16. Branch Switcher UI, Switch Flow & Language Relocation | v1.2 | 0/TBD | Not started | - |
