@@ -6,15 +6,15 @@ current_phase: 14
 current_phase_name: branch-scoped-cache-re-scoping
 current_plan: 1
 status: executing
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-07-22T18:27:46.043Z"
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-07-22T18:32:35.415Z"
 last_activity: 2026-07-22
 last_activity_desc: Phase 14 execution started
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 4
   percent: 20
 ---
 
@@ -53,11 +53,11 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 ## Current Position
 
 Phase: 14 (branch-scoped-cache-re-scoping) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-07-22 — Phase 14 execution started
 
-Progress: [█████░░░░░] 50% (v1.2)
+Progress: [███████░░░] 67% (v1.2)
 
 ## Phase Summary
 
@@ -131,6 +131,7 @@ Progress: [█████░░░░░] 50% (v1.2)
 | Phase 13 P01 | 6min | 3 tasks | 6 files |
 | Phase 13 P02 | 8min | 1 tasks | 2 files |
 | Phase 14 P01 | ~10min | 2 tasks | 5 files |
+| Phase 14 P02 | ~5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -289,8 +290,8 @@ Progress: [█████░░░░░] 50% (v1.2)
 
 **Resume file:** None
 
-**Last session:** 2026-07-22T18:27:46.035Z
-**Stopped at:** Completed 14-01-PLAN.md
+**Last session:** 2026-07-22T18:32:35.408Z
+**Stopped at:** Completed 14-02-PLAN.md
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -390,6 +391,8 @@ Progress: [█████░░░░░] 50% (v1.2)
 - [Phase ?]: [Phase 14-01]: branchId is always present in the key shape (currentBranch?.id ?? null), never a variable-length fork (D-07) — scoped/unscoped key shapes never coexist
 - [Phase ?]: [Phase 14-01]: unwrapSdkResult reads err.code from result.error.error (or the bare string), never a nonexistent result.error.code — matches the installed SDK's actual { error: string } envelope (build-time correction of D-05's literal text)
 - [Phase ?]: [Phase 14-01]: enabled: !!client stays the sole gate on useOrders, never !!branchId (D-08) — preserves no first-paint delay for single-branch tenants and the non-401 cold-start null-branch state
+- [Phase ?]: [Phase 14-02]: use-order-detail.js's enabled: !!client && !!id left byte-identical — id-gating is orthogonal to branch-gating
+- [Phase ?]: [Phase 14-02]: All three hooks (use-order-detail, use-stats, use-menu) route error path through shared unwrapSdkResult() helper from Plan 14-01
 
 ## Operator Next Steps
 
