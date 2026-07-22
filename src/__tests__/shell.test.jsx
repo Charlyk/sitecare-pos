@@ -19,6 +19,7 @@ vi.mock('../auth.jsx', () => ({
 }))
 
 import { Shell } from '../shell.jsx'
+import { useAppStore } from '../store.js'
 
 const noop = () => {}
 
@@ -79,5 +80,55 @@ describe('HIST-01: Shell sidebar History nav item', () => {
     const labels = Array.from(container.querySelectorAll('.nav-item .label')).map((el) => el.textContent)
     // First group: orders, new order, kitchen, history
     expect(labels.slice(0, 4)).toEqual(['Comenzi live', 'Comandă nouă', 'Vedere bucătărie', 'Istoric comenzi'])
+  })
+})
+
+// ── D-06 (BSTATE-01): sidebar displayName composition from getMe() CurrentUser shape ──
+
+describe('D-06: Shell displayName composition', () => {
+  beforeEach(() => {
+    useAppStore.setState({ authUser: null })
+  })
+
+  test('authUser with firstName + lastName renders "First Last"', () => {
+    useAppStore.setState({ authUser: { firstName: 'Ana', lastName: 'Pop', email: 'ana@example.com' } })
+    render(createElement(Shell, baseProps(), createElement('div')))
+    expect(screen.getByText('Ana Pop')).toBeTruthy()
+  })
+
+  test('authUser with firstName only (lastName null) renders "First"', () => {
+    useAppStore.setState({ authUser: { firstName: 'Ana', lastName: null, email: 'ana@example.com' } })
+    render(createElement(Shell, baseProps(), createElement('div')))
+    expect(screen.getByText('Ana')).toBeTruthy()
+  })
+
+  test('authUser with no first/last name but an email renders the email', () => {
+    useAppStore.setState({ authUser: { firstName: null, lastName: null, email: 'ana@example.com' } })
+    render(createElement(Shell, baseProps(), createElement('div')))
+    expect(screen.getByText('ana@example.com')).toBeTruthy()
+  })
+
+  test('authUser null (unresolved) renders an empty identity name row — never the literal "Eduard Albu"', () => {
+    useAppStore.setState({ authUser: null })
+    const { container } = render(createElement(Shell, baseProps(), createElement('div')))
+    expect(screen.queryByText('Eduard Albu')).toBeNull()
+    const userChip = container.querySelector('.user-chip')
+    const wrapperDiv = Array.from(userChip.children).find((el) => !el.className)
+    const nameDiv = wrapperDiv.children[0]
+    expect(nameDiv.textContent).toBe('')
+  })
+
+  test('initials derive from the resolved displayName and are empty when displayName is empty', () => {
+    useAppStore.setState({ authUser: null })
+    const { container } = render(createElement(Shell, baseProps(), createElement('div')))
+    const avatar = container.querySelector('.avatar')
+    expect(avatar.textContent).toBe('')
+  })
+
+  test('initials derive from the resolved displayName when authUser has a full name', () => {
+    useAppStore.setState({ authUser: { firstName: 'Ana', lastName: 'Pop', email: 'ana@example.com' } })
+    const { container } = render(createElement(Shell, baseProps(), createElement('div')))
+    const avatar = container.querySelector('.avatar')
+    expect(avatar.textContent).toBe('AP')
   })
 })

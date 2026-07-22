@@ -28,7 +28,14 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
 
-  const displayName = authUser?.name ?? authUser?.email ?? 'Eduard Albu';
+  // D-06: compose firstName/lastName from the getMe() CurrentUser shape; fall back to any
+  // optimistic-fill .name, then .email, then empty string. Never a hardcoded personal name —
+  // when authUser is unresolved (null), the identity row renders nothing (UI-SPEC E2).
+  const displayName =
+    [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' ').trim() ||
+    authUser?.name ||
+    authUser?.email ||
+    '';
   const initials = displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   const navGroups = [
