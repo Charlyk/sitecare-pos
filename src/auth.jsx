@@ -86,6 +86,7 @@ export function AuthProvider({ children }) {
     setToken(null);
     setIsAuthenticated(false);
     setAuthUser(null);
+    setCurrentBranch(null); // CR-01: prevent stale branch leaking into the next session
     setError(null); // WR-02: clear stale login error before showing login screen again
     pushToast({
       id: Date.now(),
@@ -181,6 +182,7 @@ export function AuthProvider({ children }) {
       setClient(adminClient);
       setIsAuthenticated(true);
       setAuthUser(user); // optimistic fill from the signIn response; getMe() below is the source of truth
+      setCurrentBranch(null); // CR-01: clear any previous session's branch before getMe() re-seeds it
       // D-07/BSTATE-01: getMe() seeds authUser + currentBranch as the source of truth, replacing
       // the optimistic setAuthUser(user) above. Non-fatal — a failure here is not fatal to sign-in
       // (currentBranch stays null; the D-04 focus-retry listener is the backstop).
@@ -223,6 +225,7 @@ export function AuthProvider({ children }) {
     setClient(null);
     setIsAuthenticated(false);
     setAuthUser(null);
+    setCurrentBranch(null); // CR-01: prevent stale branch leaking into the next session
     setError(null); // WR-02: clear stale login error before showing login screen again
     setScreen('orders'); // WR-01: 'login' is not a valid router branch; auth guard handles LoginScreen render
   }
