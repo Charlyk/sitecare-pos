@@ -185,7 +185,8 @@ describe('branch-aware reconnect', () => {
 describe('U9b2 — useSSE handles order_status_changed event', () => {
   beforeEach(() => { vi.clearAllMocks() })
 
-  test('order_status_changed updates state in ["orders"] list cache', async () => {
+  test('order_status_changed updates state in ["orders", branchId] list cache and invalidates D-04 scoped keys', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
     let capturedOnMessage
     fetchEventSource.mockImplementation((_url, opts) => {
       capturedOnMessage = opts.onmessage
@@ -193,7 +194,7 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
     })
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['orders'], { orders: [{ id: 'ord-001', status: 'NEW', state: 'new' }] })
+    queryClient.setQueryData(['orders', 'branch-a'], { orders: [{ id: 'ord-001', status: 'NEW', state: 'new' }] })
 
     function testWrapper({ children }) {
       return createElement(QueryClientProvider, { client: queryClient }, children)
@@ -201,18 +202,24 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
 
     renderHook(() => useSSE('test-token'), { wrapper: testWrapper })
 
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
     await act(async () => {
       if (capturedOnMessage) {
         capturedOnMessage({ event: 'order_status_changed', data: JSON.stringify({ orderId: 'ord-001', fromStatus: 'NEW', toStatus: 'ACCEPTED', updatedAt: new Date().toISOString() }) })
       }
     })
 
-    const cached = queryClient.getQueryData(['orders'])
+    const cached = queryClient.getQueryData(['orders', 'branch-a'])
     expect(cached.orders[0].status).toBe('ACCEPTED')
     expect(cached.orders[0].state).toBe('accepted')
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['orders', 'branch-a', 'NEW'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['orders', 'branch-a', 'ACCEPTED'] })
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['stats', 'branch-a'] })
   })
 
   test('order_status_changed maps OUT_FOR_DELIVERY to state "out"', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
     let capturedOnMessage
     fetchEventSource.mockImplementation((_url, opts) => {
       capturedOnMessage = opts.onmessage
@@ -220,7 +227,7 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
     })
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['orders'], { orders: [{ id: 'ord-002', status: 'READY', state: 'ready' }] })
+    queryClient.setQueryData(['orders', 'branch-a'], { orders: [{ id: 'ord-002', status: 'READY', state: 'ready' }] })
 
     function testWrapper({ children }) {
       return createElement(QueryClientProvider, { client: queryClient }, children)
@@ -234,11 +241,12 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
       }
     })
 
-    const cached = queryClient.getQueryData(['orders'])
+    const cached = queryClient.getQueryData(['orders', 'branch-a'])
     expect(cached.orders[0].state).toBe('out')
   })
 
   test('order_status_changed maps COMPLETED to state "done"', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
     let capturedOnMessage
     fetchEventSource.mockImplementation((_url, opts) => {
       capturedOnMessage = opts.onmessage
@@ -246,7 +254,7 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
     })
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['orders'], { orders: [{ id: 'ord-003', status: 'READY', state: 'ready' }] })
+    queryClient.setQueryData(['orders', 'branch-a'], { orders: [{ id: 'ord-003', status: 'READY', state: 'ready' }] })
 
     function testWrapper({ children }) {
       return createElement(QueryClientProvider, { client: queryClient }, children)
@@ -260,11 +268,12 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
       }
     })
 
-    const cached = queryClient.getQueryData(['orders'])
+    const cached = queryClient.getQueryData(['orders', 'branch-a'])
     expect(cached.orders[0].state).toBe('done')
   })
 
   test('order_status_changed patches the per-order detail cache', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
     let capturedOnMessage
     fetchEventSource.mockImplementation((_url, opts) => {
       capturedOnMessage = opts.onmessage
@@ -272,8 +281,8 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
     })
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['orders'], { orders: [] })
-    queryClient.setQueryData(['order', 'ord-004'], { id: 'ord-004', status: 'NEW', state: 'new' })
+    queryClient.setQueryData(['orders', 'branch-a'], { orders: [] })
+    queryClient.setQueryData(['order', 'branch-a', 'ord-004'], { id: 'ord-004', status: 'NEW', state: 'new' })
 
     function testWrapper({ children }) {
       return createElement(QueryClientProvider, { client: queryClient }, children)
@@ -287,12 +296,13 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
       }
     })
 
-    const detail = queryClient.getQueryData(['order', 'ord-004'])
+    const detail = queryClient.getQueryData(['order', 'branch-a', 'ord-004'])
     expect(detail.status).toBe('PREPARING')
     expect(detail.state).toBe('preparing')
   })
 
   test('order_status_changed with unknown orderId does not throw', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
     let capturedOnMessage
     fetchEventSource.mockImplementation((_url, opts) => {
       capturedOnMessage = opts.onmessage
@@ -300,7 +310,7 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
     })
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-    queryClient.setQueryData(['orders'], { orders: [{ id: 'ord-999', status: 'NEW', state: 'new' }] })
+    queryClient.setQueryData(['orders', 'branch-a'], { orders: [{ id: 'ord-999', status: 'NEW', state: 'new' }] })
 
     function testWrapper({ children }) {
       return createElement(QueryClientProvider, { client: queryClient }, children)
@@ -315,8 +325,50 @@ describe('U9b2 — useSSE handles order_status_changed event', () => {
     })
 
     // Cache unchanged for unmatched orderId
-    const cached = queryClient.getQueryData(['orders'])
+    const cached = queryClient.getQueryData(['orders', 'branch-a'])
     expect(cached.orders[0].state).toBe('new')
+  })
+})
+
+// ── D-03: captured-not-live-read isolation — a late message from a stale connection ────────
+// writes only to its captured (old) branch's key, never the new live-store value.
+
+describe('D-03 — captured scopedBranchId isolates a stale-connection message from a live branch switch', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  test('a message fired after the store changes but before the hook rerenders writes to the OLD captured branch key, not the live value', async () => {
+    useAppStore.setState({ currentBranch: { id: 'branch-a' } })
+    let capturedOnMessage
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnMessage = opts.onmessage
+      return Promise.resolve()
+    })
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    queryClient.setQueryData(['orders', 'branch-a'], { orders: [] })
+    queryClient.setQueryData(['orders', 'branch-b'], { orders: [] })
+
+    function testWrapper({ children }) {
+      return createElement(QueryClientProvider, { client: queryClient }, children)
+    }
+
+    renderHook(() => useSSE('test-token'), { wrapper: testWrapper })
+
+    // Simulate a stale in-flight connection: the store's currentBranch changes, but the
+    // hook has NOT rerendered (no new effect run, no new scopedBranchId capture).
+    useAppStore.setState({ currentBranch: { id: 'branch-b' } })
+
+    await act(async () => {
+      if (capturedOnMessage) {
+        capturedOnMessage({ event: 'order_new', data: JSON.stringify({ id: 'ord-late', status: 'NEW' }) })
+      }
+    })
+
+    const oldBranchCache = queryClient.getQueryData(['orders', 'branch-a'])
+    const newBranchCache = queryClient.getQueryData(['orders', 'branch-b'])
+    expect(oldBranchCache.orders).toHaveLength(1)
+    expect(oldBranchCache.orders[0].id).toBe('ord-late')
+    expect(newBranchCache.orders).toHaveLength(0)
   })
 })
 
