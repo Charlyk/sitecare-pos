@@ -50,7 +50,7 @@ This codebase's real convention is a **finer, non-strict-8pt scale** (verified a
 | lg | 24px | confirm-dialog header/footer padding (exact `cancel-dialog.jsx` precedent) |
 | xl | 32px+ | overlay centered content max-width breathing room |
 
-Exceptions: none beyond the above — this table already documents the codebase's real granularity rather than forcing round-8 values onto existing/reused patterns.
+Exceptions: 6px, 10px, 12px, and 14px are retained (not rounded to the nearest 4px multiple) under the **LOCKED — Design-fidelity exception to the generic UI grid/weight rules** decision recorded in `PROJECT.md` Key Decisions (locked 2026-07-23). That decision formally waives the UI-SPEC checker's Dimension 5 (4px-multiple grid) project-wide for values matching the shipped design system (`colors_and_type.css` + `styles.css`, 15 phases live); this table's tokens are drawn verbatim from that shipped system (`shell.jsx`, `cancel-dialog.jsx`), so retaining them is compliant by the locked decision, not a violation of it.
 
 ---
 
@@ -65,7 +65,7 @@ All sizes are on the existing `Outfit` scale already used across the sidebar/dia
 | Heading | 20px | 800 | 1.25 — the overlay's "Switching to `<branch>`…" message (deliberately one step below `cancel-dialog.jsx`'s 22px/900 dialog title — this is a transient status line, not a decision-requiring dialog, so it reads slightly lighter) |
 | Meta/sub | 12px | 500 | 1.4 — overlay secondary line (e.g. reconnecting status), toast detail text (matches existing `.toast` detail: `fontSize:13` — use 12–13px, never below) |
 
-Weight budget for this phase: **600 (semibold body/name) + 700–800 (labels/heading)** — no new weight introduced; both already exist in the installed font-face set (300–900 available, this phase only draws from the 600/700/800 band already in active use).
+Weight budget for this phase: **600 (body/meta) + 700 (label) + 800 (heading)** — three weights, exceeding the UI-SPEC checker's generic 2-weight cap (Dimension 4). This is authorized, not a gap: the **LOCKED — Design-fidelity exception to the generic UI grid/weight rules** decision recorded in `PROJECT.md` Key Decisions (locked 2026-07-23) formally waives Dimension 4 project-wide for weights matching the shipped design system. All three weights (600/700/800) are already in active, human-verified shipped use across 15 completed phases (e.g. `.user-chip` name at 600, `cancel-dialog.jsx`'s reason-picker label at 700, dialog titles at 800/900) — this phase extends those exact tokens rather than introducing new ones.
 
 ---
 
@@ -79,6 +79,8 @@ Weight budget for this phase: **600 (semibold body/name) + 700–800 (labels/hea
 | Destructive | `var(--sc-destructive)` `hsl(0 84.2% 60.2%)` | the "discard order" verb inside the cart-non-empty confirm dialog (D-13) — the confirm button only; **not** the generic failure toast (D-11 failure toast is neutral/error-toned like existing `kind: 'error'` toasts, not framed as destructive) |
 
 Accent reserved for: selected-branch checkmark, "default" badge idle styling, overlay spinner, popover-open chevron color — nothing else in this phase's new UI uses `--sc-primary` as a fill (trigger pill background stays neutral/white-on-cream, matching the existing Collapse button's `background:#fff` convention, not a primary-tinted button).
+
+**Primary visual focal point:** the current-branch name inside the sidebar-footer trigger pill is the element the eye lands on first — it sits at 13px/600 in the position of highest habitual attention in the existing footer stack (directly above the user chip, the sidebar's other identity element), so it must never be visually subordinated to the chevron, the "default" badge, or any icon in the same row.
 
 ---
 
@@ -122,7 +124,7 @@ Applicable state considerations resolved: 9 covered, 3 backstop, 0 unresolved
 | populated | multi-branch popover, one row selected | ✅ covered | Selected row shows the `--sc-primary` checkmark (D-01); "default" badge shown independently of selection state on whichever row `isDefault: true`. |
 | zero-one-many | branch count (0 / 1 / many) | ✅ covered | 0 is not a reachable app state (every authenticated user has `getMe().selectedBranch` seeded in Phase 13, and `NO_BRANCH_ACCESS` full-screen block is Phase 17's BERR-03); 1 → read-only trigger (D-04, SWCH-02); many → dropdown popover (D-01). |
 | overflow | long branch name in trigger/popover row | 🧪 backstop | Trigger pill and popover rows use `text-overflow: ellipsis; white-space: nowrap; overflow: hidden` with a `title` attribute carrying the full name (mirrors the existing `nav-item`'s `title={sidebarCollapsed ? item.label : ''}` truncation-safety precedent) — not manually verified against a real long branch name from the API, flagged for verification. |
-| collapsed-sidebar | branch identity when sidebar is collapsed | ✅ covered | D-03 — compact chip (branch-name initial, single uppercase letter in a circular tile matching `.avatar`'s 32×32 circle treatment) stays visible and clickable; never hidden, unlike the removed RO/EN toggle's prior collapsed behavior. |
+| collapsed-sidebar | branch identity when sidebar is collapsed | ✅ covered | D-03 — compact chip (branch-name initial, single uppercase letter in a circular tile matching `.avatar`'s 32×32 circle treatment) stays visible and clickable; never hidden, unlike the removed RO/EN toggle's prior collapsed behavior. **Accessible name required:** the chip carries `aria-label`/`title` naming the current branch in full (e.g. `title={currentBranch?.name}`) — it is icon/initial-only with no visible text, so the accessible name is the sole way to identify the branch without expanding the sidebar; mirrors the ellipsis-truncation `title` fallback already specified for the expanded trigger/popover rows (overflow row above). |
 | long-text | overlay heading with a long branch name | ✅ covered | Overlay heading wraps (no truncation) since it's a centered, unconstrained-width message card — unlike the trigger/popover row, there's no adjacent layout to protect. |
 | partial | switch succeeds server-side but SSE reconnect times out (D-09) | ✅ covered | Overlay releases anyway at the bounded timeout, success toast still fires (the switch *did* succeed), and the normal `OfflineBanner` takes over — this is the documented "honest offline indicator" outcome, not an error state. |
 | confirm-gate | cart-discard confirm dialog (D-13) shown vs. skipped | ✅ covered | Gated strictly on cart non-emptiness read at click time; empty cart (the common case) skips the dialog entirely and switches immediately. |
