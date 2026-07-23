@@ -18,9 +18,9 @@ vi.mock('../auth.jsx', () => ({
 }))
 
 import { renderHook, waitFor, act } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, QueryCache, useQuery } from '@tanstack/react-query'
 import { createElement } from 'react'
-import { useBranches, useBranchSwitch } from '../use-branches.js'
+import { useBranches, useBranchSwitch, handleBranchError, BRANCH_CODES } from '../use-branches.js'
 import { useAuth } from '../auth.jsx'
 import { useAppStore } from '../store.js'
 
@@ -198,5 +198,100 @@ describe('useBranchSwitch — non-optimistic branch switch (SWCH-03)', () => {
 
     // Old branch untouched — nothing else changed.
     expect(useAppStore.getState().currentBranch?.id).toBe('br-001')
+  })
+})
+
+// ── handleBranchError — central branch-403 recovery dispatch (BERR-01, 17-01 tracer) ──
+
+describe('handleBranchError — central branch-403 recovery dispatch (BERR-01)', () => {
+  beforeEach(() => {
+    useAppStore.setState({ toasts: [], branchSwitcherForceOpen: false, currentBranch: null, lang: 'ro' })
+  })
+
+  test('BRANCH_ACCESS_REVOKED pushes exactly one toast, sets branchSwitcherForceOpen true, and invalidates ["branches"]', () => {
+    const invalidateQueries = vi.fn()
+    const queryClient = { invalidateQueries }
+
+    handleBranchError({ code: 'BRANCH_ACCESS_REVOKED' }, queryClient)
+
+    const state = useAppStore.getState()
+    expect(state.toasts).toHaveLength(1)
+    expect(state.toasts[0].title).toBe('Acces revocat')
+    expect(state.branchSwitcherForceOpen).toBe(true)
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['branches'] })
+  })
+
+  test('a non-branch error code is a no-op — no toast, no reopen, no invalidation (guard-first early-return)', () => {
+    const invalidateQueries = vi.fn()
+    const queryClient = { invalidateQueries }
+
+    handleBranchError({ code: 'SOME_OTHER_ERROR' }, queryClient)
+
+    const state = useAppStore.getState()
+    expect(state.toasts).toHaveLength(0)
+    expect(state.branchSwitcherForceOpen).toBe(false)
+    expect(invalidateQueries).not.toHaveBeenCalled()
+  })
+
+  test('interpolates err.branchName into the detail line when present, never a literal "<branch>"', () => {
+    const queryClient = { invalidateQueries: vi.fn() }
+
+    handleBranchError({ code: 'BRANCH_ACCESS_REVOKED', branchName: 'Centru' }, queryClient)
+
+    const detail = useAppStore.getState().toasts[0].detail
+    expect(detail).toContain('Centru')
+    expect(detail).not.toContain('<branch>')
+  })
+
+  test('falls back to currentBranch?.name when err.branchName is absent', () => {
+    useAppStore.setState({ currentBranch: { id: 'b1', name: 'Filiala Nord' } })
+    const queryClient = { invalidateQueries: vi.fn() }
+
+    handleBranchError({ code: 'BRANCH_ACCESS_REVOKED' }, queryClient)
+
+    const detail = useAppStore.getState().toasts[0].detail
+    expect(detail).toContain('Filiala Nord')
+    expect(detail).not.toContain('<branch>')
+  })
+
+  test('falls back to the generic fallback copy when neither err.branchName nor currentBranch exist — never a literal "<branch>" or empty gap', () => {
+    const queryClient = { invalidateQueries: vi.fn() }
+
+    handleBranchError({ code: 'BRANCH_ACCESS_REVOKED' }, queryClient)
+
+    const detail = useAppStore.getState().toasts[0].detail
+    expect(detail).not.toContain('<branch>')
+    expect(detail).not.toMatch(/\s{2,}/)
+    expect(detail.length).toBeGreaterThan(0)
+  })
+
+  test('BRANCH_CODES exports the three literal branch-access codes', () => {
+    expect(BRANCH_CODES).toEqual(
+      expect.arrayContaining(['BRANCH_INACTIVE', 'BRANCH_ACCESS_REVOKED', 'NO_BRANCH_ACCESS'])
+    )
+  })
+
+  test('a QueryCache constructed with onError:(e)=>handleBranchError(e,qc) invokes the dispatch when a query rejects with a BRANCH_ACCESS_REVOKED error', async () => {
+    const qc = new QueryClient({
+      queryCache: new QueryCache({ onError: (err) => handleBranchError(err, qc) }),
+      defaultOptions: { queries: { retry: false } },
+    })
+    function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
+
+    const { result } = renderHook(
+      () => useQuery({
+        queryKey: ['test-branch-revoked-query'],
+        queryFn: async () => {
+          const err = new Error('BRANCH_ACCESS_REVOKED')
+          err.code = 'BRANCH_ACCESS_REVOKED'
+          throw err
+        },
+      }),
+      { wrapper: w }
+    )
+
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(useAppStore.getState().toasts).toHaveLength(1)
+    expect(useAppStore.getState().branchSwitcherForceOpen).toBe(true)
   })
 })
