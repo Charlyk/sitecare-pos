@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Icon } from './icons.jsx';
 import { useT } from './i18n.jsx';
@@ -11,7 +11,7 @@ import { useAppStore } from './store.js';
 
 const orderTypeMap = { dinein: 'local', pickup: 'pickup', delivery: 'delivery' };
 
-function PosScreen({ lang, isOffline }) {
+function PosScreen({ lang, isOffline, onCartEmptyChange }) {
   const t = useT(lang);
   const { client } = useAuth();
   const queryClient = useQueryClient();
@@ -55,6 +55,14 @@ function PosScreen({ lang, isOffline }) {
 
   const [cat, setCat] = useState(() => cats[0]?.id ?? '');
   const [cart, setCart] = useState([]);
+
+  // Cart-emptiness bridge (Phase 16, RESEARCH Pattern 3): the cart is local state with no
+  // external visibility. Report emptiness to app.jsx on cart change (not every render) so the
+  // D-13 cart-discard confirm gate can read it at branch-switch click time.
+  useEffect(() => {
+    onCartEmptyChange?.(cart.length === 0);
+  }, [cart, onCartEmptyChange]);
+
   const [type, setType] = useState('dinein');
   const [table, setTable] = useState('');
   const [customer, setCustomer] = useState({ name: '', phone: '', street: '', number: '', bloc: '', apartament: '', etaj: '', interfon: '' });

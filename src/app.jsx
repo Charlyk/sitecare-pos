@@ -62,6 +62,7 @@ function App() {
   const dismissToast = useAppStore((s) => s.dismissToast);
   const setAcceptDialog = useAppStore((s) => s.setAcceptDialog);
   const [cancelDialog, setCancelDialog] = useState(null);
+  const currentBranch = useAppStore((s) => s.currentBranch);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const { signIn, coldStartBusy, busy: authBusy, error: authError, token } = useAuth();
   const t = useT(lang);
@@ -89,6 +90,12 @@ function App() {
   const [pendingBranch, setPendingBranch] = useState(null); // branch being switched to, for overlay/toast copy
   const hasDroppedRef = useRef(false);
   const bridgeTimeoutRef = useRef(null);
+
+  // D-13 cart-discard gate (Plan 03): posCartEmpty defaults true — PosScreen only mounts on
+  // screen === 'pos' and reports its actual emptiness via onCartEmptyChange on mount.
+  // cartDiscardConfirm holds the pending branch while the confirm dialog is open (null = closed).
+  const [posCartEmpty, setPosCartEmpty] = useState(true);
+  const [cartDiscardConfirm, setCartDiscardConfirm] = useState(null);
 
   // Refs keep interval closure fresh without resetting the 15s clock on every orders update
   const ordersRef = useRef(orders);
@@ -221,9 +228,14 @@ function App() {
     });
   };
 
-  // handleSelectBranch — Shell's onSelectBranch callback. This tracer fires the switch
-  // immediately; the cart-non-empty confirm gate (D-13) is Plan 03's job.
+  // handleSelectBranch — Shell's onSelectBranch callback. D-13: a non-empty POS cart gates the
+  // switch behind a confirm dialog (setCartDiscardConfirm opens it); every other case (empty
+  // cart, or any non-POS screen) fires the switch immediately.
   const handleSelectBranch = (branch) => {
+    if (screen === 'pos' && !posCartEmpty) {
+      setCartDiscardConfirm(branch);
+      return;
+    }
     fireSwitch(branch);
   };
 
@@ -254,6 +266,9 @@ function App() {
       title: t('branch_switch_success_title'),
       detail: `${t('branch_switch_success_prefix')} ${pendingBranch?.name}`,
     });
+    // D-14 neutral landing: an open order-detail/history-detail bound to the prior branch must
+    // not remain visible after the branch changes — exit to Orders. Other screens stay put.
+    if (screen === 'detail' || screen === 'history-detail') setScreen('orders');
     setSwitchPhase('idle');
     setPendingBranch(null);
   }, [switchPhase]); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally one-shot on phase transition, mirrors the settledPeriod precedent (Phase 9)
@@ -332,7 +347,7 @@ function App() {
         {/* Screen router: Phase 3 — orders from useOrders(), isOffline wired to all screens */}
         {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={handleAdvance} onPrint={handlePrint} isOffline={isOffline} stats={stats} />}
         {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={handleAdvance} isOffline={isOffline} />}
-        {screen === 'pos'     && <PosScreen     lang={lang} isOffline={isOffline} />}
+        {screen === 'pos'     && <PosScreen     key={currentBranch?.id} lang={lang} isOffline={isOffline} onCartEmptyChange={setPosCartEmpty} />}
         {screen === 'detail'  && selectedOrder && <OrderDetailScreen order={selectedOrder} lang={lang} restaurantSettings={restaurantSettings} deliveryAreas={deliveryAreas} onBack={() => setScreen('orders')} onAdvance={handleAdvance} onPrint={handlePrint} onCancel={() => setCancelDialog({ order: selectedOrder })} isOffline={isOffline} />}
         {screen === 'history' && <HistoryScreen lang={lang} onOpenOrder={openHistoryOrder} isOffline={isOffline} />}
         {screen === 'history-detail' && historyOrder && (
@@ -426,6 +441,77 @@ function App() {
           }}
         />
       )}
+
+      {/* CartDiscardConfirm -- D-13: shown when selecting a branch while screen === 'pos' and the
+          cart has items. Destructive primary discards the cart and fires the switch; neutral
+          secondary stays on the current branch, nothing changes. The dialog has no failure mode
+          of its own (E7 error) — a rejected switch after confirm surfaces via the failure toast. */}
+      {cartDiscardConfirm && (
+        <CartDiscardConfirm
+          lang={lang}
+          onCancel={() => setCartDiscardConfirm(null)}
+          onConfirm={() => {
+            const branch = cartDiscardConfirm;
+            setCartDiscardConfirm(null);
+            fireSwitch(branch);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// CartDiscardConfirm — D-13's cart-discard confirm dialog. Mirrors cancel-dialog.jsx's
+// header/body/footer chrome exactly (backdrop, card, btn-secondary/btn-primary footer), with a
+// destructive primary (matching CancelDialog's hsl(0 53% 52%) red) instead of a reason picker.
+function CartDiscardConfirm({ lang, onCancel, onConfirm }) {
+  const t = useT(lang);
+  return (
+    <div style={{
+      position: 'absolute', inset: 0,
+      background: 'rgba(18, 24, 18, 0.45)',
+      backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 200, animation: 'fadeIn 180ms ease-out',
+    }}>
+      <div style={{
+        width: 420, background: '#fff', borderRadius: 20,
+        boxShadow: '0 30px 80px rgba(0,0,0,0.35)',
+        overflow: 'hidden', border: '1px solid hsl(120 10% 88%)',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid hsl(120 10% 92%)' }}>
+          <div className="eyebrow">{lang === 'ro' ? 'schimbare filială' : 'branch switch'}</div>
+          <div style={{ fontWeight: 900, fontSize: 22, letterSpacing: '-0.02em', marginTop: 4 }}>
+            {t('branch_cart_discard_title')}
+          </div>
+          <div style={{ color: 'var(--sc-muted-foreground)', fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
+            {t('branch_cart_discard_body')}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          padding: '14px 24px', borderTop: '1px solid hsl(120 10% 92%)',
+          display: 'flex', gap: 10, background: '#fafaf6',
+        }}>
+          <button className="btn-secondary" onClick={onCancel} style={{ flex: '0 0 auto' }}>
+            {t('branch_cart_discard_cancel')}
+          </button>
+          <button
+            className="btn-primary"
+            style={{
+              flex: 1, justifyContent: 'center', height: 42,
+              background: 'hsl(0 53% 52%)',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}
+            onClick={onConfirm}
+          >
+            <Icon name="x" size={14} />
+            {t('branch_cart_discard_confirm')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
