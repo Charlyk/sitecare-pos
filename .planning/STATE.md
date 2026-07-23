@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Branch Switching
-current_phase: 16
-current_phase_name: branch-switcher-ui-switch-flow-language-relocation
+current_phase: 17
+current_phase_name: centralized-branch-access-error-handling
 current_plan: 1
 status: executing
-stopped_at: Phase 17 UI-SPEC approved
-last_updated: "2026-07-23T15:33:40.827Z"
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-07-23T20:23:05.531Z"
 last_activity: 2026-07-23
-last_activity_desc: Phase 16 execution started
+last_activity_desc: Phase 17 execution started
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 16
-  completed_plans: 10
-  percent: 80
+  completed_plans: 11
+  percent: 69
 ---
 
 # State: SiteCare POS Desktop App
@@ -29,7 +29,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-21 — v1.2 Branch Switching milestone started)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 16 — branch-switcher-ui-switch-flow-language-relocation
+**Current focus:** Phase 17 — centralized-branch-access-error-handling
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -52,12 +52,12 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 ## Current Position
 
-Phase: 16 (branch-switcher-ui-switch-flow-language-relocation) — EXECUTING
-Plan: 3 of 3
+Phase: 17 (centralized-branch-access-error-handling) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-07-23 — Phase 16 execution started
+Last activity: 2026-07-23 — Phase 17 execution started
 
-Progress: [██████████] 100% (v1.2)
+Progress: [███████░░░] 69% (v1.2)
 
 ## Phase Summary
 
@@ -138,6 +138,7 @@ Progress: [██████████] 100% (v1.2)
 | Phase 16 P01 | 50min | 2 tasks | 7 files |
 | Phase 16 P02 | ~20min | 2 tasks | 2 files |
 | Phase 16 P03 | ~7min | 2 tasks | 3 files |
+| Phase 17 P01 | 6min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -294,10 +295,10 @@ Progress: [██████████] 100% (v1.2)
 
 ## Session Continuity
 
-**Resume file:** /Users/eduardalbu/Developer/sitecare-pos/.planning/phases/17-centralized-branch-access-error-handling/17-UI-SPEC.md
+**Resume file:** None
 
-**Last session:** 2026-07-23T14:17:06.516Z
-**Stopped at:** Phase 17 UI-SPEC approved
+**Last session:** 2026-07-23T20:23:05.523Z
+**Stopped at:** Completed 17-01-PLAN.md
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -414,6 +415,8 @@ Progress: [██████████] 100% (v1.2)
 - [Phase ?]: [Phase 16-02]: collapsed-sidebar branch chip is a bespoke 32x32 tile (white bg + border), not the .avatar class — .avatar's terracotta fill is reserved for the user chip per 16-UI-SPEC.md
 - [Phase ?]: [Phase 16-03]: posCartEmpty defaults true — PosScreen only mounts on screen==='pos' and reports actual emptiness on mount, so the default is never observably stale
 - [Phase ?]: [Phase 16-03]: CartDiscardConfirm is a standalone component (not a CancelDialog variant) — shares chrome, not props/behavior; D-14 neutral-landing check lives inside the existing Plan-01 release effect, not a new effect, keeping toast-fire and screen-exit atomic to one 'done' transition
+- [Phase ?]: [Phase 17-01]: handleBranchError is a plain module-scope function reading/writing via useAppStore.getState() (never a hook) — mirrors auth.jsx's handleFocus/expireSession convention, since it must be callable from main.jsx's module-scope QueryCache/MutationCache constructors
+- [Phase ?]: [Phase 17-01]: Only BRANCH_ACCESS_REVOKED wired end-to-end this plan; BRANCH_INACTIVE/NO_BRANCH_ACCESS left as guarded-but-unimplemented switch branches, deferred to plan 17-03 — deliberate functionality gap, not architectural
 
 ## Operator Next Steps
 
