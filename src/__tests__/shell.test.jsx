@@ -1,4 +1,4 @@
-import { describe, test, expect, vi } from 'vitest'
+import { describe, test, expect, vi, afterEach, beforeEach } from 'vitest'
 import { createElement } from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 
@@ -27,6 +27,7 @@ vi.mock('../use-branches.js', () => ({
 
 import { Shell } from '../shell.jsx'
 import { useAppStore } from '../store.js'
+import { useBranches } from '../use-branches.js'
 
 const noop = () => {}
 
@@ -137,5 +138,114 @@ describe('D-06: Shell displayName composition', () => {
     const { container } = render(createElement(Shell, baseProps(), createElement('div')))
     const avatar = container.querySelector('.avatar')
     expect(avatar.textContent).toBe('AP')
+  })
+})
+
+// ── Phase 16 Plan 02: branch selector — SWCH-01, SWCH-02, LANG-01, collapsed chip, popover states ──
+
+const branchCentru = { id: 'b1', name: 'Filiala Centru', isDefault: true, isActive: true }
+const branchNord = { id: 'b2', name: 'Filiala Nord', isDefault: false, isActive: true }
+
+afterEach(() => {
+  useBranches.mockReturnValue({ data: [] })
+  useAppStore.setState({ currentBranch: null })
+})
+
+describe('SWCH-01: default badge + multi-branch trigger', () => {
+  test('trigger shows the current branch name and a default badge when the current branch isDefault', () => {
+    useBranches.mockReturnValue({ data: [branchCentru, branchNord], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: branchCentru })
+    render(createElement(Shell, baseProps(), createElement('div')))
+    expect(screen.getByText('Filiala Centru')).toBeTruthy()
+    expect(screen.getByText('Implicit')).toBeTruthy()
+  })
+
+  test('popover row for the default branch also carries the default badge', () => {
+    useBranches.mockReturnValue({ data: [branchCentru, branchNord], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: branchCentru })
+    render(createElement(Shell, baseProps(), createElement('div')))
+    fireEvent.click(screen.getByTitle('Filiala Centru'))
+    // One badge in the trigger, one on the default row inside the now-open popover
+    expect(screen.getAllByText('Implicit').length).toBe(2)
+    expect(screen.getByText('Filiala Nord')).toBeTruthy()
+  })
+
+  test('selected branch row shows the primary checkmark, sourced from the store currentBranch (not an optimistic local value)', () => {
+    useBranches.mockReturnValue({ data: [branchCentru, branchNord], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: branchNord })
+    render(createElement(Shell, baseProps(), createElement('div')))
+    fireEvent.click(screen.getByTitle('Filiala Nord'))
+    const nordRow = screen.getAllByTitle('Filiala Nord').find((el) => el.tagName === 'BUTTON')
+    const centruRow = screen.getAllByTitle('Filiala Centru').find((el) => el.tagName === 'BUTTON')
+    expect(nordRow.querySelector('svg')).toBeTruthy()
+    expect(centruRow.querySelector('svg')).toBeNull()
+  })
+})
+
+describe('SWCH-02 (D-04): single-branch tenant renders read-only', () => {
+  test('with exactly one branch, no popover opens on click and no branch row ever renders', () => {
+    useBranches.mockReturnValue({ data: [branchCentru], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: branchCentru })
+    render(createElement(Shell, baseProps(), createElement('div')))
+    const trigger = screen.getByTitle('Filiala Centru')
+    fireEvent.click(trigger)
+    // Only the trigger's own name text exists — no second occurrence from a popover row
+    expect(screen.getAllByText('Filiala Centru').length).toBe(1)
+  })
+
+  test('a null currentBranch with a single branch still renders read-only (never gates on !!currentBranch)', () => {
+    useBranches.mockReturnValue({ data: [branchCentru], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: null })
+    const { container } = render(createElement(Shell, baseProps(), createElement('div')))
+    const branchWrapper = container.querySelectorAll('.sidebar-footer > div')[0]
+    fireEvent.click(branchWrapper.firstElementChild)
+    // Popover never opens — the single branch's name never appears anywhere in the DOM
+    expect(screen.queryByText('Filiala Centru')).toBeNull()
+  })
+})
+
+describe('D-03: collapsed sidebar branch chip', () => {
+  test('renders a compact chip with the branch initial and the full name in title/aria-label', () => {
+    useBranches.mockReturnValue({ data: [branchCentru, branchNord], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: branchCentru })
+    render(createElement(Shell, baseProps({ sidebarCollapsed: true }), createElement('div')))
+    const chip = screen.getByTitle('Filiala Centru')
+    expect(chip.textContent).toBe('F')
+    expect(chip.getAttribute('aria-label')).toBe('Filiala Centru')
+  })
+
+  test('clicking the collapsed chip opens the same popover when multi-branch', () => {
+    useBranches.mockReturnValue({ data: [branchCentru, branchNord], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: branchCentru })
+    render(createElement(Shell, baseProps({ sidebarCollapsed: true }), createElement('div')))
+    fireEvent.click(screen.getByTitle('Filiala Centru'))
+    expect(screen.getByText('Filiala Nord')).toBeTruthy()
+  })
+})
+
+describe('E3 popover backstops: loading / error states', () => {
+  test('shows an inline spinner row while useBranches() is loading', () => {
+    useBranches.mockReturnValue({ data: undefined, isLoading: true, isError: false })
+    useAppStore.setState({ currentBranch: branchCentru })
+    const { container } = render(createElement(Shell, baseProps(), createElement('div')))
+    fireEvent.click(screen.getByTitle('Filiala Centru'))
+    expect(container.querySelector('.spin')).toBeTruthy()
+  })
+
+  test('shows the branch_popover_error row when useBranches() errors, keeping the last-known trigger label', () => {
+    useBranches.mockReturnValue({ data: undefined, isLoading: false, isError: true })
+    useAppStore.setState({ currentBranch: branchCentru })
+    render(createElement(Shell, baseProps(), createElement('div')))
+    expect(screen.getByText('Filiala Centru')).toBeTruthy() // trigger keeps last-known label
+    fireEvent.click(screen.getByTitle('Filiala Centru'))
+    expect(screen.getByText('Nu am putut încărca filialele')).toBeTruthy()
+  })
+})
+
+describe('LANG-01 (D-15): RO/EN pill is absent from the footer', () => {
+  test('no RO or EN language-toggle button renders in the sidebar footer', () => {
+    render(createElement(Shell, baseProps(), createElement('div')))
+    expect(screen.queryByRole('button', { name: 'RO' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'EN' })).toBeNull()
   })
 })
