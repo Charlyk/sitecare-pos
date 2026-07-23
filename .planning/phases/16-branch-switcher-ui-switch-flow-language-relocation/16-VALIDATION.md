@@ -7,7 +7,7 @@ status: validated
 nyquist_compliant: true
 wave_0_complete: true
 created: 2026-07-23
-validated: 2026-07-23
+validated: 2026-07-24
 ---
 
 # Phase 16 — Validation Strategy
@@ -103,3 +103,18 @@ Retroactive audit of the completed phase (State A — VALIDATION.md existed as a
 | Manual-only (by design) | 3 |
 
 **Re-run confirmation:** `npx vitest run src/__tests__/use-branches.test.js src/__tests__/shell.test.jsx src/__tests__/app-branch-switch.test.jsx` → 3 files, 44/44 tests pass (2026-07-23).
+
+---
+
+## Validation Audit 2026-07-24
+
+Re-audit of the completed phase (State A — VALIDATION.md already `validated` / `nyquist_compliant: true`). Re-derived the requirement→task→test map independently rather than trusting the prior audit: confirmed all three phase test files exist on disk and that each of the 7 phase requirements resolves to a concrete, requirement-tagged, green test block (SWCH-01/SWCH-02/LANG-01 in `shell.test.jsx`; SWCH-03/SWCH-04 in `use-branches.test.js`; SCOPE-03/SCOPE-04 in `app-branch-switch.test.jsx`). No gaps found; no tests generated; no auditor spawn required. The 3 Manual-Only items remain manual by design (live multi-branch API + pixel fidelity).
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+| Manual-only (by design) | 3 |
+
+**Re-run confirmation:** `npx vitest run src/__tests__/use-branches.test.js src/__tests__/shell.test.jsx src/__tests__/app-branch-switch.test.jsx` → 3 files, **65/65** tests pass (2026-07-24). The count rose from 44 → 65 because `use-branches.test.js` and `app-branch-switch.test.jsx` gained Phase 17 coverage in the same files; every phase-16 requirement block remains present and green.
