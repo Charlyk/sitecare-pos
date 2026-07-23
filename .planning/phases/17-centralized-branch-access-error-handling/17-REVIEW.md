@@ -18,7 +18,14 @@ findings:
   warning: 2
   info: 1
   total: 5
-status: issues_found
+status: fixed
+fixed_at: 2026-07-24T00:53:00Z
+fix_commits:
+  CR-01: eb200e8
+  CR-02: 9ef5901
+  WR-01: 9ef5901
+  WR-02: 30e0595
+  IN-01: 4de69a0
 ---
 
 # Phase 17: Code Review Report
@@ -26,7 +33,7 @@ status: issues_found
 **Reviewed:** 2026-07-24T00:00:00Z
 **Depth:** standard
 **Files Reviewed:** 9
-**Status:** issues_found
+**Status:** issues_found — ALL 5 FINDINGS FIXED (see per-finding "Resolution" notes below; fixed at 2026-07-24T00:53:00Z)
 
 ## Summary
 
@@ -109,6 +116,22 @@ behavior) is preferred, additionally call the effect's `ctrl.abort()` before ret
 the external signal makes `fetch.js`'s `curRequestController.signal.aborted` guard (line 67) true,
 which unconditionally suppresses the retry-scheduling branch regardless of what `getBytes` does.
 
+**Resolution: FIXED** (commit `eb200e8`). Implemented the deterministic `ctrl.abort()` variant:
+the recognized branch-code case in `onopen` now calls `ctrl.abort()` (the effect's own
+`AbortController`, already in the closure) immediately after `handleBranchError` and
+`setIsConnected(false)`, before returning without throwing. This makes fetchEventSource's own
+`inputSignal` 'abort' listener fire synchronously, which aborts its internal
+`curRequestController` — so even though `getBytes(response.body, ...)` still throws next (the
+body was already drained by `response.text()`), the library's `catch` block sees
+`curRequestController.signal.aborted === true` and unconditionally skips the retry-scheduling
+branch. Verified end-to-end against the REAL (unmocked) `@microsoft/fetch-event-source` library in
+`src/__tests__/use-sse-retry-suppression.test.js` (new file): a branch-403 response results in
+exactly one `fetch` call even after waiting past the library's default 1s retry interval, while a
+non-branch 403 still retries (second `fetch` call observed) — proving the fix without disturbing
+the legacy non-branch path. Also added a unit-level assertion in `use-sse.test.js` that the
+connection's abort signal is `true` only for the branch-code path. Confirmed this test fails (RED)
+against the pre-fix code and passes (GREEN) with the fix applied.
+
 ## Warnings
 
 ### WR-01: `noBranchAccess` (and `branchSwitcherForceOpen`) are never reset on sign-out/session-expiry — stale flag leaks into the next login on the same terminal
@@ -160,6 +183,15 @@ async function signOut() {
 `useAppStore((s) => s...)` destructuring block, or use `useAppStore.getState()` as shown, matching
 the non-hook `getState()` convention already used elsewhere in this same file's `handleFocus`.)
 
+**Resolution: FIXED** (commit `9ef5901`, covers both WR-01 and CR-02 together — same fix).
+Added `useAppStore.getState().setNoBranchAccess(false)` and
+`useAppStore.getState().setBranchSwitcherForceOpen(false)` immediately after the existing
+`setCurrentBranch(null)` CR-01 line in both `expireSession()` and `signOut()`, using the
+`getState()` convention exactly as suggested. Added two tests in `src/__tests__/auth.test.jsx`:
+one that pre-latches both flags `true`, triggers `expireSession()` via a focus-time 401, and
+asserts both reset to `false`; one that pre-latches both flags `true` and calls `signOut()`
+directly via `useAuth()`, asserting the same reset.
+
 ### WR-02: `useBranches()`'s queryFn bypasses the shared `unwrapSdkResult`/`err.code` convention that the rest of the central-choke-point design depends on
 
 **File:** `src/use-branches.js:10-14`
@@ -194,6 +226,14 @@ queryFn: async () => {
 },
 ```
 
+**Resolution: FIXED** (commit `30e0595`). `useBranches()`'s `queryFn` now imports and calls
+`unwrapSdkResult` from `data.jsx` exactly as suggested — success behavior unchanged, but a `{
+error }` result now populates `err.code`. Added two tests in `src/__tests__/use-branches.test.js`:
+one asserting `err.code` matches the SDK's error string, and one end-to-end test wiring a
+`QueryCache` with `onError: (err) => handleBranchError(err, qc)` and asserting a
+`NO_BRANCH_ACCESS` branches-list error now correctly sets `noBranchAccess` — proving the branches
+hook no longer bypasses the central choke point.
+
 ## Info
 
 ### IN-01: `store.js` header comment is stale — key/action counts no longer match after this phase's additions
@@ -206,6 +246,23 @@ count — the store currently has 18 state keys and 19 actions. Low-impact, but 
 this comment gets a materially wrong picture of the store's surface area.
 **Fix:** Update or remove the stale count (e.g. drop the specific numbers and just say "Persisted
 keys (6, see partialize below); all other keys are session-only.").
+
+**Resolution: FIXED** (commit `4de69a0`). Replaced the stale exact-count comment with the
+suggested wording — "Persisted keys (6, see partialize below); all other keys are session-only" —
+so the comment no longer needs updating every time a key/action is added.
+
+---
+
+## Fix Summary
+
+All 5 findings in this report have been fixed and verified. See the per-finding "Resolution" notes
+above for commit hashes and details.
+
+- `npx vitest run src/__tests__/use-sse.test.js src/__tests__/auth.test.jsx
+  src/__tests__/use-branches.test.js src/__tests__/use-sse-retry-suppression.test.js` — all passing.
+- Full suite `npx vitest run`: 626 passing / 1 pre-existing unrelated failure
+  (`build-pipeline.test.js` BILD-04, `bundle.createUpdaterArtifacts` — a Tauri config assertion
+  unrelated to this phase's branch-access work, present before these fixes).
 
 ---
 
