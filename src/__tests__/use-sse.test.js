@@ -14,13 +14,21 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 vi.mock('@microsoft/fetch-event-source', () => ({
   fetchEventSource: vi.fn(),
 }))
+// 17-05: use-sse.js's onopen 403 short-circuit imports handleBranchError + BRANCH_CODES from
+// use-branches.js. Mock handleBranchError as a spy; keep BRANCH_CODES as the real literal array
+// so the `BRANCH_CODES.includes(code)` guard in use-sse.js behaves identically to production.
+vi.mock('../use-branches.js', () => ({
+  handleBranchError: vi.fn(),
+  BRANCH_CODES: ['BRANCH_INACTIVE', 'BRANCH_ACCESS_REVOKED', 'NO_BRANCH_ACCESS'],
+}))
 
 import { renderHook, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, useRef } from 'react'
-import { useSSE } from '../use-sse.js'
+import { useSSE, extractBranchCodeFromSseBody } from '../use-sse.js'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import { useAppStore } from '../store.js'
+import { handleBranchError } from '../use-branches.js'
 
 beforeEach(() => {
   useAppStore.setState({ currentBranch: null })
@@ -89,6 +97,123 @@ describe('U9a — useSSE sets isConnected=true on open, false on error (KDS-01)'
       body: '{"error":"branch not resolved"}',
     }))
     // Non-ok onopen never flips isConnected true — the throw→onerror→retry path is preserved
+    expect(result.current.isConnected).toBe(false)
+
+    warnSpy.mockRestore()
+  })
+})
+
+// ── D-08: branch-403 onopen short-circuit (17-05, BERR-01) ────────────────
+// The one error path that bypasses TanStack's onError — the SSE stream's onopen
+// non-2xx — must route a BRANCH_* 403 to handleBranchError and return WITHOUT
+// throwing, so fetchEventSource never schedules a retry against an inaccessible
+// branch. Non-branch 403s and all other non-2xx statuses must keep today's
+// warn+throw behavior exactly (retry preserved).
+
+describe('extractBranchCodeFromSseBody (17-05, V5 input validation)', () => {
+  test('returns null for undefined input', () => {
+    expect(extractBranchCodeFromSseBody(undefined)).toBeNull()
+  })
+
+  test('returns null for empty-string input', () => {
+    expect(extractBranchCodeFromSseBody('')).toBeNull()
+  })
+
+  test('returns null for non-JSON input and never throws', () => {
+    expect(() => extractBranchCodeFromSseBody('not json at all')).not.toThrow()
+    expect(extractBranchCodeFromSseBody('not json at all')).toBeNull()
+  })
+
+  test('returns the code for the ASSUMED { error: "<CODE>" } body shape', () => {
+    expect(extractBranchCodeFromSseBody('{"error":"BRANCH_ACCESS_REVOKED"}')).toBe('BRANCH_ACCESS_REVOKED')
+  })
+
+  test('returns the code for a bare JSON string body', () => {
+    expect(extractBranchCodeFromSseBody('"BRANCH_INACTIVE"')).toBe('BRANCH_INACTIVE')
+  })
+})
+
+describe('D-08 — SSE onopen 403 short-circuit routes BRANCH_* codes to handleBranchError without throwing', () => {
+  beforeEach(() => { vi.clearAllMocks() })
+
+  test('a 403 onopen with a body carrying a BRANCH_* code calls handleBranchError and resolves without throwing (no retry scheduled)', async () => {
+    let capturedOnOpen
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnOpen = opts.onopen
+      return Promise.resolve()
+    })
+    const { result } = renderHook(() => useSSE('test-token'), { wrapper })
+
+    const branchResponse = { ok: false, status: 403, text: () => Promise.resolve('{"error":"BRANCH_ACCESS_REVOKED"}') }
+    await act(async () => {
+      // MUST resolve, not reject — a throw here would re-enter fetchEventSource's retry loop (D-08).
+      await expect(capturedOnOpen(branchResponse)).resolves.toBeUndefined()
+    })
+
+    expect(handleBranchError).toHaveBeenCalledTimes(1)
+    expect(handleBranchError).toHaveBeenCalledWith({ code: 'BRANCH_ACCESS_REVOKED' }, expect.anything())
+    expect(result.current.isConnected).toBe(false)
+  })
+
+  test('a 403 onopen whose body is non-JSON falls through to the existing console.warn + throw (retry preserved)', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let capturedOnOpen
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnOpen = opts.onopen
+      return Promise.resolve()
+    })
+    const { result } = renderHook(() => useSSE('test-token'), { wrapper })
+
+    const badResponse = { ok: false, status: 403, text: () => Promise.resolve('not json') }
+    await act(async () => {
+      await expect(capturedOnOpen(badResponse)).rejects.toThrow('SSE: server returned 403')
+    })
+
+    expect(handleBranchError).not.toHaveBeenCalled()
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+    expect(result.current.isConnected).toBe(false)
+
+    warnSpy.mockRestore()
+  })
+
+  test('a 403 onopen whose body carries no branch code falls through to the existing console.warn + throw (retry preserved)', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let capturedOnOpen
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnOpen = opts.onopen
+      return Promise.resolve()
+    })
+    const { result } = renderHook(() => useSSE('test-token'), { wrapper })
+
+    const badResponse = { ok: false, status: 403, text: () => Promise.resolve('{"error":"branch not resolved"}') }
+    await act(async () => {
+      await expect(capturedOnOpen(badResponse)).rejects.toThrow('SSE: server returned 403')
+    })
+
+    expect(handleBranchError).not.toHaveBeenCalled()
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+
+    warnSpy.mockRestore()
+  })
+
+  test('a non-403 non-2xx onopen keeps the existing warn + throw behavior unchanged (retry preserved)', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    let capturedOnOpen
+    fetchEventSource.mockImplementation((_url, opts) => {
+      capturedOnOpen = opts.onopen
+      return Promise.resolve()
+    })
+    const { result } = renderHook(() => useSSE('test-token'), { wrapper })
+
+    const badResponse = { ok: false, status: 500, text: () => Promise.resolve('{"error":"BRANCH_ACCESS_REVOKED"}') }
+    await act(async () => {
+      await expect(capturedOnOpen(badResponse)).rejects.toThrow('SSE: server returned 500')
+    })
+
+    // Even though the body carries a branch code, a non-403 status must never short-circuit —
+    // the branch-403 special case is gated on status === 403 specifically.
+    expect(handleBranchError).not.toHaveBeenCalled()
+    expect(warnSpy).toHaveBeenCalledTimes(1)
     expect(result.current.isConnected).toBe(false)
 
     warnSpy.mockRestore()
