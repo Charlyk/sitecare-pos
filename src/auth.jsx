@@ -113,6 +113,11 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
     setAuthUser(null);
     setCurrentBranch(null); // CR-01: prevent stale branch leaking into the next session
+    // 17-REVIEW CR-02/WR-01: also reset the session-only branch-error flags — otherwise a
+    // previous user's "No branch available" block (or a forced switcher reopen) leaks into the
+    // next login on the same running app (e.g. a shared POS terminal).
+    useAppStore.getState().setNoBranchAccess(false);
+    useAppStore.getState().setBranchSwitcherForceOpen(false);
     setError(null); // WR-02: clear stale login error before showing login screen again
     pushToast({
       id: Date.now(),
@@ -285,6 +290,11 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(false);
     setAuthUser(null);
     setCurrentBranch(null); // CR-01: prevent stale branch leaking into the next session
+    // 17-REVIEW CR-02/WR-01: also reset the session-only branch-error flags — otherwise a
+    // previous user's "No branch available" block (or a forced switcher reopen) leaks into the
+    // next login on the same running app (e.g. a shared POS terminal).
+    useAppStore.getState().setNoBranchAccess(false);
+    useAppStore.getState().setBranchSwitcherForceOpen(false);
     setError(null); // WR-02: clear stale login error before showing login screen again
     setScreen('orders'); // WR-01: 'login' is not a valid router branch; auth guard handles LoginScreen render
   }

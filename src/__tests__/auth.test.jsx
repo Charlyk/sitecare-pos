@@ -281,4 +281,58 @@ describe('BERR-04 — window focus always revalidates the selected branch (D-06/
     expect(useAppStore.getState().toasts).toHaveLength(0)
     expect(useAppStore.getState().currentBranch).toEqual(FOCUS_BRANCH_A)
   })
+
+  // ── CR-02/WR-01 (17-REVIEW.md): noBranchAccess/branchSwitcherForceOpen must not leak across
+  // a sign-out/session-expiry -> next-login cycle on the same running app (shared POS terminal).
+  test('expireSession (triggered by a focus-time 401) resets noBranchAccess AND branchSwitcherForceOpen to false', async () => {
+    await signInWithBranch(FOCUS_BRANCH_A)
+    // Simulate a previous branch-access block still latched from earlier in this session.
+    useAppStore.setState({ noBranchAccess: true, branchSwitcherForceOpen: true })
+    getMe.mockRejectedValue({ status: 401 })
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(useAppStore.getState().isAuthenticated).toBe(false))
+    expect(useAppStore.getState().noBranchAccess).toBe(false)
+    expect(useAppStore.getState().branchSwitcherForceOpen).toBe(false)
+  })
+})
+
+describe('CR-02/WR-01 — signOut() resets noBranchAccess AND branchSwitcherForceOpen (shared-terminal leak fix)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    load.mockResolvedValue({
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+    })
+    useAppStore.setState({
+      isAuthenticated: false,
+      authUser: null,
+      currentBranch: null,
+      toasts: [],
+      noBranchAccess: false,
+      branchSwitcherForceOpen: false,
+      lang: 'en',
+    })
+  })
+
+  test('signOut() resets both flags to false even when a previous NO_BRANCH_ACCESS/reopen was latched', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper: focusWrapper })
+    await waitFor(() => expect(result.current.coldStartBusy).toBe(false))
+
+    // Simulate staff member A hitting a branch-access block before signing out.
+    useAppStore.setState({ noBranchAccess: true, branchSwitcherForceOpen: true })
+
+    await act(async () => {
+      await result.current.signOut()
+    })
+
+    expect(useAppStore.getState().noBranchAccess).toBe(false)
+    expect(useAppStore.getState().branchSwitcherForceOpen).toBe(false)
+  })
 })
