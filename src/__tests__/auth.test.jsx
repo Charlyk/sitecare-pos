@@ -7,9 +7,14 @@ vi.mock('@charlyk/admin-client', () => ({ signIn: vi.fn(), createAdminClient: vi
 vi.mock('@tauri-apps/plugin-opener', () => ({ open: vi.fn(), openUrl: vi.fn() }))
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 
-import { render, screen } from '@testing-library/react'
+import { render, screen, renderHook, act, waitFor } from '@testing-library/react'
+import { createElement } from 'react'
 import { LoginScreen } from '../screen-login.jsx'
 import { I18N } from '../i18n.jsx'
+import { AuthProvider, useAuth } from '../auth.jsx'
+import { useAppStore } from '../store.js'
+import { createAdminClient, signIn as sdkSignIn } from '@charlyk/admin-client'
+import { load } from '@tauri-apps/plugin-store'
 
 // ── U3: Auth error type mapping (T-02-08) ──────────────────────────────────
 
@@ -68,5 +73,209 @@ describe('U3 — Auth error maps to creds type, not raw API message (T-02-08)', 
 
     const expectedMsg = I18N.ro.login_err_creds // "Email sau parolă greșită"
     expect(screen.getByText(expectedMsg)).toBeInTheDocument()
+  })
+})
+
+// ── BERR-04: window-focus listener generalized to always revalidate (D-06/D-07) ───────────
+// The `|| currentBranch` short-circuit is removed from the D-04 focus listener — every focus
+// now calls getMe() and compares the server's selectedBranch to the local one, routing through
+// adopt+toast / setNoBranchAccess(true) / no-op / expireSession depending on the result.
+
+function focusWrapper({ children }) {
+  return createElement(AuthProvider, null, children)
+}
+
+const FOCUS_BRANCH_A = { id: 'b1', name: 'Branch One', slug: 'b1', isDefault: true, isActive: true }
+const FOCUS_BRANCH_B = { id: 'b2', name: 'Branch Two', slug: 'b2', isDefault: false, isActive: true }
+
+function makeFocusMe(selectedBranch) {
+  return {
+    id: 'u1',
+    firstName: 'Ana',
+    lastName: 'Pop',
+    email: 'ana@example.com',
+    image: null,
+    role: 'cashier',
+    selectedBranch,
+  }
+}
+
+describe('BERR-04 — window focus always revalidates the selected branch (D-06/D-07)', () => {
+  let getMe
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useAppStore.setState({
+      isAuthenticated: false,
+      authUser: null,
+      currentBranch: null,
+      toasts: [],
+      noBranchAccess: false,
+      lang: 'en',
+    })
+    load.mockResolvedValue({
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+    })
+  })
+
+  // Signs in via the existing AuthProvider flow so isAuthenticated/currentBranch/client are all
+  // set exactly as they would be in production, then clears the getMe mock's call count so
+  // subsequent assertions only count focus-triggered calls.
+  async function signInWithBranch(branch) {
+    sdkSignIn.mockResolvedValue({ token: 'tok-focus', user: { id: 1, name: 'Focus' } })
+    getMe = vi.fn().mockResolvedValue(makeFocusMe(branch))
+    createAdminClient.mockReturnValue({
+      auth: { getSession: vi.fn().mockResolvedValue({ session: null }), getMe },
+    })
+
+    const { result } = renderHook(() => useAuth(), { wrapper: focusWrapper })
+    await waitFor(() => expect(result.current.coldStartBusy).toBe(false))
+
+    await act(async () => {
+      await result.current.signIn('user@example.com', 'password', false)
+    })
+
+    expect(useAppStore.getState().currentBranch).toEqual(branch)
+    getMe.mockClear()
+    return { result }
+  }
+
+  test('focus with a different-but-valid server branch adopts it and pushes a neutral "Now showing" toast', async () => {
+    await signInWithBranch(FOCUS_BRANCH_A)
+    getMe.mockResolvedValue(makeFocusMe(FOCUS_BRANCH_B))
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(useAppStore.getState().currentBranch).toEqual(FOCUS_BRANCH_B))
+    expect(getMe).toHaveBeenCalledTimes(1)
+    const toasts = useAppStore.getState().toasts
+    expect(toasts).toHaveLength(1)
+    expect(toasts[0].title).toBe('Branch updated')
+    expect(toasts[0].detail).toBe('Now showing Branch Two')
+  })
+
+  test('focus with the same server branch id is a no-op — no setCurrentBranch, no toast, no block', async () => {
+    await signInWithBranch(FOCUS_BRANCH_A)
+    getMe.mockResolvedValue(makeFocusMe(FOCUS_BRANCH_A))
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(getMe).toHaveBeenCalledTimes(1)
+    expect(useAppStore.getState().currentBranch).toEqual(FOCUS_BRANCH_A)
+    expect(useAppStore.getState().toasts).toHaveLength(0)
+    expect(useAppStore.getState().noBranchAccess).toBe(false)
+  })
+
+  test('focus with selectedBranch===null routes to setNoBranchAccess(true) and does not adopt a branch', async () => {
+    await signInWithBranch(FOCUS_BRANCH_A)
+    getMe.mockResolvedValue(makeFocusMe(null))
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(getMe).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(useAppStore.getState().noBranchAccess).toBe(true))
+    expect(useAppStore.getState().currentBranch).toEqual(FOCUS_BRANCH_A) // unchanged — no adoption
+    expect(useAppStore.getState().toasts).toHaveLength(0)
+  })
+
+  test('focus with a thrown 403 (A3 defensive path) also routes to setNoBranchAccess(true)', async () => {
+    await signInWithBranch(FOCUS_BRANCH_A)
+    getMe.mockRejectedValue({ status: 403 })
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(useAppStore.getState().noBranchAccess).toBe(true))
+    expect(useAppStore.getState().toasts).toHaveLength(0)
+  })
+
+  test('focus with a thrown 401 calls expireSession (session ends)', async () => {
+    await signInWithBranch(FOCUS_BRANCH_A)
+    getMe.mockRejectedValue({ status: 401 })
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(useAppStore.getState().isAuthenticated).toBe(false))
+    expect(useAppStore.getState().currentBranch).toBe(null)
+  })
+
+  test('focus with a non-401/non-403 thrown error is swallowed silently — no block, no toast, no expire', async () => {
+    await signInWithBranch(FOCUS_BRANCH_A)
+    getMe.mockRejectedValue(new Error('network drop'))
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(getMe).toHaveBeenCalledTimes(1)
+    expect(useAppStore.getState().isAuthenticated).toBe(true)
+    expect(useAppStore.getState().noBranchAccess).toBe(false)
+    expect(useAppStore.getState().toasts).toHaveLength(0)
+    expect(useAppStore.getState().currentBranch).toEqual(FOCUS_BRANCH_A)
+  })
+
+  test('two focus events fired before the first getMe() resolves result in a single getMe() call (reentrancy guard)', async () => {
+    await signInWithBranch(FOCUS_BRANCH_A)
+    let resolveGetMe
+    getMe.mockReturnValue(new Promise((resolve) => { resolveGetMe = resolve }))
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+      window.dispatchEvent(new Event('focus'))
+      await Promise.resolve()
+    })
+
+    expect(getMe).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      resolveGetMe(makeFocusMe(FOCUS_BRANCH_B))
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    await waitFor(() => expect(useAppStore.getState().currentBranch).toEqual(FOCUS_BRANCH_B))
+    expect(getMe).toHaveBeenCalledTimes(1)
+    expect(useAppStore.getState().toasts).toHaveLength(1)
+  })
+
+  test('a single-branch tenant returning the same branch every focus never trips the block or a spurious toast', async () => {
+    await signInWithBranch(FOCUS_BRANCH_A)
+    getMe.mockResolvedValue(makeFocusMe(FOCUS_BRANCH_A))
+
+    for (let i = 0; i < 3; i++) {
+      await act(async () => {
+        window.dispatchEvent(new Event('focus'))
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+    }
+
+    expect(getMe).toHaveBeenCalledTimes(3)
+    expect(useAppStore.getState().noBranchAccess).toBe(false)
+    expect(useAppStore.getState().toasts).toHaveLength(0)
+    expect(useAppStore.getState().currentBranch).toEqual(FOCUS_BRANCH_A)
   })
 })
