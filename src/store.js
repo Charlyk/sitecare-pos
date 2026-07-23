@@ -35,9 +35,8 @@ const tauriStorage = {
   },
 };
 
-// Single flat store. 9 state keys + 10 action functions.
-// Persisted keys (6): written to preferences.json via plugin-store.
-// Session-only keys (3): reset to defaults on every cold start.
+// Single flat store. Persisted keys (6, see partialize below): written to preferences.json via
+// plugin-store. All other keys are session-only — reset to defaults on every cold start.
 export const useAppStore = create(
   persist(
     (set) => ({
