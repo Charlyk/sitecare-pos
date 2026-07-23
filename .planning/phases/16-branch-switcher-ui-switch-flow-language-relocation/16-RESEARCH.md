@@ -480,9 +480,12 @@ Not applicable in the conventional sense (no external library/API version drift 
 
 **If this table is empty:** N/A — two low/medium-risk assumptions logged above, both non-blocking and independently resolvable during planning.
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> Both resolved at planning time (2026-07-23). Q1 was sidestepped by the design 16-01-PLAN.md actually adopted; Q2 was discretionary and picked by the planner. No plan text depends on an unresolved answer.
 
 1. **Does TanStack Query v5's `useMutation` compose hook-level and call-site `onSuccess` callbacks, or does the call-site option override the hook-level one?**
+   - **RESOLVED — sidestepped (option b).** `16-01-PLAN.md` Task 1 keeps `setCurrentBranch` inside `useBranchSwitch()`'s own `onSuccess` (no `onMutate`, no call-site `onSuccess`) and drives the `switchPhase` machine via a `useEffect` watching `branchSwitch.isSuccess`/`isConnected` in `app.jsx`. Dual-callback composition semantics are never relied upon, so the question is moot by construction.
    - What we know: v5's `mutate(variables, options)` accepts a per-call options object; TanStack's docs describe these as composing (both fire, hook-level first) in v4/v5, but this repo's own hooks (`use-order-actions.js`) never exercise this pattern — every existing mutation only has ONE `onSuccess`, defined at the hook level, with call sites never passing a second one.
    - What's unclear: whether relying on dual-`onSuccess` composition (Pattern 1's recommendation) is proven correct within THIS specific installed version, vs. a safer single-`onSuccess`-site design.
    - Recommendation: the planner should either (a) verify this against the installed `@tanstack/react-query` version's behavior before committing to the dual-callback design, or (b) sidestep the question entirely by keeping `setCurrentBranch` inside the hook's `onSuccess` and handling the `switchPhase` transition via a `useEffect` watching `branchSwitch.isSuccess` in `app.jsx` instead of a call-site `onSuccess` — this is actually the more robust design regardless of the answer, since it decouples the phase-machine trigger from mutation-callback composition semantics entirely.
@@ -491,6 +494,7 @@ Not applicable in the conventional sense (no external library/API version drift 
    - What we know: the UI-SPEC's Copywriting Contract table gives the exact ro/en strings needed.
    - What's unclear: whether "prefix" keys should be named e.g. `branch_switch_overlay_heading_prefix` vs. some shorter convention; this codebase has no single naming convention for prefix-style keys (`h_empty_prefix` is the only precedent, from Phase 9).
    - Recommendation: planner picks any clear, grep-able key names; not a decision requiring further research.
+   - **RESOLVED — discretionary.** The planner owns the new i18n keys (all defined in 16-01 so no Wave-2 plan touches `i18n.jsx`); prefix-style keys follow the `h_empty_prefix` precedent.
 
 ## Environment Availability
 
