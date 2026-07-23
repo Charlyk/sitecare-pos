@@ -3,10 +3,11 @@ phase: 16
 slug: branch-switcher-ui-switch-flow-language-relocation
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: validated
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-07-23
+validated: 2026-07-23
 ---
 
 # Phase 16 — Validation Strategy
@@ -45,24 +46,25 @@ created: 2026-07-23
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| TBD | TBD | TBD | SWCH-01 | T-16-* / — | Selector renders in footer slot with name + "default" badge | unit (shell render) | `npx vitest run src/__tests__/shell.test.jsx` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | SWCH-02 | — | Single-branch tenant → read-only, no popover affordance (gate on `branches.length > 1`) | unit | `npx vitest run src/__tests__/shell.test.jsx` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | SWCH-03 | T-16-* | `client.me.branches.switch` fires; control disabled while pending; `currentBranch` unchanged until resolve (non-optimistic) | unit (mock SDK) | `npx vitest run src/__tests__/use-branches.test.js` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | SWCH-04 | — | Success toast fires at overlay release, not at mutation resolve | unit (fake timers) | `npx vitest run src/__tests__/app-branch-switch.test.jsx` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | SCOPE-03 | — | Cart reset on switch (remount key); open detail view exits to Orders | unit + integration | `npx vitest run src/__tests__/app-branch-switch.test.jsx` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | SCOPE-04 | T-16-* | Overlay blocks all screens while pending (no mutation lands mid-switch) | unit (overlay coverage/inert assertion) | `npx vitest run src/__tests__/app-branch-switch.test.jsx` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | LANG-01 | — | RO/EN pill absent from footer; Settings → Afișaj still switches `lang` (no regression) | unit (negative assertion) | `npx vitest run src/__tests__/shell.test.jsx` | ❌ W0 | ⬜ pending |
+| T1–T2 | 16-02 (SWCH-01 badge) / 16-01 (slot) | W2 / W1 | SWCH-01 | — | Selector renders in footer slot with name + "default" badge | unit (shell render) | `npx vitest run src/__tests__/shell.test.jsx` | ✅ | ✅ green |
+| T1 | 16-02 | W2 | SWCH-02 | — | Single-branch tenant → read-only, no popover affordance (gate `canOpenBranchPopover`, never `!!currentBranch`) | unit | `npx vitest run src/__tests__/shell.test.jsx` | ✅ | ✅ green |
+| T1–T2 | 16-01 | W1 | SWCH-03 | — | `client.me.branches.switch` fires; overlay blocks while pending; `currentBranch` unchanged until resolve (non-optimistic, `setCurrentBranch` only in `onSuccess`) | unit (mock SDK) | `npx vitest run src/__tests__/use-branches.test.js` | ✅ | ✅ green |
+| T1 | 16-01 | W1 | SWCH-04 | — | Success toast fires at overlay release, not at mutation resolve; rejected switch → single generic error toast, no branch change | unit + integration (fake timers) | `npx vitest run src/__tests__/app-branch-switch.test.jsx` | ✅ | ✅ green |
+| T1–T2 | 16-03 | W2 | SCOPE-03 | — | Cart-discard confirm gate (non-empty POS cart); cart reset on switch (remount `key={currentBranch?.id}`); open detail view exits to Orders (neutral landing) | integration | `npx vitest run src/__tests__/app-branch-switch.test.jsx` | ✅ | ✅ green |
+| T1 | 16-01 (overlay) / 16-03 (bounded-timeout completeness) | W1 / W2 | SCOPE-04 | — | Overlay blocks all screens for the full pending+bridging window incl. bounded ~6s timeout; releases exactly once (no double toast on later reconnect) | integration (fake timers) | `npx vitest run src/__tests__/app-branch-switch.test.jsx` | ✅ | ✅ green |
+| T1–T2 | 16-02 (assertion) / 16-01 (removal) | W2 / W1 | LANG-01 | — | RO/EN pill absent from footer; Settings → Afișaj still switches `lang` (no regression) | unit (negative assertion) | `npx vitest run src/__tests__/shell.test.jsx` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Wave map: W1 = Plan 16-01 tracer (SWCH-01 slot / SWCH-03 / SWCH-04 / SCOPE-04 overlay / LANG-01 removal); W2 = Plans 16-02 (selector polish, SWCH-01/02/LANG-01) + 16-03 (switch-flow safety, SCOPE-03/04) parallel. All 44 phase-scoped tests confirmed green `npx vitest run` on 2026-07-23.*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `src/__tests__/use-branches.test.js` — new; `useBranchSwitch()` unit coverage (mirrors `use-order-actions.test.js` SDK-mock scaffold)
-- [ ] `src/__tests__/shell.test.jsx` — new; footer-slot selector / popover / collapsed-chip / single-branch read-only / RO-EN-pill-absent coverage
-- [ ] `src/__tests__/app-branch-switch.test.jsx` — new (or extend an existing `app.jsx` test file if one exists — confirm during planning); overlay / switch-phase-machine / cart-gate / neutral-landing integration coverage
-- [ ] Framework install: **none** — Vitest, `@testing-library/react`, and existing mock scaffolding (`vi.mock('@tauri-apps/plugin-store', ...)`, `vi.mock('@charlyk/admin-client', ...)`) are present and reusable verbatim from `use-sse.test.js`.
+- [x] `src/__tests__/use-branches.test.js` — extended (16-01 T2); `useBranchSwitch()` unit coverage — SDK call-shape, non-optimistic ordering proof, error-path proof
+- [x] `src/__tests__/shell.test.jsx` — extended (16-01 T1 mock, 16-02 T2 blocks); footer-slot selector / default badge / popover loading-error backstops / collapsed-chip / single-branch read-only / RO-EN-pill-absent coverage
+- [x] `src/__tests__/app-branch-switch.test.jsx` — new (16-01 T1, extended 16-03 T2); overlay / switch-phase-machine / cart-gate / neutral-landing / POS-remount / bounded-timeout integration coverage
+- [x] Framework install: **none** — Vitest, `@testing-library/react`, and existing mock scaffolding (`vi.mock('@tauri-apps/plugin-store', ...)`, `vi.mock('@charlyk/admin-client', ...)`) reused verbatim; no new dependencies added this phase.
 
 ---
 
@@ -78,11 +80,26 @@ created: 2026-07-23
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references — no MISSING references; all 7 requirements COVERED
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s (phase-scoped suite runs in ~1.3s)
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** validated 2026-07-23 — all 7 requirements automated & green; 3 manual-only items retained by design (live-API/pixel-fidelity).
+
+---
+
+## Validation Audit 2026-07-23
+
+Retroactive audit of the completed phase (State A — VALIDATION.md existed as an un-updated post-plan scaffold). All Per-Task Verification Map rows were `TBD`/`⬜ pending`; the phase had in fact shipped with full automated coverage (confirmed by 16-01/16-02/16-03 SUMMARY `coverage:` sections and 16-VERIFICATION.md). No tests were generated — every requirement was already COVERED by a green test. This audit reconciled the map to concrete task/plan/wave values and green statuses, and re-ran the suite to confirm.
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+| Manual-only (by design) | 3 |
+
+**Re-run confirmation:** `npx vitest run src/__tests__/use-branches.test.js src/__tests__/shell.test.jsx src/__tests__/app-branch-switch.test.jsx` → 3 files, 44/44 tests pass (2026-07-23).
