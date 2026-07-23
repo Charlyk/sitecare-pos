@@ -22,7 +22,7 @@ import { useSSE } from './use-sse.js';
 import { useOrders } from './use-orders.js';
 import { useOrderDetail } from './use-order-detail.js';
 import { useOrderActions } from './use-order-actions.js';
-import { useBranchSwitch } from './use-branches.js';
+import { useBranchSwitch, BRANCH_CODES } from './use-branches.js';
 import { useStats } from './use-stats.js';
 import { useRestaurantSettings } from './use-restaurant-settings.js';
 import { useDeliveryAreas } from './use-delivery-areas.js';
@@ -214,16 +214,23 @@ function App() {
           setSwitchPhase('done'); // D-09: release anyway — the switch already succeeded server-side
         }, 6000);
       },
-      onError: () => {
+      // onError (D-05, 17-03): the switchPhase/pendingBranch cleanup ALWAYS runs — BERR-02
+      // requires the app to visibly return to a stable state regardless of err.code. Only the
+      // generic toast is conditional: a BRANCH_* code is handled solely by handleBranchError via
+      // the global MutationCache.onError (main.jsx), so pushing the generic toast here too would
+      // double-surface the same failure (D-05's exactly-one-toast invariant).
+      onError: (err) => {
         clearTimeout(bridgeTimeoutRef.current);
         setSwitchPhase('idle');
         setPendingBranch(null);
-        pushToast({
-          id: Date.now(),
-          kind: 'error',
-          title: t('branch_switch_error_title'),
-          detail: t('branch_switch_error_detail'),
-        });
+        if (!BRANCH_CODES.includes(err?.code)) {
+          pushToast({
+            id: Date.now(),
+            kind: 'error',
+            title: t('branch_switch_error_title'),
+            detail: t('branch_switch_error_detail'),
+          });
+        }
       },
     });
   };
