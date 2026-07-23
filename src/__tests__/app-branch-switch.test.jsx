@@ -72,6 +72,9 @@ vi.mock('../use-branches.js', () => ({
     ],
   }),
   useBranchSwitch: () => ({ mutate: branchSwitchMutate, isPending: false }),
+  // BRANCH_CODES (17-03, D-05): app.jsx imports this real allowlist to guard fireSwitch's
+  // generic onError toast. Mirrors use-branches.js's real exported literal set exactly.
+  BRANCH_CODES: ['BRANCH_INACTIVE', 'BRANCH_ACCESS_REVOKED', 'NO_BRANCH_ACCESS'],
 }))
 
 import { useEffect } from 'react'
@@ -213,6 +216,61 @@ describe('app-branch-switch — end-to-end tracer (SWCH-03/04, SCOPE-04, D-05/D-
     expect(screen.getByText('Încearcă din nou')).toBeInTheDocument()
     // Never a success toast on the error path.
     expect(screen.queryByText('Filială schimbată')).not.toBeInTheDocument()
+  })
+
+  // ── D-05: no double toast for a branch-code switch failure (17-03) ──────
+
+  test('a branch-code rejection (BRANCH_ACCESS_REVOKED) does NOT fire the generic branch_switch_error toast — the per-code toast is handleBranchError\'s job alone', () => {
+    renderApp()
+    openPopoverAndSelect('Uptown')
+
+    const { onError } = branchSwitchMutate.mock.calls[0][1]
+    act(() => { onError({ code: 'BRANCH_ACCESS_REVOKED' }) })
+
+    expect(screen.queryByText('Nu s-a putut schimba filiala')).not.toBeInTheDocument()
+    expect(screen.queryByText('Încearcă din nou')).not.toBeInTheDocument()
+    expect(useAppStore.getState().toasts).toHaveLength(0)
+  })
+
+  test('composed with handleBranchError firing separately (as MutationCache.onError would in production), a branch-code rejection produces EXACTLY ONE toast total, not two', () => {
+    renderApp()
+    openPopoverAndSelect('Uptown')
+
+    const { onError } = branchSwitchMutate.mock.calls[0][1]
+    act(() => {
+      // Simulates main.jsx's MutationCache.onError -> handleBranchError firing for the same
+      // rejection (wired at the QueryClient level in production, out of scope for this bare
+      // per-test QueryClient) — the one toast this composition should produce.
+      useAppStore.getState().pushToast({ id: Date.now(), kind: 'error', title: 'Acces revocat', detail: 'x' })
+      onError({ code: 'BRANCH_ACCESS_REVOKED' })
+    })
+
+    expect(useAppStore.getState().toasts).toHaveLength(1)
+    expect(useAppStore.getState().toasts[0].title).toBe('Acces revocat')
+  })
+
+  test('a rejection with a non-branch code (e.g. a validation error string) still fires the generic branch_switch_error toast', () => {
+    renderApp()
+    openPopoverAndSelect('Uptown')
+
+    const { onError } = branchSwitchMutate.mock.calls[0][1]
+    act(() => { onError({ code: 'VALIDATION_ERROR' }) })
+
+    expect(screen.getByText('Nu s-a putut schimba filiala')).toBeInTheDocument()
+    expect(screen.getByText('Încearcă din nou')).toBeInTheDocument()
+  })
+
+  test('switchPhase/pendingBranch cleanup runs unconditionally for a branch-code rejection too (BERR-02) — overlay released, app stable on the previous branch', () => {
+    renderApp()
+    openPopoverAndSelect('Uptown')
+    expect(screen.getByText(/Se comută la/)).toBeInTheDocument()
+
+    const { onError } = branchSwitchMutate.mock.calls[0][1]
+    act(() => { onError({ code: 'BRANCH_ACCESS_REVOKED' }) })
+
+    expect(screen.queryByText(/Se comută la/)).not.toBeInTheDocument()
+    // currentBranch never mutated by a rejected switch (setCurrentBranch only fires in onSuccess).
+    expect(useAppStore.getState().currentBranch.name).toBe('Downtown')
   })
 })
 
