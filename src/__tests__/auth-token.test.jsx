@@ -280,7 +280,13 @@ describe('BSTATE-01 — D-04 window focus-retry backstop', () => {
     expect(getMe).toHaveBeenCalledTimes(2)
   })
 
-  test('firing window focus when currentBranch is already set does NOT call getMe() again', async () => {
+  // Phase 17, plan 06 (BERR-04/D-07) generalized this listener to ALWAYS revalidate on focus —
+  // the `|| currentBranch` short-circuit that made this backstop a no-op once a branch was set
+  // is removed. This test's title/expectation is updated accordingly: focus now calls getMe()
+  // again even with a branch already set, but since the server returns the same branch it's a
+  // no-op in terms of state (see src/__tests__/auth.test.jsx's BERR-04 describe block for the
+  // full adopt+toast/block/no-op/expire coverage of the generalized listener).
+  test('firing window focus when currentBranch is already set now revalidates via getMe() again (BERR-04) — same branch stays a no-op', async () => {
     sdkSignIn.mockResolvedValue({ token: 'tok-4', user: { id: 4, name: 'Focus2' } })
     const getMe = vi.fn().mockResolvedValue(FAKE_ME)
     createAdminClient.mockReturnValue({
@@ -300,8 +306,11 @@ describe('BSTATE-01 — D-04 window focus-retry backstop', () => {
     await act(async () => {
       window.dispatchEvent(new Event('focus'))
       await Promise.resolve()
+      await Promise.resolve()
     })
 
-    expect(getMe).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(getMe).toHaveBeenCalledTimes(2))
+    // Server returned the same branch — a no-op: currentBranch is unchanged.
+    expect(useAppStore.getState().currentBranch).toEqual(FAKE_ME.selectedBranch)
   })
 })

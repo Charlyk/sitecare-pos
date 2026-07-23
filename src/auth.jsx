@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { load } from '@tauri-apps/plugin-store';
 import { signIn as sdkSignIn, createAdminClient } from '@charlyk/admin-client';
 import { useAppStore } from './store.js';
+import { useT } from './i18n.jsx';
 
 // In dev, requests go through Vite proxy (empty base = relative URL → proxy intercepts /v1/*)
 // In production Tauri build, requests go directly to the API
@@ -164,17 +165,64 @@ export function AuthProvider({ children }) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // D-04: window 'focus' retry backstop. Re-seeds authUser/currentBranch via getMe() whenever
-  // the window regains focus AND isAuthenticated is true AND currentBranch is still null AND a
-  // client exists — the backstop for a non-401 getMe() failure at either seam above. Removes
-  // itself on unmount / client change.
+  // BERR-04/D-06/D-07: window 'focus' revalidation, generalized from the original D-04 backstop
+  // (which only re-seeded when currentBranch was null) to ALWAYS revalidate on focus — catching a
+  // branch change or access revocation made on another device while this window was unfocused.
+  // The `|| currentBranch` short-circuit that gated the old backstop is intentionally removed.
+  //
+  // On focus: getMe() is called and me.selectedBranch is compared to the local currentBranch:
+  //   - selectedBranch === null            -> zero accessible branches; same recovery as a live
+  //                                            403 (setNoBranchAccess(true)), no adoption.
+  //   - server branch id !== local id      -> benign remote change to a still-valid branch;
+  //                                            silently adopt (setCurrentBranch) + a neutral
+  //                                            "Now showing <branch>" info toast (D-06).
+  //   - server branch id === local id      -> no-op.
+  //   - getMe() throws with .status 401    -> expireSession(), mirrors seedFromMe's convention.
+  //   - getMe() throws with .status 403    -> defensive path (Assumption A3): the zero-branch
+  //                                            signal may arrive as a thrown 403 instead of a
+  //                                            null selectedBranch; same block either way.
+  //   - any other thrown error             -> swallowed silently, matches seedFromMe's convention.
+  // An in-closure `inFlight` guard (Pitfall 4) prevents overlapping getMe() calls when focus
+  // events fire in rapid succession (e.g. POS terminal alt-tabbing) — a stale, later-resolving
+  // response can never win the adopt/toast decision because a second focus while one call is
+  // still pending is a no-op.
   useEffect(() => {
-    function handleFocus() {
+    let inFlight = false;
+    async function handleFocus() {
       const { isAuthenticated, currentBranch } = useAppStore.getState();
-      if (!isAuthenticated || currentBranch || !client) return;
-      // WR-02: mirror the 401 handling used by the other two getMe() seams — a genuinely
-      // expired session must not be swallowed silently forever by this backstop.
-      seedFromMe(client, { onUnauthorized: () => expireSession() });
+      if (!isAuthenticated || !client || inFlight) return;
+      inFlight = true;
+      try {
+        const me = await client.auth.getMe();
+        if (me?.selectedBranch === null) {
+          useAppStore.getState().setNoBranchAccess(true);
+          return;
+        }
+        const serverBranchId = me?.selectedBranch?.id ?? null;
+        const localBranchId = currentBranch?.id ?? null;
+        // Normalize both sides to string so a type mismatch (e.g. number vs string id) can never
+        // produce a false "changed" and misfire the adopt+toast path (Pitfall 11 warning sign).
+        if (serverBranchId !== null && String(serverBranchId) !== String(localBranchId)) {
+          useAppStore.getState().setCurrentBranch(me.selectedBranch);
+          const t = useT(useAppStore.getState().lang);
+          useAppStore.getState().pushToast({
+            id: Date.now(),
+            kind: 'info',
+            title: t('branch_focus_update_title'),
+            detail: `${t('branch_focus_update_prefix')} ${me.selectedBranch.name}`,
+          });
+        }
+        // serverBranchId === localBranchId -> no-op, still the same branch
+      } catch (meErr) {
+        if (meErr?.status === 401) {
+          expireSession();
+        } else if (meErr?.status === 403) {
+          useAppStore.getState().setNoBranchAccess(true);
+        }
+        // other failures: silent, matches seedFromMe's error-swallow convention
+      } finally {
+        inFlight = false;
+      }
     }
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);

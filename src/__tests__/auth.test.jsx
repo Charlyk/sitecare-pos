@@ -105,6 +105,14 @@ describe('BERR-04 — window focus always revalidates the selected branch (D-06/
 
   beforeEach(() => {
     vi.clearAllMocks()
+    // Configure the plugin-store mock BEFORE any useAppStore.setState call below — setState on a
+    // persisted key (lang) synchronously kicks off zustand persist's async setItem->load() write,
+    // so `load` must already resolve to a valid store object to avoid an unhandled rejection.
+    load.mockResolvedValue({
+      get: vi.fn().mockResolvedValue(null),
+      set: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+    })
     useAppStore.setState({
       isAuthenticated: false,
       authUser: null,
@@ -112,11 +120,6 @@ describe('BERR-04 — window focus always revalidates the selected branch (D-06/
       toasts: [],
       noBranchAccess: false,
       lang: 'en',
-    })
-    load.mockResolvedValue({
-      get: vi.fn().mockResolvedValue(null),
-      set: vi.fn().mockResolvedValue(undefined),
-      delete: vi.fn().mockResolvedValue(undefined),
     })
   })
 

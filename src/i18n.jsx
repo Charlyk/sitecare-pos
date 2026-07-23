@@ -228,6 +228,9 @@ export const I18N = {
     branch_no_access_retry: 'Reîncearcă',
     branch_no_access_retry_busy: 'Se verifică…',
     branch_generic_fallback: 'această filială',
+    // Window-focus revalidation neutral toast (Phase 17, plan 06 — BERR-04, D-06)
+    branch_focus_update_title: 'Filială actualizată',
+    branch_focus_update_prefix: 'Acum vezi',
     // history (Phase 7)
     h_period_today: 'Azi',
     h_period_7: '7 zile',
@@ -498,6 +501,9 @@ export const I18N = {
     branch_no_access_retry: 'Retry',
     branch_no_access_retry_busy: 'Checking…',
     branch_generic_fallback: 'this branch',
+    // Window-focus revalidation neutral toast (Phase 17, plan 06 — BERR-04, D-06)
+    branch_focus_update_title: 'Branch updated',
+    branch_focus_update_prefix: 'Now showing',
     // history (Phase 7)
     h_period_today: 'Today',
     h_period_7: '7 days',
