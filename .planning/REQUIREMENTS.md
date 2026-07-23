@@ -15,7 +15,7 @@
 ### Branch Switcher UI (SWCH)
 
 - [x] **SWCH-01**: A persistent branch selector sits in the sidebar footer — in the exact position vacated by the removed RO/EN toggle — showing the current branch name and a "default" badge for the tenant's default branch.
-- [ ] **SWCH-02**: When the user has a single accessible branch, the selector renders read-only, preserving exact pre-v2.6 behavior for single-branch tenants.
+- [x] **SWCH-02**: When the user has a single accessible branch, the selector renders read-only, preserving exact pre-v2.6 behavior for single-branch tenants.
 - [x] **SWCH-03**: Selecting a different branch calls `client.me.branches.switch({ body: { branchId } })`; the control is disabled while the switch is pending, and the active branch updates only after the call succeeds (non-optimistic).
 - [x] **SWCH-04**: A successful switch surfaces a "switched to \<branch\>" confirmation toast.
 
@@ -67,7 +67,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | BSTATE-01 | Phase 13 | Complete |
 | BSTATE-02 | Phase 13 | Complete |
 | SWCH-01 | Phase 16 | Complete |
-| SWCH-02 | Phase 16 | Pending |
+| SWCH-02 | Phase 16 | Complete |
 | SWCH-03 | Phase 16 | Complete |
 | SWCH-04 | Phase 16 | Complete |
 | SCOPE-01 | Phase 14 | Complete |

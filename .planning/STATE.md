@@ -6,15 +6,15 @@ current_phase: 16
 current_phase_name: branch-switcher-ui-switch-flow-language-relocation
 current_plan: 1
 status: executing
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-07-23T13:12:34.590Z"
+stopped_at: Completed 16-02-PLAN.md
+last_updated: "2026-07-23T13:21:47.921Z"
 last_activity: 2026-07-23
 last_activity_desc: Phase 16 execution started
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
   percent: 60
 ---
 
@@ -53,11 +53,11 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 ## Current Position
 
 Phase: 16 (branch-switcher-ui-switch-flow-language-relocation) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-07-23 — Phase 16 execution started
 
-Progress: [████████░░] 80% (v1.2)
+Progress: [█████████░] 90% (v1.2)
 
 ## Phase Summary
 
@@ -136,6 +136,7 @@ Progress: [████████░░] 80% (v1.2)
 | Phase 14 P04 | ~12min | 2 tasks | 5 files |
 | Phase 15 P01 | ~7min | 3 tasks | 2 files |
 | Phase 16 P01 | 50min | 2 tasks | 7 files |
+| Phase 16 P02 | ~20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -294,8 +295,8 @@ Progress: [████████░░] 80% (v1.2)
 
 **Resume file:** None
 
-**Last session:** 2026-07-23T13:12:34.582Z
-**Stopped at:** Completed 16-01-PLAN.md
+**Last session:** 2026-07-23T13:21:47.913Z
+**Stopped at:** Completed 16-02-PLAN.md
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -408,6 +409,8 @@ Progress: [████████░░] 80% (v1.2)
 - [Phase ?]: [Phase 16-01]: setCurrentBranch called only inside useBranchSwitch's own onSuccess (D-05) — non-optimistic, never adjacent to .mutate()
 - [Phase ?]: [Phase 16-01]: SwitchingOverlay renders as a sibling of Shell at zIndex 250 (above dialog zIndex 200), bounded bridging timeout is 6000ms (D-09)
 - [Phase ?]: [Phase 16-01]: shell.test.jsx now mocks use-branches.js since Shell calls useBranches() directly (Rule 3 deviation)
+- [Phase ?]: [Phase 16-02]: canOpenBranchPopover = isMultiBranch || branchesLoading || branchesError — extends the D-04 read-only gate so the popover's own loading/error backstops are reachable before the definitive branch count resolves, while a settled single-branch tenant still locks read-only permanently
+- [Phase ?]: [Phase 16-02]: collapsed-sidebar branch chip is a bespoke 32x32 tile (white bg + border), not the .avatar class — .avatar's terracotta fill is reserved for the user chip per 16-UI-SPEC.md
 
 ## Operator Next Steps
 
