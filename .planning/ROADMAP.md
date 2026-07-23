@@ -136,7 +136,16 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
   4. A successful switch shows a "switched to `<branch>`" confirmation toast, exits any open order-detail view back to a neutral screen, and discards any in-progress POS cart so no prior-branch state carries forward; order-affecting actions (Ring Up, Accept, Advance, Cancel, Reprint) stay disabled for the duration of a pending switch.
   5. The RO/EN language toggle no longer appears in the sidebar footer; language remains changeable from Settings → Afișaj with no loss of capability.
 
-**Plans**: TBD
+**Plans**: 3 plans
+**Wave 1**
+
+- [ ] 16-01-PLAN.md — Tracer: end-to-end branch switch (useBranchSwitch non-optimistic + branchSwitcherForceOpen + all i18n keys + minimal multi-branch selector + app.jsx overlay/phase-machine/bridge/toast) + RO/EN pill removal (SWCH-01, SWCH-03, SWCH-04, SCOPE-04, LANG-01)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 16-02-PLAN.md — Selector completeness: single-branch read-only, default badge, collapsed chip, popover loading/error/overflow backstops + shell tests (SWCH-01, SWCH-02, LANG-01)
+- [ ] 16-03-PLAN.md — Switch-flow completeness: cart-emptiness callback + cart-discard confirm + neutral-landing + POS remount key + bounded-timeout tests (SCOPE-03, SCOPE-04)
+
 **UI hint**: yes
 
 ### Phase 17: Centralized Branch-Access Error Handling
@@ -174,7 +183,7 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
 | 13. Branch State & Launch Seeding Foundation | v1.2 | 2/2 | Complete    | 2026-07-22 |
 | 14. Branch-Scoped Cache Re-Scoping | v1.2 | 4/4 | Complete    | 2026-07-22 |
 | 15. SSE Branch-Aware Reconnect | v1.2 | 1/1 | In Progress|  |
-| 16. Branch Switcher UI, Switch Flow & Language Relocation | v1.2 | 0/TBD | Not started | - |
+| 16. Branch Switcher UI, Switch Flow & Language Relocation | v1.2 | 0/3 | Planned | - |
 | 17. Centralized Branch-Access Error Handling | v1.2 | 0/TBD | Not started | - |
 
 ---
