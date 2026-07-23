@@ -68,6 +68,48 @@ describe('useBranches — calls client.me.branches.list() and returns data (BSTA
     expect(result.current.error.message).toBe('Access revoked')
   })
 
+  // WR-02 (17-REVIEW.md): the queryFn must route through the same unwrapSdkResult convention
+  // every sibling branch-scoped hook uses, so a branches-list 403 carries a matchable err.code
+  // into handleBranchError's central choke point instead of surfacing as a plain, code-less Error.
+  test('WR-02: a SDK { error } result populates err.code (matches the unwrapSdkResult convention used by every sibling hook)', async () => {
+    const mockClient = {
+      me: {
+        branches: {
+          list: vi.fn().mockResolvedValue({ data: null, error: { error: 'BRANCH_ACCESS_REVOKED' } }),
+        },
+      },
+    }
+
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const { result } = renderHook(() => useBranches(), { wrapper: makeWrapper() })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(result.current.error.code).toBe('BRANCH_ACCESS_REVOKED')
+  })
+
+  test('WR-02: a branches-list BRANCH_* 403 reaches handleBranchError via QueryCache onError (central choke point, not bypassed)', async () => {
+    const mockClient = {
+      me: {
+        branches: {
+          list: vi.fn().mockResolvedValue({ data: null, error: { error: 'NO_BRANCH_ACCESS' } }),
+        },
+      },
+    }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const qc = new QueryClient({
+      queryCache: new QueryCache({ onError: (err) => handleBranchError(err, qc) }),
+      defaultOptions: { queries: { retry: false } },
+    })
+    function w({ children }) { return createElement(QueryClientProvider, { client: qc }, children) }
+
+    useAppStore.setState({ noBranchAccess: false })
+
+    const { result } = renderHook(() => useBranches(), { wrapper: w })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(useAppStore.getState().noBranchAccess).toBe(true)
+  })
+
   test('does not run when client is null (enabled: !!client, no branchId gate)', () => {
     useAuth.mockReturnValue({ client: null })
 

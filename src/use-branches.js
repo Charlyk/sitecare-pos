@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from './auth.jsx';
 import { useAppStore } from './store.js';
 import { useT } from './i18n.jsx';
+import { unwrapSdkResult } from './data.jsx';
 
 export function useBranches() {
   const { client } = useAuth();
@@ -9,8 +10,11 @@ export function useBranches() {
     queryKey: ['branches'],
     queryFn: async () => {
       const result = await client.me.branches.list();
-      if (result.error) throw new Error(result.error.error ?? 'Failed to load branches');
-      return result.data; // AccessibleBranch[]
+      // WR-02 (17-REVIEW.md): route through the same shared unwrap convention every sibling
+      // branch-scoped hook uses (use-orders.js, use-stats.js, etc.) — this populates err.code so
+      // a branches-list 403 also lands in handleBranchError's central choke point instead of
+      // silently bypassing it as a plain, code-less Error.
+      return unwrapSdkResult(result, 'Failed to load branches'); // AccessibleBranch[]
     },
     enabled: !!client,             // sole gate — NEVER add !!currentBranch/!!branchId (Pitfall 5/11)
     staleTime: 30_000,             // finite, matches use-stats.js precedent
