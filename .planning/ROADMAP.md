@@ -163,9 +163,20 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
 **Plans**: 6 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 17-01-PLAN.md — Tracer: central 403 choke-point wiring (main.jsx QueryCache/MutationCache onError → handleBranchError) proven end-to-end for BRANCH_ACCESS_REVOKED
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 17-02-PLAN.md — Live 403-envelope verification: capture real REST + SSE 403 body shapes, lock/correct the matcher (autonomous: false)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 17-03-PLAN.md — Complete handleBranchError (all 3 codes) + noBranchAccess store flag + D-05 no-double-toast guard
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 17-04-PLAN.md — NO_BRANCH_ACCESS full-screen block + non-optimistic Retry (BERR-03)
 - [ ] 17-05-PLAN.md — SSE onopen 403 routing + retry suppression (D-08)
 - [ ] 17-06-PLAN.md — Window-focus branch revalidation (BERR-04)

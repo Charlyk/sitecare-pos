@@ -5,15 +5,15 @@ milestone_name: Branch Switching
 current_phase: 16
 current_phase_name: branch-switcher-ui-switch-flow-language-relocation
 current_plan: 1
-status: verifying
-stopped_at: Phase 17 context gathered
-last_updated: "2026-07-23T14:07:37.283Z"
+status: executing
+stopped_at: Phase 17 UI-SPEC approved
+last_updated: "2026-07-23T15:33:40.827Z"
 last_activity: 2026-07-23
 last_activity_desc: Phase 16 execution started
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 10
+  total_plans: 16
   completed_plans: 10
   percent: 80
 ---
@@ -54,7 +54,7 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 Phase: 16 (branch-switcher-ui-switch-flow-language-relocation) — EXECUTING
 Plan: 3 of 3
-Status: Phase complete — ready for verification
+Status: Ready to execute
 Last activity: 2026-07-23 — Phase 16 execution started
 
 Progress: [██████████] 100% (v1.2)
@@ -276,7 +276,7 @@ Progress: [██████████] 100% (v1.2)
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
+  derives that key from a body-level `Status:`/`**Status:**Ready to execute
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
   sync correctly via their own body fields (`**Current Plan:**1
@@ -294,10 +294,10 @@ Progress: [██████████] 100% (v1.2)
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/17-centralized-branch-access-error-handling/17-CONTEXT.md
+**Resume file:** /Users/eduardalbu/Developer/sitecare-pos/.planning/phases/17-centralized-branch-access-error-handling/17-UI-SPEC.md
 
-**Last session:** 2026-07-23T14:07:37.271Z
-**Stopped at:** Phase 17 context gathered
+**Last session:** 2026-07-23T14:17:06.516Z
+**Stopped at:** Phase 17 UI-SPEC approved
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
