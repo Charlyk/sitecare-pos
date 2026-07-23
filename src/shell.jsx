@@ -58,6 +58,21 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
     return () => document.removeEventListener('mousedown', handleClick);
   }, [branchMenuOpen]);
 
+  // BERR-01 (17-01): consume-once reopen seam. A central 403 recovery (handleBranchError) sets
+  // branchSwitcherForceOpen true; this effect force-opens the popover and immediately resets the
+  // store flag so a single 403 reopens the popover exactly once, never re-overriding a later
+  // manual close. Only fires when the popover is actually reachable (canOpenBranchPopover) so a
+  // settled single-branch tenant is never force-opened. No new dismiss logic — the existing
+  // outside-click handler above already makes the reopened popover dismissible (D-04).
+  const branchSwitcherForceOpen = useAppStore((s) => s.branchSwitcherForceOpen);
+  const setBranchSwitcherForceOpen = useAppStore((s) => s.setBranchSwitcherForceOpen);
+
+  useEffect(() => {
+    if (!branchSwitcherForceOpen) return;
+    if (canOpenBranchPopover) setBranchMenuOpen(true);
+    setBranchSwitcherForceOpen(false);
+  }, [branchSwitcherForceOpen, canOpenBranchPopover, setBranchSwitcherForceOpen]);
+
   // D-06: compose firstName/lastName from the getMe() CurrentUser shape; fall back to any
   // optimistic-fill .name, then .email, then empty string. Never a hardcoded personal name —
   // when authUser is unresolved (null), the identity row renders nothing (UI-SPEC E2).

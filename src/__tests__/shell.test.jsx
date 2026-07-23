@@ -249,3 +249,42 @@ describe('LANG-01 (D-15): RO/EN pill is absent from the footer', () => {
     expect(screen.queryByRole('button', { name: 'EN' })).toBeNull()
   })
 })
+
+// ── Phase 17 Plan 01 (BERR-01): consume branchSwitcherForceOpen — reopen the switcher ──
+
+describe('BERR-01: Shell consumes branchSwitcherForceOpen (reopen-on-403 consume-once)', () => {
+  afterEach(() => {
+    useAppStore.setState({ branchSwitcherForceOpen: false })
+  })
+
+  test('setting branchSwitcherForceOpen true opens the branch popover and resets the store flag to false', () => {
+    useBranches.mockReturnValue({ data: [branchCentru, branchNord], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: branchCentru, branchSwitcherForceOpen: true })
+
+    render(createElement(Shell, baseProps(), createElement('div')))
+
+    expect(screen.getByText('Filiala Nord')).toBeTruthy() // popover open — sibling row visible
+    expect(useAppStore.getState().branchSwitcherForceOpen).toBe(false) // consumed once
+  })
+
+  test('a settled single-branch tenant (canOpenBranchPopover false) is never force-opened', () => {
+    useBranches.mockReturnValue({ data: [branchCentru], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: branchCentru, branchSwitcherForceOpen: true })
+
+    render(createElement(Shell, baseProps(), createElement('div')))
+
+    // Only the trigger's own name text exists — no popover row rendered
+    expect(screen.getAllByText('Filiala Centru').length).toBe(1)
+  })
+
+  test('the reopened popover stays dismissible via the existing outside-click handler', () => {
+    useBranches.mockReturnValue({ data: [branchCentru, branchNord], isLoading: false, isError: false })
+    useAppStore.setState({ currentBranch: branchCentru, branchSwitcherForceOpen: true })
+
+    render(createElement(Shell, baseProps(), createElement('div')))
+    expect(screen.getByText('Filiala Nord')).toBeTruthy()
+
+    fireEvent.mouseDown(document.body)
+    expect(screen.queryByText('Filiala Nord')).toBeNull()
+  })
+})
