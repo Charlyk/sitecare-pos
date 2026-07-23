@@ -81,15 +81,25 @@ export function useSSE(token, onLiveOrder) {
         }
         // D-08 (BERR-01, SC2): the SSE stream's onopen is the one error path that bypasses
         // TanStack's onError, so a branch-access 403 must be routed to the central handler
-        // here explicitly. A branch-code 403 returns WITHOUT throwing — throwing would
-        // re-enter fetchEventSource's retry loop and hammer an inaccessible branch with
-        // blind exponential backoff. Recovery instead comes from the next useSSE effect run
-        // when currentBranch changes (branchId is already a reconnect dependency, D-01).
+        // here explicitly. A branch-code 403 returns WITHOUT throwing — but returning alone is
+        // NOT sufficient to stop the retry: response.text() above already drains/locks
+        // response.body, so fetchEventSource's create() loop still calls
+        // getBytes(response.body, ...) right after onopen resolves, which throws on the locked
+        // stream and would otherwise fall into onerror -> retry regardless (CR-01, 17-REVIEW).
+        // CR-01 fix: explicitly abort the connection's own AbortController (`ctrl`, closed over
+        // from this effect) for the branch-code case. fetchEventSource listens for its input
+        // signal's 'abort' event and aborts its internal curRequestController synchronously in
+        // response — so by the time the subsequent getBytes() throw is caught, the library's own
+        // `curRequestController.signal.aborted` guard is already true and unconditionally
+        // suppresses the retry-scheduling branch, deterministically stopping the stream with NO
+        // retry. Recovery still comes from the next useSSE effect run when currentBranch changes
+        // (branchId is already a reconnect dependency, D-01).
         if (response.status === 403) {
           const code = extractBranchCodeFromSseBody(body);
           if (code && BRANCH_CODES.includes(code)) {
             handleBranchError({ code }, queryClient);
             setIsConnected(false);
+            ctrl.abort(); // CR-01: suppress fetchEventSource's retry — see comment above
             return;
           }
         }

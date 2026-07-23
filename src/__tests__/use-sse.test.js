@@ -138,8 +138,10 @@ describe('D-08 — SSE onopen 403 short-circuit routes BRANCH_* codes to handleB
 
   test('a 403 onopen with a body carrying a BRANCH_* code calls handleBranchError and resolves without throwing (no retry scheduled)', async () => {
     let capturedOnOpen
+    let capturedSignal
     fetchEventSource.mockImplementation((_url, opts) => {
       capturedOnOpen = opts.onopen
+      capturedSignal = opts.signal
       return Promise.resolve()
     })
     const { result } = renderHook(() => useSSE('test-token'), { wrapper })
@@ -153,13 +155,22 @@ describe('D-08 — SSE onopen 403 short-circuit routes BRANCH_* codes to handleB
     expect(handleBranchError).toHaveBeenCalledTimes(1)
     expect(handleBranchError).toHaveBeenCalledWith({ code: 'BRANCH_ACCESS_REVOKED' }, expect.anything())
     expect(result.current.isConnected).toBe(false)
+    // CR-01 (17-REVIEW.md): "return without throwing" alone does NOT stop fetchEventSource's retry
+    // — response.text() above already drained response.body, so the library's own getBytes() call
+    // (right after onopen resolves) throws on the locked stream regardless. The connection's own
+    // AbortController must be aborted so the library's `curRequestController.signal.aborted` guard
+    // suppresses the retry-scheduling branch unconditionally. See use-sse-retry-suppression.test.js
+    // for an end-to-end proof against the REAL (unmocked) fetch-event-source library.
+    expect(capturedSignal.aborted).toBe(true)
   })
 
   test('a 403 onopen whose body is non-JSON falls through to the existing console.warn + throw (retry preserved)', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     let capturedOnOpen
+    let capturedSignal
     fetchEventSource.mockImplementation((_url, opts) => {
       capturedOnOpen = opts.onopen
+      capturedSignal = opts.signal
       return Promise.resolve()
     })
     const { result } = renderHook(() => useSSE('test-token'), { wrapper })
@@ -172,6 +183,9 @@ describe('D-08 — SSE onopen 403 short-circuit routes BRANCH_* codes to handleB
     expect(handleBranchError).not.toHaveBeenCalled()
     expect(warnSpy).toHaveBeenCalledTimes(1)
     expect(result.current.isConnected).toBe(false)
+    // CR-01: the abort-based short-circuit is scoped to the recognized-branch-code case only —
+    // a non-branch 403 must NOT abort, preserving the existing throw -> onerror -> retry path.
+    expect(capturedSignal.aborted).toBe(false)
 
     warnSpy.mockRestore()
   })
