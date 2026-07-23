@@ -17,6 +17,7 @@ import { formatRON } from './data.jsx';
 import { typeMeta } from './screen-orders.jsx';
 import { AuthProvider, useAuth } from './auth.jsx';
 import { LoginScreen } from './screen-login.jsx';
+import { NoBranchAccessBlock } from './no-branch-access.jsx';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useSSE } from './use-sse.js';
 import { useOrders } from './use-orders.js';
@@ -64,7 +65,11 @@ function App() {
   const [cancelDialog, setCancelDialog] = useState(null);
   const currentBranch = useAppStore((s) => s.currentBranch);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
-  const { signIn, coldStartBusy, busy: authBusy, error: authError, token } = useAuth();
+  const noBranchAccess = useAppStore((s) => s.noBranchAccess);
+  const setNoBranchAccess = useAppStore((s) => s.setNoBranchAccess);
+  const setCurrentBranch = useAppStore((s) => s.setCurrentBranch);
+  const [noBranchRetrying, setNoBranchRetrying] = useState(false);
+  const { signIn, coldStartBusy, busy: authBusy, error: authError, token, client } = useAuth();
   const t = useT(lang);
 
   const { data: ordersData } = useOrders();
@@ -340,6 +345,34 @@ function App() {
         onForgotPassword={() => openUrl('https://restaurant.sitecare.ro/reset-password')}
         busy={authBusy}
         error={authError}
+      />
+    );
+  }
+
+  // NO_BRANCH_ACCESS terminal-state gate (Phase 17, BERR-03, D-01/D-02): supersedes <Shell>
+  // entirely — the screen router is never reached while noBranchAccess is true. Retry re-checks
+  // via getMe() and clears the flag ONLY when a non-null selectedBranch comes back (never
+  // optimistic on click, T-17-02) — a failed/null-result Retry leaves the block up unchanged.
+  if (noBranchAccess) {
+    return (
+      <NoBranchAccessBlock
+        lang={lang}
+        retrying={noBranchRetrying}
+        onRetry={async () => {
+          setNoBranchRetrying(true);
+          try {
+            const me = await client.auth.getMe();
+            if (me?.selectedBranch) {
+              setCurrentBranch(me.selectedBranch);
+              setNoBranchAccess(false);
+            }
+            // me.selectedBranch null: leave the block up, fire no toast (fail-safe, T-17-02).
+          } catch {
+            // getMe() threw (network drop, etc.): leave the block up unchanged, no toast.
+          } finally {
+            setNoBranchRetrying(false);
+          }
+        }}
       />
     );
   }
