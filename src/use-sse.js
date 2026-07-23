@@ -8,6 +8,24 @@ import { fetchEventSource } from '@microsoft/fetch-event-source';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from './store.js';
 import { normalizeOrder, SDK_STATE_MAP } from './data.jsx';
+import { handleBranchError, BRANCH_CODES } from './use-branches.js';
+
+// extractBranchCodeFromSseBody (17-05, D-08, V5 input validation) — parses the SSE onopen
+// 403 body text captured by the Phase 15 scaffold below. Targets the ASSUMED body shape
+// { error: '<CODE>' } (or a bare JSON string), copied from 17-02's REST-side convention —
+// the real SSE 403 body was NOT live-verified (see .planning/WINDOWS.md entry #1; 17-02
+// flagged this as an open follow-up). MUST NEVER throw: a malformed/non-JSON body must
+// return null and fall through to the unchanged generic warn+throw path, never mask the
+// real HTTP status.
+export function extractBranchCodeFromSseBody(rawText) {
+  if (!rawText) return null;
+  try {
+    const parsed = JSON.parse(rawText);
+    return (typeof parsed === 'string' ? parsed : parsed?.error) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 // Dev: Vite proxy intercepts /v1/* → https://api.restaurant.sitecare.ro
 // Prod: direct URL — tauri.conf.json connect-src already whitelists this domain (Phase 1)
@@ -61,8 +79,23 @@ export function useSSE(token, onLiveOrder) {
         } catch {
           body = undefined;
         }
+        // D-08 (BERR-01, SC2): the SSE stream's onopen is the one error path that bypasses
+        // TanStack's onError, so a branch-access 403 must be routed to the central handler
+        // here explicitly. A branch-code 403 returns WITHOUT throwing — throwing would
+        // re-enter fetchEventSource's retry loop and hammer an inaccessible branch with
+        // blind exponential backoff. Recovery instead comes from the next useSSE effect run
+        // when currentBranch changes (branchId is already a reconnect dependency, D-01).
+        if (response.status === 403) {
+          const code = extractBranchCodeFromSseBody(body);
+          if (code && BRANCH_CODES.includes(code)) {
+            handleBranchError({ code }, queryClient);
+            setIsConnected(false);
+            return;
+          }
+        }
         console.warn('[SSE] non-2xx onopen', { status: response.status, body });
-        // Non-2xx: throw so fetchEventSource routes to onerror and retries
+        // Non-2xx (non-branch, or branch-403 with an unrecognized/malformed body): throw so
+        // fetchEventSource routes to onerror and retries — unchanged from before this plan.
         throw new Error(`SSE: server returned ${response.status}`);
       },
 
