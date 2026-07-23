@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Branch Switching
-current_phase: 15
-current_phase_name: sse-branch-aware-reconnect
+current_phase: 16
+current_phase_name: branch-switcher-ui-switch-flow-language-relocation
 current_plan: 1
 status: executing
-stopped_at: Phase 16 UI-SPEC approved
-last_updated: "2026-07-23T11:30:22.903Z"
-last_activity: 2026-07-22
-last_activity_desc: Phase 15 execution started
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-07-23T13:12:34.590Z"
+last_activity: 2026-07-23
+last_activity_desc: Phase 16 execution started
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 10
-  completed_plans: 7
+  completed_plans: 8
   percent: 60
 ---
 
@@ -29,7 +29,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-21 — v1.2 Branch Switching milestone started)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 15 — sse-branch-aware-reconnect
+**Current focus:** Phase 16 — branch-switcher-ui-switch-flow-language-relocation
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -52,12 +52,12 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 ## Current Position
 
-Phase: 15 (sse-branch-aware-reconnect) — EXECUTING
-Plan: 1 of 1
+Phase: 16 (branch-switcher-ui-switch-flow-language-relocation) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-22 — Phase 15 execution started
+Last activity: 2026-07-23 — Phase 16 execution started
 
-Progress: [██████████] 100% (v1.2)
+Progress: [████████░░] 80% (v1.2)
 
 ## Phase Summary
 
@@ -135,6 +135,7 @@ Progress: [██████████] 100% (v1.2)
 | Phase 14 P03 | ~4min | 2 tasks | 6 files |
 | Phase 14 P04 | ~12min | 2 tasks | 5 files |
 | Phase 15 P01 | ~7min | 3 tasks | 2 files |
+| Phase 16 P01 | 50min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -291,10 +292,10 @@ Progress: [██████████] 100% (v1.2)
 
 ## Session Continuity
 
-**Resume file:** /Users/eduardalbu/Developer/sitecare-pos/.planning/phases/16-branch-switcher-ui-switch-flow-language-relocation/16-UI-SPEC.md
+**Resume file:** None
 
-**Last session:** 2026-07-23T10:16:54.777Z
-**Stopped at:** Phase 16 UI-SPEC approved
+**Last session:** 2026-07-23T13:12:34.582Z
+**Stopped at:** Completed 16-01-PLAN.md
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -404,6 +405,9 @@ Progress: [██████████] 100% (v1.2)
 - [Phase ?]: [Phase 15-01]: scopedBranchId captured once per SSE connection and closed over by every handler (D-03) — no handler ever reads useAppStore.getState(), preventing stale-connection cross-branch cache bleed
 - [Phase ?]: [Phase 15-01]: setIsConnected(false) added at top of every SSE effect run (D-05) — ctrl.abort() fires neither onerror nor onclose, so the reconnect drop must be explicit to stay visible
 - [Phase ?]: [Phase 15-01]: shared test wrapper() must hold QueryClient via useRef, not construct new QueryClient() in the render body — otherwise renderHook's rerender() gives every dependent hook a fresh queryClient identity and defeats dependency-array assertions
+- [Phase ?]: [Phase 16-01]: setCurrentBranch called only inside useBranchSwitch's own onSuccess (D-05) — non-optimistic, never adjacent to .mutate()
+- [Phase ?]: [Phase 16-01]: SwitchingOverlay renders as a sibling of Shell at zIndex 250 (above dialog zIndex 200), bounded bridging timeout is 6000ms (D-09)
+- [Phase ?]: [Phase 16-01]: shell.test.jsx now mocks use-branches.js since Shell calls useBranches() directly (Rule 3 deviation)
 
 ## Operator Next Steps
 

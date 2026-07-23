@@ -14,17 +14,17 @@
 
 ### Branch Switcher UI (SWCH)
 
-- [ ] **SWCH-01**: A persistent branch selector sits in the sidebar footer — in the exact position vacated by the removed RO/EN toggle — showing the current branch name and a "default" badge for the tenant's default branch.
+- [x] **SWCH-01**: A persistent branch selector sits in the sidebar footer — in the exact position vacated by the removed RO/EN toggle — showing the current branch name and a "default" badge for the tenant's default branch.
 - [ ] **SWCH-02**: When the user has a single accessible branch, the selector renders read-only, preserving exact pre-v2.6 behavior for single-branch tenants.
-- [ ] **SWCH-03**: Selecting a different branch calls `client.me.branches.switch({ body: { branchId } })`; the control is disabled while the switch is pending, and the active branch updates only after the call succeeds (non-optimistic).
-- [ ] **SWCH-04**: A successful switch surfaces a "switched to \<branch\>" confirmation toast.
+- [x] **SWCH-03**: Selecting a different branch calls `client.me.branches.switch({ body: { branchId } })`; the control is disabled while the switch is pending, and the active branch updates only after the call succeeds (non-optimistic).
+- [x] **SWCH-04**: A successful switch surfaces a "switched to \<branch\>" confirmation toast.
 
 ### Branch-Scoped Data & Realtime (SCOPE)
 
 - [x] **SCOPE-01**: On switch, all branch-scoped server data (orders, order detail, stats, menu, order history, restaurant settings, delivery areas) re-scopes to the newly selected branch — no stale prior-branch data is served for the cache's `staleTime` window.
 - [x] **SCOPE-02**: The live SSE stream reconnects on switch so the order list and Kitchen Display receive the new branch's events; the reconnect must not fire the initial-snapshot sound burst.
 - [ ] **SCOPE-03**: On switch, the POS cart is reset and any open order-detail view is exited, so no prior-branch working state carries into the new branch.
-- [ ] **SCOPE-04**: Order mutations (POS submit, accept / advance / cancel, receipt reprint) are blocked while a switch is pending, so no mutation lands against the wrong branch.
+- [x] **SCOPE-04**: Order mutations (POS submit, accept / advance / cancel, receipt reprint) are blocked while a switch is pending, so no mutation lands against the wrong branch.
 
 ### Branch Access Errors (BERR)
 
@@ -35,7 +35,7 @@
 
 ### Language Control Relocation (LANG)
 
-- [ ] **LANG-01**: The RO/EN toggle is removed from the sidebar footer; language remains changeable via Settings → Afișaj (which already provides the control), with no loss of language-switching capability.
+- [x] **LANG-01**: The RO/EN toggle is removed from the sidebar footer; language remains changeable via Settings → Afișaj (which already provides the control), with no loss of language-switching capability.
 
 ## Future Requirements
 
@@ -66,19 +66,19 @@ Which phases cover which requirements. Populated during roadmap creation.
 |-------------|-------|--------|
 | BSTATE-01 | Phase 13 | Complete |
 | BSTATE-02 | Phase 13 | Complete |
-| SWCH-01 | Phase 16 | Pending |
+| SWCH-01 | Phase 16 | Complete |
 | SWCH-02 | Phase 16 | Pending |
-| SWCH-03 | Phase 16 | Pending |
-| SWCH-04 | Phase 16 | Pending |
+| SWCH-03 | Phase 16 | Complete |
+| SWCH-04 | Phase 16 | Complete |
 | SCOPE-01 | Phase 14 | Complete |
 | SCOPE-02 | Phase 15 | Complete |
 | SCOPE-03 | Phase 16 | Pending |
-| SCOPE-04 | Phase 16 | Pending |
+| SCOPE-04 | Phase 16 | Complete |
 | BERR-01 | Phase 17 | Pending |
 | BERR-02 | Phase 17 | Pending |
 | BERR-03 | Phase 17 | Pending |
 | BERR-04 | Phase 17 | Pending |
-| LANG-01 | Phase 16 | Pending |
+| LANG-01 | Phase 16 | Complete |
 
 **Coverage:**
 
