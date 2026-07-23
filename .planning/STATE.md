@@ -6,15 +6,15 @@ current_phase: 17
 current_phase_name: centralized-branch-access-error-handling
 current_plan: 1
 status: executing
-stopped_at: Completed 17-03-PLAN.md
-last_updated: "2026-07-23T21:14:59.553Z"
+stopped_at: Completed 17-04-PLAN.md
+last_updated: "2026-07-23T21:21:02.053Z"
 last_activity: 2026-07-23
 last_activity_desc: Phase 17 execution started
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 16
-  completed_plans: 13
+  completed_plans: 14
   percent: 80
 ---
 
@@ -53,11 +53,11 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 ## Current Position
 
 Phase: 17 (centralized-branch-access-error-handling) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-07-23 — Phase 17 execution started
 
-Progress: [████████░░] 81% (v1.2)
+Progress: [█████████░] 88% (v1.2)
 
 ## Phase Summary
 
@@ -141,6 +141,7 @@ Progress: [████████░░] 81% (v1.2)
 | Phase 17 P01 | 6min | 2 tasks | 6 files |
 | Phase 17 P02 | 8min | 1 tasks | 1 files |
 | Phase 17 P03 | ~6min | 2 tasks | 7 files |
+| Phase 17 P04 | ~10min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -299,8 +300,8 @@ Progress: [████████░░] 81% (v1.2)
 
 **Resume file:** None
 
-**Last session:** 2026-07-23T21:14:52.074Z
-**Stopped at:** Completed 17-03-PLAN.md
+**Last session:** 2026-07-23T21:21:02.043Z
+**Stopped at:** Completed 17-04-PLAN.md
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -422,6 +423,9 @@ Progress: [████████░░] 81% (v1.2)
 - [Phase 17]: 17-02: BRANCH_CODES err.code matcher shipped PROVISIONAL — live 403 capture infeasible — The live-capture checkpoint (17-02) could not be completed: no test account with a deactivable/revocable branch was reachable in the execution environment. Per the plan's own fallback clause, the three literal strings (BRANCH_INACTIVE/BRANCH_ACCESS_REVOKED/NO_BRANCH_ACCESS) were kept unchanged and locked by a synthetic regression test only (src/__tests__/use-branches.test.js). ASSUMED REST 403 body: { error: 'BRANCH_ACCESS_REVOKED' } (and siblings) — UNVERIFIED. ASSUMED SSE 403 body: same { error: '<LITERAL_CODE>' } shape — UNVERIFIED, and the SSE route is hand-rolled server-side so it may differ from REST. Downstream plans (17-05 SSE parsing, and any plan relying on this matcher) must treat this as an unproven assumption, not a confirmed contract. Follow-up correction task recorded in .planning/WINDOWS.md (entry #1, kind=deviation).
 - [Phase ?]: 17-03: RECOVERABLE_CODE_COPY per-code copy map factors BRANCH_ACCESS_REVOKED/BRANCH_INACTIVE's shared recovery behavior through one code path instead of a duplicated switch-case body
 - [Phase ?]: 17-03: D-05 no-double-toast composition tested at two levels (handleBranchError alone, fireSwitch's own onError alone, plus one explicit composition test) rather than one full MutationCache-wired integration test, matching the existing tracer-suite's bare-QueryClient harness convention
+- [Phase ?]: [Phase 17-04]: app.jsx's third top-level gate (noBranchAccess) supersedes <Shell> entirely, placed after the !isAuthenticated early return, before the Shell return
+- [Phase ?]: [Phase 17-04]: Retry spinner icon color follows 17-UI-SPEC.md verbatim (var(--sc-primary)) even though it renders inside the same-colored .btn-primary fill — implemented per the approved design contract, flagged for human visual review
+- [Phase ?]: [Phase 17-04]: onRetry destructures client from useAuth() (newly, previously unused in app.jsx) rather than a new prop/context path — client.auth.getMe() reuses auth.jsx's seedFromMe/handleFocus throwing contract
 
 ## Operator Next Steps
 

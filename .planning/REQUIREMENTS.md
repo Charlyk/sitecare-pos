@@ -30,7 +30,7 @@
 
 - [ ] **BERR-01**: `BRANCH_INACTIVE` and `BRANCH_ACCESS_REVOKED` (403) — whether returned by the switch call itself or by any later branch-scoped request — are handled through one central path: a toast, the branch switcher reopened, and the branch list refetched.
 - [x] **BERR-02**: A rejected switch (403) leaves the app on the previously selected branch, with no change beyond the error notice (the server state was untouched).
-- [ ] **BERR-03**: `NO_BRANCH_ACCESS` (403 — the user has no accessible active branch at all) shows a distinct full-screen blocking state that supersedes normal screens until access is restored.
+- [x] **BERR-03**: `NO_BRANCH_ACCESS` (403 — the user has no accessible active branch at all) shows a distinct full-screen blocking state that supersedes normal screens until access is restored.
 - [ ] **BERR-04**: The selected branch is revalidated when the app window regains focus, catching a branch change or access revocation made on another device.
 
 ### Language Control Relocation (LANG)
@@ -76,7 +76,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | SCOPE-04 | Phase 16 | Complete |
 | BERR-01 | Phase 17 | Pending |
 | BERR-02 | Phase 17 | Complete |
-| BERR-03 | Phase 17 | Pending |
+| BERR-03 | Phase 17 | Complete |
 | BERR-04 | Phase 17 | Pending |
 | LANG-01 | Phase 16 | Complete |
 
