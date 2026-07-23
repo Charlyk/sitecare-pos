@@ -160,7 +160,7 @@ Full phase details → `.planning/milestones/v1.1-ROADMAP.md`
   3. A `NO_BRANCH_ACCESS` 403 produces a distinct blocking state that takes over the entire app until access is restored, rather than the toast-and-reopen treatment used for the other two codes.
   4. Returning to the app after it regains focus revalidates the selected branch, surfacing a branch change or access revocation made on another device through the same recovery path.
 
-**Plans**: 4/6 plans executed
+**Plans**: 5/6 plans executed
 
 Plans:
 **Wave 1**
@@ -178,7 +178,7 @@ Plans:
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [x] 17-04-PLAN.md — NO_BRANCH_ACCESS full-screen block + non-optimistic Retry (BERR-03)
-- [ ] 17-05-PLAN.md — SSE onopen 403 routing + retry suppression (D-08)
+- [x] 17-05-PLAN.md — SSE onopen 403 routing + retry suppression (D-08)
 - [ ] 17-06-PLAN.md — Window-focus branch revalidation (BERR-04)
 
 ---
@@ -203,7 +203,7 @@ Plans:
 | 14. Branch-Scoped Cache Re-Scoping | v1.2 | 4/4 | Complete    | 2026-07-22 |
 | 15. SSE Branch-Aware Reconnect | v1.2 | 1/1 | In Progress|  |
 | 16. Branch Switcher UI, Switch Flow & Language Relocation | v1.2 | 3/3 | In Progress|  |
-| 17. Centralized Branch-Access Error Handling | v1.2 | 4/6 | In Progress|  |
+| 17. Centralized Branch-Access Error Handling | v1.2 | 5/6 | In Progress|  |
 
 ---
 
