@@ -5,17 +5,17 @@ milestone_name: Branch Switching
 current_phase: 16
 current_phase_name: branch-switcher-ui-switch-flow-language-relocation
 current_plan: 1
-status: executing
-stopped_at: Completed 16-02-PLAN.md
-last_updated: "2026-07-23T13:21:47.921Z"
+status: verifying
+stopped_at: Completed 16-03-PLAN.md
+last_updated: "2026-07-23T13:31:04.435Z"
 last_activity: 2026-07-23
 last_activity_desc: Phase 16 execution started
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 9
-  percent: 60
+  completed_plans: 10
+  percent: 80
 ---
 
 # State: SiteCare POS Desktop App
@@ -54,10 +54,10 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 
 Phase: 16 (branch-switcher-ui-switch-flow-language-relocation) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-23 — Phase 16 execution started
 
-Progress: [█████████░] 90% (v1.2)
+Progress: [██████████] 100% (v1.2)
 
 ## Phase Summary
 
@@ -137,6 +137,7 @@ Progress: [█████████░] 90% (v1.2)
 | Phase 15 P01 | ~7min | 3 tasks | 2 files |
 | Phase 16 P01 | 50min | 2 tasks | 7 files |
 | Phase 16 P02 | ~20min | 2 tasks | 2 files |
+| Phase 16 P03 | ~7min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -275,7 +276,7 @@ Progress: [█████████░] 90% (v1.2)
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Ready to execute
+  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
   sync correctly via their own body fields (`**Current Plan:**1
@@ -295,8 +296,8 @@ Progress: [█████████░] 90% (v1.2)
 
 **Resume file:** None
 
-**Last session:** 2026-07-23T13:21:47.913Z
-**Stopped at:** Completed 16-02-PLAN.md
+**Last session:** 2026-07-23T13:31:04.427Z
+**Stopped at:** Completed 16-03-PLAN.md
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -411,6 +412,8 @@ Progress: [█████████░] 90% (v1.2)
 - [Phase ?]: [Phase 16-01]: shell.test.jsx now mocks use-branches.js since Shell calls useBranches() directly (Rule 3 deviation)
 - [Phase ?]: [Phase 16-02]: canOpenBranchPopover = isMultiBranch || branchesLoading || branchesError — extends the D-04 read-only gate so the popover's own loading/error backstops are reachable before the definitive branch count resolves, while a settled single-branch tenant still locks read-only permanently
 - [Phase ?]: [Phase 16-02]: collapsed-sidebar branch chip is a bespoke 32x32 tile (white bg + border), not the .avatar class — .avatar's terracotta fill is reserved for the user chip per 16-UI-SPEC.md
+- [Phase ?]: [Phase 16-03]: posCartEmpty defaults true — PosScreen only mounts on screen==='pos' and reports actual emptiness on mount, so the default is never observably stale
+- [Phase ?]: [Phase 16-03]: CartDiscardConfirm is a standalone component (not a CancelDialog variant) — shares chrome, not props/behavior; D-14 neutral-landing check lives inside the existing Plan-01 release effect, not a new effect, keeping toast-fire and screen-exit atomic to one 'done' transition
 
 ## Operator Next Steps
 

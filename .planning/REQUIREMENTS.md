@@ -23,7 +23,7 @@
 
 - [x] **SCOPE-01**: On switch, all branch-scoped server data (orders, order detail, stats, menu, order history, restaurant settings, delivery areas) re-scopes to the newly selected branch — no stale prior-branch data is served for the cache's `staleTime` window.
 - [x] **SCOPE-02**: The live SSE stream reconnects on switch so the order list and Kitchen Display receive the new branch's events; the reconnect must not fire the initial-snapshot sound burst.
-- [ ] **SCOPE-03**: On switch, the POS cart is reset and any open order-detail view is exited, so no prior-branch working state carries into the new branch.
+- [x] **SCOPE-03**: On switch, the POS cart is reset and any open order-detail view is exited, so no prior-branch working state carries into the new branch.
 - [x] **SCOPE-04**: Order mutations (POS submit, accept / advance / cancel, receipt reprint) are blocked while a switch is pending, so no mutation lands against the wrong branch.
 
 ### Branch Access Errors (BERR)
@@ -72,7 +72,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | SWCH-04 | Phase 16 | Complete |
 | SCOPE-01 | Phase 14 | Complete |
 | SCOPE-02 | Phase 15 | Complete |
-| SCOPE-03 | Phase 16 | Pending |
+| SCOPE-03 | Phase 16 | Complete |
 | SCOPE-04 | Phase 16 | Complete |
 | BERR-01 | Phase 17 | Pending |
 | BERR-02 | Phase 17 | Pending |
