@@ -114,22 +114,43 @@ Bilingual (`ro` canonical / `en` mirror) per `src/i18n.jsx` convention — every
 > Empty-state and error-state COPY live in `## Copywriting Contract` above — this section covers
 > state coverage and REFERENCES those rows rather than restating the copy (de-dup).
 
-Applicable state considerations resolved: **8 ✅ covered · 2 🧪 backstop · 0 ⚠ unresolved.**
+Applicable state considerations resolved (probe Step 9.5, `ui-consideration-probe.cjs`, 31 applicable): **27 ✅ covered · 4 🧪 backstop · 0 ⚠ unresolved.**
 
-Surfaces probed: **E1** `NO_BRANCH_ACCESS` block (headline+body message, classified `static-content`; Retry button, classified `interactive-control`) · **E2** recoverable-code toast (`BRANCH_INACTIVE`/`BRANCH_ACCESS_REVOKED`, `static-content` with interpolation) · **E3** reopened branch popover post-403 (`list-collection`, reuses Phase 16 markup unmodified) · **E4** focus-revalidation neutral toast (`static-content` with interpolation).
+Surfaces probed: **E1-block** `NO_BRANCH_ACCESS` full-page static message surface (headline+body, `static-content`) · **E1-retry** the block's Retry button (`interactive-control`) · **E2-toast** recoverable-code toast (`BRANCH_INACTIVE`/`BRANCH_ACCESS_REVOKED`, `static-content` with interpolation) · **E3-popover** reopened branch popover post-403 (`list-collection`, reuses Phase 16 markup unmodified) · **E4-focus-toast** focus-revalidation neutral toast (`static-content` with interpolation). "Cannot-arise" rows are recorded as **covered truths** (the design guarantees the state is structurally unreachable), never silently dropped.
 
-| Category | Element(s) | Status | Resolution / Reason |
-|----------|------------|--------|---------------------|
-| overflow | E1 block message | ✅ covered | Fixed short copy wraps within a centered, unconstrained-width text column (no card/box to clip against — see layout rationale in Color section); no truncation. |
-| long-text | E1 block message | ✅ covered | Copy is static and short (`Copywriting Contract` above), no interpolation — even the longer EN/RO variants stay well within a comfortable wrap width. |
-| long-text | E1 Retry button | ✅ covered | Fixed one-word label (`Retry`/`Reîncearcă`), no truncation risk at any width. |
-| loading | E1 Retry button | 🧪 backstop | Clicking Retry disables the button and swaps its label to the in-flight copy (`Checking…`/`Se verifică…`) with the existing `Icon name="refresh" className="spin"` treatment (reuses `SwitchingOverlay`'s exact spinner pattern); resolves to either clearing the block (access restored) or re-rendering it unchanged. **Verification:** backstop — visual check that the spinner/label swap renders and clears correctly on both outcomes. |
-| error | E1 Retry button | 🧪 backstop | If the Retry check's own `getMe()` call fails (e.g. network drop), the block stays up unchanged and the button returns to its idle enabled state — no additional toast fires (avoids toast-on-toast noise while already in a blocking state). **Verification:** backstop — force a network failure during Retry and confirm the block persists silently with no new toast. |
-| overflow | E2 recoverable-code toast | ✅ covered | Reuses the existing `.toast` max-width wrap behavior (identical precedent to `16-UI-SPEC.md`'s E5/E6 rows) — the interpolated `<branch>` name wraps within the toast card, no new CSS. |
-| long-text | E2 recoverable-code toast | ✅ covered | Same `.toast` wrap precedent; a long branch name in either toast's detail line wraps rather than truncating or breaking layout. |
-| zero-one-many | E3 reopened popover | ✅ covered | If the post-403 `['branches']` refetch resolves to **zero** accessible branches, `NO_BRANCH_ACCESS` (E1) supersedes before the popover can render an empty reopened list — the same request that surfaced the 403 carries the `NO_BRANCH_ACCESS` code in that case (not `BRANCH_INACTIVE`/`BRANCH_ACCESS_REVOKED`), so E1 renders instead of a reopened-but-empty E3. No code path produces an empty reopened popover. (All other E3 states — empty/loading/error/populated/partial/overflow/long-text — are already resolved by `16-UI-SPEC.md`'s own E3 row; this phase changes only what *triggers* the reopen, not the popover markup itself, so they are not re-litigated here.) |
-| overflow | E4 focus-revalidation neutral toast | ✅ covered | Same `.toast` wrap precedent as E2 — the interpolated `<branch>` name in `Now showing <branch>` wraps within the existing toast width. |
-| long-text | E4 focus-revalidation neutral toast | ✅ covered | Same wrap precedent; no truncation. |
+| Category | Element | Status | Resolution / Reason |
+|----------|---------|--------|---------------------|
+| empty | E1-block | ✅ covered | The block *is* the zero-branches terminal surface — its trigger (`NO_BRANCH_ACCESS`) is the empty condition, and it renders no data region that could itself be empty. Cannot-arise: no inner empty state. |
+| loading | E1-block | ✅ covered | The block mounts synchronously off the session-only `noBranchAccess` flag — no async content load of its own. The one async action (Retry) carries its own loading state → see E1-retry `loading`. |
+| error | E1-block | ✅ covered | The block *is* the terminal recovery surface for the error; a failed re-check keeps it up unchanged (owned by E1-retry `error`). No nested error state. |
+| populated | E1-block | ✅ covered | Happy-path = the fixed `alert` icon + headline (`No branch available`) + guidance line + idle Retry button, centered on `--sc-background`. No variable content volume. |
+| partial | E1-block | ✅ covered | Static copy with no interpolated/optional fields — a partially-populated render is structurally unreachable. Cannot-arise. |
+| overflow | E1-block | ✅ covered | Fixed short copy wraps within a centered, unconstrained-width text column (no card/box to clip against — see layout rationale below); no truncation. |
+| zero-one-many | E1-block | ✅ covered | The block renders no collection — singular/plural copy is fixed and count-independent. Cannot-arise. |
+| long-text | E1-block | ✅ covered | Copy is static and short (`Copywriting Contract` above), no interpolation; the longer RO/EN variants stay well within a comfortable wrap width. |
+| empty | E1-retry | ✅ covered | A button has no data-bearing empty state; its resting form is the idle `Retry` label. Cannot-arise. |
+| loading | E1-retry | 🧪 backstop | Clicking Retry disables the button and swaps its label to the in-flight copy (`Checking…`/`Se verifică…`) with the existing `Icon name="refresh" className="spin"` treatment (reuses `SwitchingOverlay`'s exact spinner); resolves to either clearing the block (access restored) or re-rendering it unchanged. **Verification:** backstop — visual check that the spinner/label swap renders and clears on both outcomes. |
+| error | E1-retry | 🧪 backstop | If the Retry check's own `getMe()` call fails (e.g. network drop), the block stays up unchanged and the button returns to its idle enabled state — no additional toast fires (avoids toast-on-toast noise while already in a blocking state). **Verification:** backstop — force a network failure during Retry and confirm the block persists silently with no new toast. |
+| populated | E1-retry | ✅ covered | Normal state = the idle enabled `Retry` (`.btn-primary`, `--sc-primary` fill), single interactive element on the block. |
+| overflow | E1-retry | ✅ covered | Fixed one-word label; no overflow at any window width. |
+| long-text | E1-retry | ✅ covered | Fixed one-word label (`Retry`/`Reîncearcă`), no truncation risk. |
+| empty | E2-toast | ✅ covered | A toast renders only when a `BRANCH_*` 403 supplies its message — it has no empty render path. Cannot-arise. |
+| loading | E2-toast | ✅ covered | The toast is fire-and-display off an already-resolved error; it performs no async load of its own. Cannot-arise. |
+| error | E2-toast | ✅ covered | The toast *is* the error-surfacing artifact; there is no error-of-the-error state. Cannot-arise. |
+| populated | E2-toast | ✅ covered | Happy-path = title + interpolated detail line through the existing `.toast`/`.toast-icon` markup (zap icon, sage tint), one per 403. |
+| partial | E2-toast | 🧪 backstop | The detail copy interpolates `<branch>`; if the branch name is unavailable at handler time (id resolves to no cached branch record), the sentence must still read sensibly rather than emitting a literal `<branch>` or empty gap. **Verification:** backstop — render both toasts with a null/unknown branch name and confirm a graceful fallback descriptor (e.g. "this branch"), not a broken string. |
+| overflow | E2-toast | ✅ covered | Reuses the existing `.toast` max-width wrap (identical precedent to `16-UI-SPEC.md` E5/E6) — the interpolated `<branch>` name wraps within the toast card, no new CSS. |
+| zero-one-many | E2-toast | 🧪 backstop | A single switch/refetch produces one recovery, but a burst of simultaneously-inflight branch-scoped queries could each 403 at once. D-05 mandates "exactly one recovery per failure and no double toast." **Verification:** backstop — fire multiple concurrent branch-scoped 403s and confirm the handler de-dupes to a single toast + single reopen, not a stack of N. |
+| long-text | E2-toast | ✅ covered | Same `.toast` wrap precedent; a long branch name in either detail line wraps rather than truncating or breaking layout. |
+| empty | E3-popover | ✅ covered | Zero-branches supersedes with E1-block before an empty reopened popover can render (that request carries `NO_BRANCH_ACCESS`, not the recoverable codes). No empty reopened-popover path exists. |
+| loading | E3-popover | ✅ covered | Reuses Phase 16 popover loading state unmodified (`16-UI-SPEC.md` E3) — this phase changes only the reopen *trigger* (`branchSwitcherForceOpen`), not the markup. |
+| error | E3-popover | ✅ covered | Reuses Phase 16 popover error handling for the `['branches']` refetch unmodified (`16-UI-SPEC.md` E3). |
+| populated | E3-popover | ✅ covered | Happy-path = the refetched accessible-branches list with the now-unavailable branch dropped out; dismissible so the user keeps working on a remaining valid branch (D-04). |
+| partial | E3-popover | ✅ covered | Phase 16 popover markup unchanged (`16-UI-SPEC.md` E3) — partial-list rendering is not re-litigated here. |
+| overflow | E3-popover | ✅ covered | Phase 16 popover scroll/overflow behavior unmodified (`16-UI-SPEC.md` E3). |
+| zero-one-many | E3-popover | ✅ covered | Zero → E1-block supersedes; one/many → unchanged Phase 16 list rendering. No code path produces an empty reopened popover. |
+| overflow | E4-focus-toast | ✅ covered | Same `.toast` wrap precedent as E2 — the interpolated `<branch>` in `Now showing <branch>` wraps within the existing toast width. |
+| long-text | E4-focus-toast | ✅ covered | Same wrap precedent; no truncation. |
 
 <!-- Status vocabulary (locked by probe-core projectTruths):
      ✅ covered   → a plain truth string lifted into must_haves.truths
@@ -155,11 +176,11 @@ No component registry is in use. All new UI (the `NO_BRANCH_ACCESS` block, the t
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: FLAG (non-blocking — verb-only Retry CTA is precedent-matched; noted for record)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: FLAG (non-blocking — pin Meta/sub to a single size, not "12–13px", at plan time)
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED (gsd-ui-checker, 2026-07-23) — 6/6 dimensions, 2 non-blocking FLAGs. Ready for planning.
