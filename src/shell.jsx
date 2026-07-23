@@ -6,8 +6,9 @@ import { OfflineBanner } from './offline-banner.jsx';
 import { BrandLogo } from './brand-logo.jsx';
 import { useAppStore } from './store.js';
 import { useAuth } from './auth.jsx';
+import { useBranches } from './use-branches.js';
 
-function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, density, children, orderCount, sidebarCollapsed, setSidebarCollapsed, isOffline }) {
+function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, density, children, orderCount, sidebarCollapsed, setSidebarCollapsed, isOffline, onSelectBranch }) {
   const t = useT(lang);
   const updateReady = useAppStore((s) => s.updateReady);
   const authUser = useAppStore((s) => s.authUser);
@@ -27,6 +28,29 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [userMenuOpen]);
+
+  // Branch switcher (D-01/D-02/D-04, LANG-01) — presentation-only: Shell owns the read-only
+  // useBranches() list itself; the switch action bubbles up via onSelectBranch to app.jsx, where
+  // the overlay/phase-machine/cart-gate live. Popover state mirrors userMenuOpen/userMenuRef
+  // exactly (D-01). Gate the popover on branches.length > 1, NEVER on currentBranch truthiness
+  // (D-04/SWCH-02) — a single-branch tenant's currentBranch may legitimately be non-null.
+  const { data: branches = [] } = useBranches();
+  const currentBranch = useAppStore((s) => s.currentBranch);
+  const isMultiBranch = branches.length > 1;
+
+  const [branchMenuOpen, setBranchMenuOpen] = useState(false);
+  const branchMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!branchMenuOpen) return;
+    function handleClick(e) {
+      if (branchMenuRef.current && !branchMenuRef.current.contains(e.target)) {
+        setBranchMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [branchMenuOpen]);
 
   // D-06: compose firstName/lastName from the getMe() CurrentUser shape; fall back to any
   // optimistic-fill .name, then .email, then empty string. Never a hardcoded personal name —
@@ -140,16 +164,42 @@ function Shell({ lang, setLang, role, setRole, screen, setScreen, accent, densit
               {!sidebarCollapsed && <span>{lang === 'ro' ? 'Restrânge' : 'Collapse'}</span>}
             </button>
 
+            {/* Branch switcher (SWCH-01/D-01/D-02) — occupies the exact slot the RO/EN pill
+                held (LANG-01, D-15); language now lives only in Settings → Afișaj. */}
             {!sidebarCollapsed && (
-              <div style={{ display: 'flex', background: '#f3ecd9', borderRadius: 10, padding: 3, gap: 2, marginBottom: 8 }}>
-                <button onClick={() => setLang('ro')}
-                  style={{ flex: 1, border: 0, background: lang === 'ro' ? '#fff' : 'transparent', color: lang === 'ro' ? 'var(--sc-primary)' : '#777', fontWeight: 700, padding: '6px 8px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, boxShadow: lang === 'ro' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none' }}>
-                  RO
-                </button>
-                <button onClick={() => setLang('en')}
-                  style={{ flex: 1, border: 0, background: lang === 'en' ? '#fff' : 'transparent', color: lang === 'en' ? 'var(--sc-primary)' : '#777', fontWeight: 700, padding: '6px 8px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, boxShadow: lang === 'en' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none' }}>
-                  EN
-                </button>
+              <div style={{ position: 'relative', marginBottom: 8 }} ref={branchMenuRef}>
+                {branchMenuOpen && isMultiBranch && (
+                  <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, right: 0, background: '#fff', border: '1px solid hsl(120 10% 88%)', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', zIndex: 50, overflow: 'hidden', maxHeight: 220, overflowY: 'auto' }}>
+                    {branches.map((branch) => {
+                      const selected = branch.id === currentBranch?.id;
+                      return (
+                        <button
+                          key={branch.id}
+                          title={branch.name}
+                          onClick={() => { setBranchMenuOpen(false); onSelectBranch?.(branch); }}
+                          style={{ width: '100%', border: 0, background: 'transparent', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600, color: '#333', textAlign: 'left' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'hsl(120 14% 49% / 0.08)'}
+                          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        >
+                          {selected
+                            ? <Icon name="check" size={14} style={{ color: 'var(--sc-primary)', flexShrink: 0 }} />
+                            : <span style={{ width: 14, flexShrink: 0 }} />}
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{branch.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <div
+                  title={currentBranch?.name ?? ''}
+                  onClick={() => { if (isMultiBranch) setBranchMenuOpen(o => !o); }}
+                  style={{ width: '100%', border: '1px solid hsl(120 10% 88%)', background: '#fff', borderRadius: 10, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 8, cursor: isMultiBranch ? 'pointer' : 'default', fontFamily: 'inherit' }}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{currentBranch?.name ?? ''}</span>
+                  {isMultiBranch && (
+                    <Icon name={branchMenuOpen ? 'chevUp' : 'chevDown'} size={12} style={{ color: 'var(--sc-primary)', flexShrink: 0 }} />
+                  )}
+                </div>
               </div>
             )}
             <div style={{ position: 'relative' }} ref={userMenuRef}>

@@ -17,6 +17,13 @@ vi.mock('@tauri-apps/plugin-process', () => ({ relaunch: vi.fn() }))
 vi.mock('../auth.jsx', () => ({
   useAuth: vi.fn(() => ({ signOut: vi.fn() })),
 }))
+// Phase 16: Shell now calls useBranches() directly (D-01/D-04) — mocked here (rather than
+// wrapping every render in a QueryClientProvider) so this pre-existing Phase-7/13 suite keeps
+// testing History nav + displayName composition in isolation from the branch switcher, which
+// gets its own dedicated coverage in a later plan.
+vi.mock('../use-branches.js', () => ({
+  useBranches: vi.fn(() => ({ data: [] })),
+}))
 
 import { Shell } from '../shell.jsx'
 import { useAppStore } from '../store.js'

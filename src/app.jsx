@@ -22,6 +22,7 @@ import { useSSE } from './use-sse.js';
 import { useOrders } from './use-orders.js';
 import { useOrderDetail } from './use-order-detail.js';
 import { useOrderActions } from './use-order-actions.js';
+import { useBranchSwitch } from './use-branches.js';
 import { useStats } from './use-stats.js';
 import { useRestaurantSettings } from './use-restaurant-settings.js';
 import { useDeliveryAreas } from './use-delivery-areas.js';
@@ -79,6 +80,15 @@ function App() {
   const { data: deliveryAreas = [] } = useDeliveryAreas();
   const { updateStatus } = useOrderActions();
   const soundMuted = useAppStore((s) => s.soundMuted);
+
+  // Branch switch orchestration (Phase 16, D-05/D-07/D-08/D-09/D-10/D-11) — the phase state
+  // machine lives here (not in the hook) because it bridges the mutation with useSSE's
+  // isConnected transition and the global overlay, both app.jsx-local concerns.
+  const branchSwitch = useBranchSwitch();
+  const [switchPhase, setSwitchPhase] = useState('idle'); // 'idle' | 'pending' | 'bridging' | 'done'
+  const [pendingBranch, setPendingBranch] = useState(null); // branch being switched to, for overlay/toast copy
+  const hasDroppedRef = useRef(false);
+  const bridgeTimeoutRef = useRef(null);
 
   // Refs keep interval closure fresh without resetting the 15s clock on every orders update
   const ordersRef = useRef(orders);
@@ -181,6 +191,73 @@ function App() {
     }
   };
 
+  // fireSwitch — D-05/D-07/D-09: clears any stale bridge timeout first (Pitfall 4 — a rapid
+  // re-switch must never let a prior timeout force a premature 'done'), then fires the
+  // non-optimistic mutation. onSuccess enters 'bridging' and arms the bounded-timeout safety
+  // valve (D-09); onError reverts immediately (D-11) — nothing else changes.
+  const fireSwitch = (branch) => {
+    clearTimeout(bridgeTimeoutRef.current);
+    setPendingBranch(branch);
+    setSwitchPhase('pending');
+    branchSwitch.mutate(branch, {
+      onSuccess: () => {
+        hasDroppedRef.current = false;
+        setSwitchPhase('bridging');
+        bridgeTimeoutRef.current = setTimeout(() => {
+          setSwitchPhase('done'); // D-09: release anyway — the switch already succeeded server-side
+        }, 6000);
+      },
+      onError: () => {
+        clearTimeout(bridgeTimeoutRef.current);
+        setSwitchPhase('idle');
+        setPendingBranch(null);
+        pushToast({
+          id: Date.now(),
+          kind: 'error',
+          title: t('branch_switch_error_title'),
+          detail: t('branch_switch_error_detail'),
+        });
+      },
+    });
+  };
+
+  // handleSelectBranch — Shell's onSelectBranch callback. This tracer fires the switch
+  // immediately; the cart-non-empty confirm gate (D-13) is Plan 03's job.
+  const handleSelectBranch = (branch) => {
+    fireSwitch(branch);
+  };
+
+  // Bridging watcher (D-08): only active while switchPhase === 'bridging'. use-sse.js:38
+  // unconditionally drops isConnected at the top of every effect run, so a branch switch always
+  // produces a true→false→true transition once setCurrentBranch fires — no race.
+  useEffect(() => {
+    if (switchPhase !== 'bridging') return;
+    if (!isConnected) {
+      hasDroppedRef.current = true;
+      return;
+    }
+    if (isConnected && hasDroppedRef.current) {
+      clearTimeout(bridgeTimeoutRef.current);
+      setSwitchPhase('done');
+    }
+  }, [isConnected, switchPhase]);
+
+  // Release effect (D-10, Pitfall 3): fires the success toast exactly once on the 'done'
+  // transition, after reconnect OR the bounded timeout — never at mutation-resolve. Gated
+  // strictly on switchPhase !== 'done' and self-terminating (resets to 'idle' synchronously in
+  // the same effect body) so it cannot re-fire on a subsequent render.
+  useEffect(() => {
+    if (switchPhase !== 'done') return;
+    pushToast({
+      id: Date.now(),
+      kind: 'success',
+      title: t('branch_switch_success_title'),
+      detail: `${t('branch_switch_success_prefix')} ${pendingBranch?.name}`,
+    });
+    setSwitchPhase('idle');
+    setPendingBranch(null);
+  }, [switchPhase]); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally one-shot on phase transition, mirrors the settledPeriod precedent (Phase 9)
+
   // Accent CSS custom property mutation (verbatim from prototype, Zustand-driven):
   useEffect(() => {
     const map = {
@@ -250,7 +327,8 @@ function App() {
       <Shell lang={lang} setLang={setLang} role={role} setRole={setRole}
              screen={screen} setScreen={setScreen} accent={accent} density={density}
              orderCount={orderCount} sidebarCollapsed={sidebarCollapsed}
-             setSidebarCollapsed={setSidebarCollapsed} isOffline={isOffline}>
+             setSidebarCollapsed={setSidebarCollapsed} isOffline={isOffline}
+             onSelectBranch={handleSelectBranch}>
         {/* Screen router: Phase 3 — orders from useOrders(), isOffline wired to all screens */}
         {screen === 'orders'  && <OrdersScreen  orders={orders} lang={lang} onOpen={openOrder} onAdvance={handleAdvance} onPrint={handlePrint} isOffline={isOffline} stats={stats} />}
         {screen === 'kitchen' && <KitchenScreen orders={orders} lang={lang} onAdvance={handleAdvance} isOffline={isOffline} />}
@@ -276,6 +354,12 @@ function App() {
         {screen === 'printer' && <PrinterScreen lang={lang} restaurantSettings={restaurantSettings} isOffline={isOffline} />}
         {screen === 'settings'&& <SettingsScreen lang={lang} isOffline={isOffline} />}
       </Shell>
+
+      {/* SwitchingOverlay -- sibling of Shell (never a child) so it covers all of Shell's
+          children, satisfying SCOPE-04 (D-07). Renders for the full pending+bridging window. */}
+      {(switchPhase === 'pending' || switchPhase === 'bridging') && (
+        <SwitchingOverlay lang={lang} branchName={pendingBranch?.name} reconnecting={switchPhase === 'bridging'} />
+      )}
 
       {/* Toast stack -- render toasts from store */}
       {toasts.length > 0 && (
@@ -342,6 +426,29 @@ function App() {
           }}
         />
       )}
+    </div>
+  );
+}
+
+// SwitchingOverlay — the global blocking overlay (D-07/D-08/D-09/SCOPE-04). Renders as a sibling
+// of Shell at zIndex above CancelDialog/AcceptDialog's 200 so it can never be obscured mid-switch.
+// The overlay IS the loading state (UI-SPEC E4): spinner + heading while pending, plus a
+// reconnecting sub-line once switchPhase reaches 'bridging'.
+function SwitchingOverlay({ lang, branchName, reconnecting }) {
+  const t = useT(lang);
+  return (
+    <div style={{ position: 'absolute', inset: 0, background: 'rgba(18, 24, 18, 0.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 250, animation: 'fadeIn 180ms ease-out' }}>
+      <div style={{ maxWidth: 420, width: '90%', background: '#fff', borderRadius: 20, boxShadow: '0 30px 80px rgba(0,0,0,0.35)', padding: '32px 24px', textAlign: 'center', border: '1px solid hsl(120 10% 88%)' }}>
+        <Icon name="refresh" size={28} className="spin" style={{ color: 'var(--sc-primary)', marginBottom: 16 }} />
+        <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.25 }}>
+          {t('branch_overlay_heading_prefix')} {branchName}…
+        </div>
+        {reconnecting && (
+          <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--sc-muted-foreground)', marginTop: 8 }}>
+            {t('branch_overlay_reconnecting')}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

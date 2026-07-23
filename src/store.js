@@ -66,6 +66,10 @@ export const useAppStore = create(
       isAuthenticated: false,
       authUser: null,
       currentBranch: null,     // SelectedBranch | null (from getMe()); session-only; NEVER in partialize (D-10)
+      // branchSwitcherForceOpen (Phase 16, deferred from Phase 13): session-only reopen-on-403
+      // seam consumed by Phase 17's recovery flow. This phase adds the field + setter with ZERO
+      // call sites setting it true (D-12) — wired minimally, not consumed yet.
+      branchSwitcherForceOpen: false,
 
       // --- Actions ---
       // setScreen resets selectedOrder and historyOrder so no detail route can show stale data
@@ -114,6 +118,7 @@ export const useAppStore = create(
       setIsAuthenticated: (v) => set({ isAuthenticated: v }),
       setAuthUser: (user) => set({ authUser: user }),
       setCurrentBranch: (branch) => set({ currentBranch: branch }),
+      setBranchSwitcherForceOpen: (v) => set({ branchSwitcherForceOpen: v }),
     }),
     {
       name: 'sc-ui-prefs',                           // Key name in preferences.json

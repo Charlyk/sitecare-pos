@@ -204,6 +204,20 @@ export const I18N = {
     update_restart: 'Repornește',
     // User menu
     logout: 'Deconectare',
+    // Branch switcher (Phase 16 — SWCH-01/02/03/04, SCOPE-04, LANG-01)
+    branch_available_label: 'Filiale disponibile',
+    branch_default_badge: 'Implicit',
+    branch_overlay_heading_prefix: 'Se comută la',
+    branch_overlay_reconnecting: 'Se reconectează…',
+    branch_switch_success_title: 'Filială schimbată',
+    branch_switch_success_prefix: 'Ești acum pe',
+    branch_switch_error_title: 'Nu s-a putut schimba filiala',
+    branch_switch_error_detail: 'Încearcă din nou',
+    branch_cart_discard_title: 'Comanda curentă va fi anulată',
+    branch_cart_discard_body: 'Schimbarea filialei șterge comanda POS în lucru. Continui?',
+    branch_cart_discard_confirm: 'Schimbă și renunță',
+    branch_cart_discard_cancel: 'Rămân aici',
+    branch_popover_error: 'Nu am putut încărca filialele',
     // history (Phase 7)
     h_period_today: 'Azi',
     h_period_7: '7 zile',
@@ -450,6 +464,20 @@ export const I18N = {
     update_restart: 'Restart now',
     // User menu
     logout: 'Log out',
+    // Branch switcher (Phase 16 — SWCH-01/02/03/04, SCOPE-04, LANG-01)
+    branch_available_label: 'Available branches',
+    branch_default_badge: 'Default',
+    branch_overlay_heading_prefix: 'Switching to',
+    branch_overlay_reconnecting: 'Reconnecting…',
+    branch_switch_success_title: 'Branch switched',
+    branch_switch_success_prefix: "You're now on",
+    branch_switch_error_title: "Couldn't switch branch",
+    branch_switch_error_detail: 'Try again',
+    branch_cart_discard_title: 'Current order will be discarded',
+    branch_cart_discard_body: 'Switching branches discards the in-progress POS order. Continue?',
+    branch_cart_discard_confirm: 'Switch and discard',
+    branch_cart_discard_cancel: 'Stay here',
+    branch_popover_error: "Couldn't load branches",
     // history (Phase 7)
     h_period_today: 'Today',
     h_period_7: '7 days',
