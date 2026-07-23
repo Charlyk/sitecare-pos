@@ -218,6 +218,10 @@ export const I18N = {
     branch_cart_discard_confirm: 'Schimbă și renunță',
     branch_cart_discard_cancel: 'Rămân aici',
     branch_popover_error: 'Nu am putut încărca filialele',
+    // Centralized branch-access error handling (Phase 17 — BERR-01)
+    branch_err_revoked_title: 'Acces revocat',
+    branch_err_revoked_detail: 'Accesul tău la <branch> a fost eliminat. Alege altă filială.',
+    branch_generic_fallback: 'această filială',
     // history (Phase 7)
     h_period_today: 'Azi',
     h_period_7: '7 zile',
@@ -478,6 +482,10 @@ export const I18N = {
     branch_cart_discard_confirm: 'Switch and discard',
     branch_cart_discard_cancel: 'Stay here',
     branch_popover_error: "Couldn't load branches",
+    // Centralized branch-access error handling (Phase 17 — BERR-01)
+    branch_err_revoked_title: 'Access revoked',
+    branch_err_revoked_detail: 'Your access to <branch> was removed. Pick another branch.',
+    branch_generic_fallback: 'this branch',
     // history (Phase 7)
     h_period_today: 'Today',
     h_period_7: '7 days',

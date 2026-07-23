@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from './auth.jsx';
 import { useAppStore } from './store.js';
+import { useT } from './i18n.jsx';
 
 export function useBranches() {
   const { client } = useAuth();
@@ -35,6 +36,7 @@ export function useBranchSwitch() {
         const message = (typeof raw === 'string' ? raw : raw?.error) ?? 'Failed to switch branch';
         const err = new Error(message);
         err.code = message; // matches data.jsx's unwrapSdkResult convention — Phase 17 will consume this
+        err.branchName = branch.name; // 17-01: attempted branch identity for handleBranchError's <branch> interpolation
         throw err;
       }
       return result.data; // SwitchBranchResponse: { ok: true, branchId }
@@ -45,4 +47,58 @@ export function useBranchSwitch() {
                                  // bare branchId, needed for the popover checkmark/toast copy.
     },
   });
+}
+
+// BRANCH_CODES — the one allowlist of recognized branch-access error codes (T-17-02, D-05's
+// "one central path"). Shared by handleBranchError (below), app.jsx's fireSwitch onError trim,
+// and use-sse.js's onopen 403 extension (both land in later plans of this phase) so all three
+// branch off the same literal set rather than re-declaring it.
+export const BRANCH_CODES = ['BRANCH_INACTIVE', 'BRANCH_ACCESS_REVOKED', 'NO_BRANCH_ACCESS'];
+
+// handleBranchError(err, queryClient) — the ONE central branch-access-403 recovery path (BERR-01,
+// D-05). A plain module-scope function, NOT a hook: it is invoked from main.jsx's QueryCache/
+// MutationCache onError (module scope, not a React render context) and, in a later plan, from
+// use-sse.js's onopen callback. It therefore reads/writes the store via useAppStore.getState()
+// exclusively, mirroring auth.jsx's handleFocus/expireSession non-hook getState() convention —
+// never useAppStore((s) => ...).
+//
+// Guard-first: any err.code not in BRANCH_CODES is an immediate no-op (T-17-02) — this is the
+// single choke point every branch-scoped query/mutation error passes through, so a wrongly-typed
+// or unrelated error (a 500, a validation string) must never toast/reopen/invalidate.
+//
+// Only BRANCH_ACCESS_REVOKED is wired end-to-end this plan (the tracer). BRANCH_INACTIVE and
+// NO_BRANCH_ACCESS are deliberately guarded-but-not-yet-implemented — they land in plan 17-03 on
+// this same proven architecture; this is a functionality gap, not an architectural one.
+export function handleBranchError(err, queryClient) {
+  const code = err?.code;
+  if (!BRANCH_CODES.includes(code)) return;
+
+  const { pushToast, setBranchSwitcherForceOpen, currentBranch, lang } = useAppStore.getState();
+  const t = useT(lang);
+
+  switch (code) {
+    case 'BRANCH_ACCESS_REVOKED': {
+      // <branch> resolution order (never a literal '<branch>' or empty gap, UI-SPEC E2-toast
+      // backstop): the attempted branch identity attached by useBranchSwitch's mutationFn first,
+      // then the currently-known branch, then a graceful generic fallback string.
+      const branchName = err.branchName ?? currentBranch?.name ?? t('branch_generic_fallback');
+      pushToast({
+        id: Date.now(),
+        kind: 'error',
+        title: t('branch_err_revoked_title'),
+        detail: t('branch_err_revoked_detail').replace('<branch>', branchName),
+      });
+      setBranchSwitcherForceOpen(true);
+      queryClient.invalidateQueries({ queryKey: ['branches'] });
+      break;
+    }
+    case 'BRANCH_INACTIVE':
+      // Guarded but not yet implemented — lands in plan 17-03.
+      break;
+    case 'NO_BRANCH_ACCESS':
+      // Guarded but not yet implemented — lands in plan 17-03.
+      break;
+    default:
+      break;
+  }
 }
