@@ -179,7 +179,7 @@ Plans:
 
 - [x] 17-04-PLAN.md — NO_BRANCH_ACCESS full-screen block + non-optimistic Retry (BERR-03)
 - [x] 17-05-PLAN.md — SSE onopen 403 routing + retry suppression (D-08)
-- [ ] 17-06-PLAN.md — Window-focus branch revalidation (BERR-04)
+- [x] 17-06-PLAN.md — Window-focus branch revalidation (BERR-04)
 
 ---
 
