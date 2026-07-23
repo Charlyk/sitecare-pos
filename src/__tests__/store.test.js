@@ -140,6 +140,41 @@ describe('soundMuted state (KDS-04, D-07)', () => {
   })
 })
 
+// ── noBranchAccess session-only flag (Phase 17 — BERR-01) ────────────────
+
+describe('noBranchAccess session-only flag (BERR-01)', () => {
+  beforeEach(() => {
+    useAppStore.setState({ noBranchAccess: false })
+  })
+
+  test('store default noBranchAccess value is false', () => {
+    expect(useAppStore.getState().noBranchAccess).toBe(false)
+  })
+
+  test('setNoBranchAccess(true) sets noBranchAccess to true', () => {
+    useAppStore.getState().setNoBranchAccess(true)
+    expect(useAppStore.getState().noBranchAccess).toBe(true)
+    // reset
+    useAppStore.getState().setNoBranchAccess(false)
+  })
+
+  test('setNoBranchAccess(false) sets noBranchAccess back to false', () => {
+    useAppStore.getState().setNoBranchAccess(true)
+    useAppStore.getState().setNoBranchAccess(false)
+    expect(useAppStore.getState().noBranchAccess).toBe(false)
+  })
+
+  test('noBranchAccess is NOT included in the partialize output (session-only, never persisted)', () => {
+    useAppStore.getState().setNoBranchAccess(true)
+    const state = useAppStore.getState()
+    const { partialize } = useAppStore.persist.getOptions()
+    const persisted = partialize(state)
+    expect(persisted).not.toHaveProperty('noBranchAccess')
+    // reset
+    useAppStore.getState().setNoBranchAccess(false)
+  })
+})
+
 describe('ORD-02: role switch reflects in store', () => {
   test('setRole("kitchen") updates role to kitchen', () => {
     useAppStore.getState().setRole('kitchen')

@@ -265,6 +265,63 @@ describe('handleBranchError — central branch-403 recovery dispatch (BERR-01)',
     expect(detail.length).toBeGreaterThan(0)
   })
 
+  test('BRANCH_INACTIVE pushes exactly one toast with the DISTINCT inactive title (not the revoked title), sets branchSwitcherForceOpen true, and invalidates ["branches"]', () => {
+    const invalidateQueries = vi.fn()
+    const queryClient = { invalidateQueries }
+
+    handleBranchError({ code: 'BRANCH_INACTIVE' }, queryClient)
+
+    const state = useAppStore.getState()
+    expect(state.toasts).toHaveLength(1)
+    expect(state.toasts[0].title).toBe('Filială inactivă')
+    expect(state.toasts[0].title).not.toBe('Acces revocat')
+    expect(state.branchSwitcherForceOpen).toBe(true)
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['branches'] })
+  })
+
+  test('BRANCH_INACTIVE interpolates <branch> the same way as BRANCH_ACCESS_REVOKED (err.branchName -> currentBranch?.name -> generic fallback)', () => {
+    const queryClient = { invalidateQueries: vi.fn() }
+
+    handleBranchError({ code: 'BRANCH_INACTIVE', branchName: 'Centru' }, queryClient)
+
+    const detail = useAppStore.getState().toasts[0].detail
+    expect(detail).toContain('Centru')
+    expect(detail).not.toContain('<branch>')
+  })
+
+  test('NO_BRANCH_ACCESS calls setNoBranchAccess(true), pushes NO toast, and does NOT set branchSwitcherForceOpen', () => {
+    const invalidateQueries = vi.fn()
+    const queryClient = { invalidateQueries }
+
+    handleBranchError({ code: 'NO_BRANCH_ACCESS' }, queryClient)
+
+    const state = useAppStore.getState()
+    expect(state.noBranchAccess).toBe(true)
+    expect(state.toasts).toHaveLength(0)
+    expect(state.branchSwitcherForceOpen).toBe(false)
+    expect(invalidateQueries).not.toHaveBeenCalled()
+  })
+
+  test('BRANCH_INACTIVE and BRANCH_ACCESS_REVOKED both reach the same reopen+refetch behavior but with different copy', () => {
+    const qc1 = { invalidateQueries: vi.fn() }
+    handleBranchError({ code: 'BRANCH_INACTIVE' }, qc1)
+    const inactiveState = useAppStore.getState()
+    expect(inactiveState.branchSwitcherForceOpen).toBe(true)
+    expect(qc1.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['branches'] })
+    const inactiveTitle = inactiveState.toasts[0].title
+
+    useAppStore.setState({ toasts: [], branchSwitcherForceOpen: false })
+
+    const qc2 = { invalidateQueries: vi.fn() }
+    handleBranchError({ code: 'BRANCH_ACCESS_REVOKED' }, qc2)
+    const revokedState = useAppStore.getState()
+    expect(revokedState.branchSwitcherForceOpen).toBe(true)
+    expect(qc2.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['branches'] })
+    const revokedTitle = revokedState.toasts[0].title
+
+    expect(inactiveTitle).not.toBe(revokedTitle)
+  })
+
   test('BRANCH_CODES exports the three literal branch-access codes', () => {
     expect(BRANCH_CODES).toEqual(
       expect.arrayContaining(['BRANCH_INACTIVE', 'BRANCH_ACCESS_REVOKED', 'NO_BRANCH_ACCESS'])
