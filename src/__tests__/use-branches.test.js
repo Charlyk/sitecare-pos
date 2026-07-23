@@ -294,4 +294,43 @@ describe('handleBranchError — central branch-403 recovery dispatch (BERR-01)',
     expect(useAppStore.getState().toasts).toHaveLength(1)
     expect(useAppStore.getState().branchSwitcherForceOpen).toBe(true)
   })
+
+  // [PROVISIONAL/UNVERIFIED — 17-02] Live-API capture of the real 403 body was infeasible during
+  // execution (no accessible test tenant with a deactivable/revocable branch). This test locks the
+  // CURRENTLY ASSUMED contract only — that the REST 403 envelope is { error: '<LITERAL_CODE>' } and
+  // that the literal code string round-trips through useBranchSwitch's err.code extraction unchanged
+  // — so that a future drift (a real body that doesn't match this assumption) breaks this test rather
+  // than silently no-opping in production. See 17-02-SUMMARY.md "Known Stubs" / decision log for the
+  // flagged risk. Plan 17-05 must re-confirm the real REST + SSE shapes against a live API and correct
+  // this test (and the matcher) if they differ — this is NOT a verified runtime observation.
+  test('[PROVISIONAL] err.code extraction from the assumed REST 403 body { error: "BRANCH_ACCESS_REVOKED" } yields the exact literal code, and handleBranchError dispatches on it', async () => {
+    const mockSwitch = vi.fn().mockResolvedValue({ data: null, error: { error: 'BRANCH_ACCESS_REVOKED' } })
+    const mockClient = { me: { branches: { switch: mockSwitch } } }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const { result } = renderHook(() => useBranchSwitch(), { wrapper: makeWrapper() })
+    const branch = { id: 'br-002', name: 'Uptown', isDefault: false, isActive: true }
+
+    let caughtErr
+    await act(async () => {
+      try {
+        await result.current.mutateAsync(branch)
+      } catch (e) {
+        caughtErr = e
+      }
+    })
+
+    // Locks the ASSUMED extraction contract: err.code must equal the exact literal string from the
+    // assumed { error: '<LITERAL_CODE>' } envelope, not a wrapped object or human-readable sentence.
+    expect(caughtErr).toBeDefined()
+    expect(caughtErr.code).toBe('BRANCH_ACCESS_REVOKED')
+
+    const queryClient = { invalidateQueries: vi.fn() }
+    handleBranchError(caughtErr, queryClient)
+
+    const state = useAppStore.getState()
+    expect(state.toasts).toHaveLength(1)
+    expect(state.branchSwitcherForceOpen).toBe(true)
+    expect(queryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['branches'] })
+  })
 })
