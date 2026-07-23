@@ -6,16 +6,16 @@ current_phase: 17
 current_phase_name: centralized-branch-access-error-handling
 current_plan: 1
 status: executing
-stopped_at: Completed 17-01-PLAN.md
-last_updated: "2026-07-23T20:23:05.531Z"
+stopped_at: Completed 17-02-PLAN.md
+last_updated: "2026-07-23T21:07:01.508Z"
 last_activity: 2026-07-23
 last_activity_desc: Phase 17 execution started
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 16
-  completed_plans: 11
-  percent: 69
+  completed_plans: 12
+  percent: 75
 ---
 
 # State: SiteCare POS Desktop App
@@ -53,11 +53,11 @@ Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v
 ## Current Position
 
 Phase: 17 (centralized-branch-access-error-handling) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-07-23 — Phase 17 execution started
 
-Progress: [███████░░░] 69% (v1.2)
+Progress: [████████░░] 75% (v1.2)
 
 ## Phase Summary
 
@@ -139,6 +139,7 @@ Progress: [███████░░░] 69% (v1.2)
 | Phase 16 P02 | ~20min | 2 tasks | 2 files |
 | Phase 16 P03 | ~7min | 2 tasks | 3 files |
 | Phase 17 P01 | 6min | 2 tasks | 6 files |
+| Phase 17 P02 | 8min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -297,8 +298,8 @@ Progress: [███████░░░] 69% (v1.2)
 
 **Resume file:** None
 
-**Last session:** 2026-07-23T20:23:05.523Z
-**Stopped at:** Completed 17-01-PLAN.md
+**Last session:** 2026-07-23T21:07:01.498Z
+**Stopped at:** Completed 17-02-PLAN.md
 **Next action:** `/gsd-plan-phase 13` — Branch State & Launch Seeding Foundation (BSTATE-01, BSTATE-02)
 
 **Phase 7 planning notes:**
@@ -417,6 +418,7 @@ Progress: [███████░░░] 69% (v1.2)
 - [Phase ?]: [Phase 16-03]: CartDiscardConfirm is a standalone component (not a CancelDialog variant) — shares chrome, not props/behavior; D-14 neutral-landing check lives inside the existing Plan-01 release effect, not a new effect, keeping toast-fire and screen-exit atomic to one 'done' transition
 - [Phase ?]: [Phase 17-01]: handleBranchError is a plain module-scope function reading/writing via useAppStore.getState() (never a hook) — mirrors auth.jsx's handleFocus/expireSession convention, since it must be callable from main.jsx's module-scope QueryCache/MutationCache constructors
 - [Phase ?]: [Phase 17-01]: Only BRANCH_ACCESS_REVOKED wired end-to-end this plan; BRANCH_INACTIVE/NO_BRANCH_ACCESS left as guarded-but-unimplemented switch branches, deferred to plan 17-03 — deliberate functionality gap, not architectural
+- [Phase 17]: 17-02: BRANCH_CODES err.code matcher shipped PROVISIONAL — live 403 capture infeasible — The live-capture checkpoint (17-02) could not be completed: no test account with a deactivable/revocable branch was reachable in the execution environment. Per the plan's own fallback clause, the three literal strings (BRANCH_INACTIVE/BRANCH_ACCESS_REVOKED/NO_BRANCH_ACCESS) were kept unchanged and locked by a synthetic regression test only (src/__tests__/use-branches.test.js). ASSUMED REST 403 body: { error: 'BRANCH_ACCESS_REVOKED' } (and siblings) — UNVERIFIED. ASSUMED SSE 403 body: same { error: '<LITERAL_CODE>' } shape — UNVERIFIED, and the SSE route is hand-rolled server-side so it may differ from REST. Downstream plans (17-05 SSE parsing, and any plan relying on this matcher) must treat this as an unproven assumption, not a confirmed contract. Follow-up correction task recorded in .planning/WINDOWS.md (entry #1, kind=deviation).
 
 ## Operator Next Steps
 
