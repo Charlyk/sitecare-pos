@@ -221,6 +221,12 @@ export const I18N = {
     // Centralized branch-access error handling (Phase 17 — BERR-01)
     branch_err_revoked_title: 'Acces revocat',
     branch_err_revoked_detail: 'Accesul tău la <branch> a fost eliminat. Alege altă filială.',
+    branch_err_inactive_title: 'Filială inactivă',
+    branch_err_inactive_detail: '<branch> nu mai este activă. Alege altă filială.',
+    branch_no_access_title: 'Nicio filială disponibilă',
+    branch_no_access_body: 'Cere administratorului să îți aloce o filială.',
+    branch_no_access_retry: 'Reîncearcă',
+    branch_no_access_retry_busy: 'Se verifică…',
     branch_generic_fallback: 'această filială',
     // history (Phase 7)
     h_period_today: 'Azi',
@@ -485,6 +491,12 @@ export const I18N = {
     // Centralized branch-access error handling (Phase 17 — BERR-01)
     branch_err_revoked_title: 'Access revoked',
     branch_err_revoked_detail: 'Your access to <branch> was removed. Pick another branch.',
+    branch_err_inactive_title: 'Branch inactive',
+    branch_err_inactive_detail: '<branch> is no longer active. Pick another branch.',
+    branch_no_access_title: 'No branch available',
+    branch_no_access_body: 'Ask your manager to assign you a branch.',
+    branch_no_access_retry: 'Retry',
+    branch_no_access_retry_busy: 'Checking…',
     branch_generic_fallback: 'this branch',
     // history (Phase 7)
     h_period_today: 'Today',

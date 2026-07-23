@@ -70,6 +70,10 @@ export const useAppStore = create(
       // seam consumed by Phase 17's recovery flow. This phase adds the field + setter with ZERO
       // call sites setting it true (D-12) — wired minimally, not consumed yet.
       branchSwitcherForceOpen: false,
+      // noBranchAccess (Phase 17, plan 03 — BERR-01): session-only flag mirroring
+      // branchSwitcherForceOpen. Set true by handleBranchError on a NO_BRANCH_ACCESS 403; gates
+      // the top-level NO_BRANCH_ACCESS block (consumed in 17-04). NEVER persisted — see partialize.
+      noBranchAccess: false,
 
       // --- Actions ---
       // setScreen resets selectedOrder and historyOrder so no detail route can show stale data
@@ -119,6 +123,7 @@ export const useAppStore = create(
       setAuthUser: (user) => set({ authUser: user }),
       setCurrentBranch: (branch) => set({ currentBranch: branch }),
       setBranchSwitcherForceOpen: (v) => set({ branchSwitcherForceOpen: v }),
+      setNoBranchAccess: (v) => set({ noBranchAccess: v }),
     }),
     {
       name: 'sc-ui-prefs',                           // Key name in preferences.json

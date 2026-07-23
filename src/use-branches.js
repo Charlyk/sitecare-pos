@@ -66,39 +66,42 @@ export const BRANCH_CODES = ['BRANCH_INACTIVE', 'BRANCH_ACCESS_REVOKED', 'NO_BRA
 // single choke point every branch-scoped query/mutation error passes through, so a wrongly-typed
 // or unrelated error (a 500, a validation string) must never toast/reopen/invalidate.
 //
-// Only BRANCH_ACCESS_REVOKED is wired end-to-end this plan (the tracer). BRANCH_INACTIVE and
-// NO_BRANCH_ACCESS are deliberately guarded-but-not-yet-implemented — they land in plan 17-03 on
-// this same proven architecture; this is a functionality gap, not an architectural one.
+// RECOVERABLE_CODE_COPY (17-03) — the two BRANCH_INACTIVE/BRANCH_ACCESS_REVOKED codes share
+// identical recovery behavior (toast + setBranchSwitcherForceOpen(true) + invalidate ['branches'])
+// but render distinct per-code copy (D-03). Factoring the i18n key pair through this map means the
+// shared recovery behavior below is written once, not once per code.
+const RECOVERABLE_CODE_COPY = {
+  BRANCH_ACCESS_REVOKED: { titleKey: 'branch_err_revoked_title', detailKey: 'branch_err_revoked_detail' },
+  BRANCH_INACTIVE: { titleKey: 'branch_err_inactive_title', detailKey: 'branch_err_inactive_detail' },
+};
+
+// All three codes are wired: BRANCH_ACCESS_REVOKED and BRANCH_INACTIVE share the same recovery
+// (toast + reopen + refetch) with distinct copy; NO_BRANCH_ACCESS instead sets the session-only
+// noBranchAccess flag and fires no toast/reopen (BERR-01, D-03).
 export function handleBranchError(err, queryClient) {
   const code = err?.code;
   if (!BRANCH_CODES.includes(code)) return;
 
-  const { pushToast, setBranchSwitcherForceOpen, currentBranch, lang } = useAppStore.getState();
+  const { pushToast, setBranchSwitcherForceOpen, setNoBranchAccess, currentBranch, lang } = useAppStore.getState();
   const t = useT(lang);
 
-  switch (code) {
-    case 'BRANCH_ACCESS_REVOKED': {
-      // <branch> resolution order (never a literal '<branch>' or empty gap, UI-SPEC E2-toast
-      // backstop): the attempted branch identity attached by useBranchSwitch's mutationFn first,
-      // then the currently-known branch, then a graceful generic fallback string.
-      const branchName = err.branchName ?? currentBranch?.name ?? t('branch_generic_fallback');
-      pushToast({
-        id: Date.now(),
-        kind: 'error',
-        title: t('branch_err_revoked_title'),
-        detail: t('branch_err_revoked_detail').replace('<branch>', branchName),
-      });
-      setBranchSwitcherForceOpen(true);
-      queryClient.invalidateQueries({ queryKey: ['branches'] });
-      break;
-    }
-    case 'BRANCH_INACTIVE':
-      // Guarded but not yet implemented — lands in plan 17-03.
-      break;
-    case 'NO_BRANCH_ACCESS':
-      // Guarded but not yet implemented — lands in plan 17-03.
-      break;
-    default:
-      break;
+  if (code === 'NO_BRANCH_ACCESS') {
+    setNoBranchAccess(true);
+    return;
   }
+
+  // BRANCH_ACCESS_REVOKED / BRANCH_INACTIVE — shared recoverable-code path.
+  const { titleKey, detailKey } = RECOVERABLE_CODE_COPY[code];
+  // <branch> resolution order (never a literal '<branch>' or empty gap, UI-SPEC E2-toast
+  // backstop): the attempted branch identity attached by useBranchSwitch's mutationFn first,
+  // then the currently-known branch, then a graceful generic fallback string.
+  const branchName = err.branchName ?? currentBranch?.name ?? t('branch_generic_fallback');
+  pushToast({
+    id: Date.now(),
+    kind: 'error',
+    title: t(titleKey),
+    detail: t(detailKey).replace('<branch>', branchName),
+  });
+  setBranchSwitcherForceOpen(true);
+  queryClient.invalidateQueries({ queryKey: ['branches'] });
 }
