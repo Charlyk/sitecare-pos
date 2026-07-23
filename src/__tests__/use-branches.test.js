@@ -17,11 +17,12 @@ vi.mock('../auth.jsx', () => ({
   useAuth: vi.fn(),
 }))
 
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
-import { useBranches } from '../use-branches.js'
+import { useBranches, useBranchSwitch } from '../use-branches.js'
 import { useAuth } from '../auth.jsx'
+import { useAppStore } from '../store.js'
 
 function makeWrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -127,5 +128,75 @@ describe('useBranches — calls client.me.branches.list() and returns data (BSTA
     const { result } = renderHook(() => useBranches(), { wrapper: makeWrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toHaveLength(0)
+  })
+})
+
+// ── useBranchSwitch — non-optimistic branch switch (SWCH-03) ──────────────
+
+describe('useBranchSwitch — non-optimistic branch switch (SWCH-03)', () => {
+  beforeEach(() => {
+    useAppStore.setState({ currentBranch: { id: 'br-001', name: 'Downtown', isDefault: true, isActive: true } })
+  })
+
+  test('calling .mutate(branch) invokes client.me.branches.switch with { body: { branchId } }', async () => {
+    const mockSwitch = vi.fn().mockResolvedValue({ data: { ok: true, branchId: 'br-002' }, error: null })
+    const mockClient = { me: { branches: { switch: mockSwitch } } }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const { result } = renderHook(() => useBranchSwitch(), { wrapper: makeWrapper() })
+    const branch = { id: 'br-002', name: 'Uptown', isDefault: false, isActive: true }
+
+    await act(async () => {
+      await result.current.mutateAsync(branch)
+    })
+
+    expect(mockSwitch).toHaveBeenCalledWith({ body: { branchId: 'br-002' } })
+  })
+
+  test('setCurrentBranch is NOT called synchronously at .mutate() time — only after success resolves (D-05)', async () => {
+    let resolveSwitch
+    const mockSwitch = vi.fn(() => new Promise((resolve) => { resolveSwitch = resolve }))
+    const mockClient = { me: { branches: { switch: mockSwitch } } }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const { result } = renderHook(() => useBranchSwitch(), { wrapper: makeWrapper() })
+    const branch = { id: 'br-002', name: 'Uptown', isDefault: false, isActive: true }
+
+    act(() => {
+      result.current.mutate(branch)
+    })
+
+    // Flush microtasks so the mutationFn's async body actually starts and invokes mockSwitch
+    // (TanStack v5's mutate() dispatches execution on a microtask, not fully synchronously).
+    await act(async () => {
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+    expect(mockSwitch).toHaveBeenCalled()
+
+    // Still pending — the non-optimistic guarantee: currentBranch has NOT moved yet.
+    expect(useAppStore.getState().currentBranch?.id).toBe('br-001')
+
+    await act(async () => {
+      resolveSwitch({ data: { ok: true, branchId: 'br-002' }, error: null })
+    })
+
+    await waitFor(() => expect(useAppStore.getState().currentBranch?.id).toBe('br-002'))
+  })
+
+  test('on a mocked { error } result, the mutation rejects and setCurrentBranch is never called (D-11/SC3)', async () => {
+    const mockSwitch = vi.fn().mockResolvedValue({ data: null, error: { error: 'Branch not accessible' } })
+    const mockClient = { me: { branches: { switch: mockSwitch } } }
+    useAuth.mockReturnValue({ client: mockClient })
+
+    const { result } = renderHook(() => useBranchSwitch(), { wrapper: makeWrapper() })
+    const branch = { id: 'br-002', name: 'Uptown', isDefault: false, isActive: true }
+
+    await act(async () => {
+      await expect(result.current.mutateAsync(branch)).rejects.toThrow('Branch not accessible')
+    })
+
+    // Old branch untouched — nothing else changed.
+    expect(useAppStore.getState().currentBranch?.id).toBe('br-001')
   })
 })
