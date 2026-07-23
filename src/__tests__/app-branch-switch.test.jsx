@@ -31,6 +31,29 @@ vi.mock('../use-order-actions.js', () => ({
 }))
 vi.mock('../use-updater.js', () => ({ useUpdater: () => {} }))
 
+// PosScreen mock (Plan 03, D-13/D-14/SCOPE-03): the real PosScreen pulls in useMenu()/
+// useDeliveryAreas() and a full cart UI unrelated to this orchestration suite. A lightweight
+// stand-in reports cart emptiness via the same onCartEmptyChange effect contract Task 1 added,
+// and a module-level mount counter proves the key={currentBranch?.id} remount (SCOPE-03).
+const posScreenState = vi.hoisted(() => ({ cartEmpty: true, mounts: 0 }))
+vi.mock('../screen-pos.jsx', () => ({
+  PosScreen: ({ onCartEmptyChange }) => {
+    useEffect(() => {
+      posScreenState.mounts += 1
+      onCartEmptyChange?.(posScreenState.cartEmpty)
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- mount-only, mirrors the real effect's mount-time report
+    return <div data-testid="pos-screen-mock">POS mock</div>
+  },
+}))
+
+// OrderDetailScreen mock (D-14 neutral-landing tests only): the real component requires a fully
+// hydrated order (totals, customer, thermal-ticket fields) that is orthogonal to this suite's
+// concern — whether a successful switch exits detail/history-detail back to Orders. A minimal
+// stand-in avoids needing to fabricate a complete AdminOrder just to drive the screen enum.
+vi.mock('../screen-detail.jsx', () => ({
+  OrderDetailScreen: () => <div data-testid="order-detail-mock">Order detail mock</div>,
+}))
+
 // isConnected is driven directly by this mock's return value so the test can force the
 // true→false→true transition the bridging watcher observes (D-08), without a real SSE stream.
 const sseState = vi.hoisted(() => ({ isConnected: true }))
@@ -51,6 +74,7 @@ vi.mock('../use-branches.js', () => ({
   useBranchSwitch: () => ({ mutate: branchSwitchMutate, isPending: false }),
 }))
 
+import { useEffect } from 'react'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuth } from '../auth.jsx'
@@ -86,6 +110,8 @@ describe('app-branch-switch — end-to-end tracer (SWCH-03/04, SCOPE-04, D-05/D-
     vi.useFakeTimers()
     sseState.isConnected = true
     branchSwitchMutate.mockReset()
+    posScreenState.cartEmpty = true
+    posScreenState.mounts = 0
 
     useAuth.mockReturnValue({
       signIn: vi.fn(),
@@ -187,5 +213,307 @@ describe('app-branch-switch — end-to-end tracer (SWCH-03/04, SCOPE-04, D-05/D-
     expect(screen.getByText('Încearcă din nou')).toBeInTheDocument()
     // Never a success toast on the error path.
     expect(screen.queryByText('Filială schimbată')).not.toBeInTheDocument()
+  })
+})
+
+describe('app-branch-switch — cart-discard confirm gate (D-13, SCOPE-03)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    sseState.isConnected = true
+    branchSwitchMutate.mockReset()
+    posScreenState.cartEmpty = true
+    posScreenState.mounts = 0
+
+    useAuth.mockReturnValue({
+      signIn: vi.fn(),
+      coldStartBusy: false,
+      busy: false,
+      error: null,
+      token: 'test-token',
+      client: {},
+    })
+
+    useAppStore.setState({
+      isAuthenticated: true,
+      role: 'cashier',
+      screen: 'pos',
+      lang: 'ro',
+      currentBranch: { id: 'br-001', name: 'Downtown', isDefault: true, isActive: true },
+      toasts: [],
+    })
+  })
+
+  afterEach(() => {
+    useAppStore.setState({
+      isAuthenticated: false,
+      screen: 'orders',
+      currentBranch: null,
+      toasts: [],
+    })
+    vi.clearAllMocks()
+    vi.useRealTimers()
+  })
+
+  test('a non-empty POS cart opens the cart-discard confirm and blocks the mutation until the destructive confirm is clicked', () => {
+    posScreenState.cartEmpty = false
+    renderApp()
+
+    openPopoverAndSelect('Uptown')
+
+    // Gated — the mutation must not fire until the destructive confirm is clicked (E7 populated).
+    expect(branchSwitchMutate).not.toHaveBeenCalled()
+    expect(screen.getByText('Comanda curentă va fi anulată')).toBeInTheDocument()
+    expect(screen.getByText('Schimbarea filialei șterge comanda POS în lucru. Continui?')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Schimbă și renunță'))
+
+    expect(branchSwitchMutate).toHaveBeenCalledTimes(1)
+    expect(branchSwitchMutate.mock.calls[0][0]).toEqual({ id: 'br-002', name: 'Uptown', isDefault: false, isActive: true })
+    expect(screen.queryByText('Comanda curentă va fi anulată')).not.toBeInTheDocument()
+  })
+
+  test('cancelling the cart-discard confirm (E7 empty) stays on the current branch and fires no mutation', () => {
+    posScreenState.cartEmpty = false
+    renderApp()
+
+    openPopoverAndSelect('Uptown')
+    expect(screen.getByText('Comanda curentă va fi anulată')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('Rămân aici'))
+
+    expect(screen.queryByText('Comanda curentă va fi anulată')).not.toBeInTheDocument()
+    expect(branchSwitchMutate).not.toHaveBeenCalled()
+    expect(useAppStore.getState().currentBranch.name).toBe('Downtown')
+    expect(screen.queryByText(/Se comută la/)).not.toBeInTheDocument()
+  })
+
+  test('an empty POS cart switches immediately with no confirm step', () => {
+    posScreenState.cartEmpty = true
+    renderApp()
+
+    openPopoverAndSelect('Uptown')
+
+    expect(screen.queryByText('Comanda curentă va fi anulată')).not.toBeInTheDocument()
+    expect(branchSwitchMutate).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('app-branch-switch — neutral landing on switch success (D-14, SCOPE-03)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    sseState.isConnected = true
+    branchSwitchMutate.mockReset()
+    posScreenState.cartEmpty = true
+    posScreenState.mounts = 0
+
+    useAuth.mockReturnValue({
+      signIn: vi.fn(),
+      coldStartBusy: false,
+      busy: false,
+      error: null,
+      token: 'test-token',
+      client: {},
+    })
+
+    useAppStore.setState({
+      isAuthenticated: true,
+      role: 'cashier',
+      lang: 'ro',
+      currentBranch: { id: 'br-001', name: 'Downtown', isDefault: true, isActive: true },
+      toasts: [],
+      selectedOrder: null,
+      historyOrder: null,
+    })
+  })
+
+  afterEach(() => {
+    useAppStore.setState({
+      isAuthenticated: false,
+      screen: 'orders',
+      currentBranch: null,
+      toasts: [],
+      selectedOrder: null,
+      historyOrder: null,
+    })
+    vi.clearAllMocks()
+    vi.useRealTimers()
+  })
+
+  test('a successful switch from the order-detail screen exits to Orders', async () => {
+    useAppStore.setState({ screen: 'detail' })
+    const { forceRerender } = renderApp()
+
+    openPopoverAndSelect('Uptown')
+    const { onSuccess } = branchSwitchMutate.mock.calls[0][1]
+    await act(async () => { onSuccess() })
+
+    await act(async () => { sseState.isConnected = false; forceRerender() })
+    await act(async () => { sseState.isConnected = true; forceRerender() })
+
+    expect(useAppStore.getState().screen).toBe('orders')
+  })
+
+  test('a successful switch from the history-detail screen exits to Orders', async () => {
+    // historyOrder must be non-null or the pre-existing rehydrate backstop effect
+    // (app.jsx: screen === 'history-detail' && !historyOrder -> setScreen('history'))
+    // redirects away before this test can drive the D-14 transition.
+    useAppStore.setState({ screen: 'history-detail', historyOrder: { id: 'ho-1' } })
+    const { forceRerender } = renderApp()
+
+    openPopoverAndSelect('Uptown')
+    const { onSuccess } = branchSwitchMutate.mock.calls[0][1]
+    await act(async () => { onSuccess() })
+
+    await act(async () => { sseState.isConnected = false; forceRerender() })
+    await act(async () => { sseState.isConnected = true; forceRerender() })
+
+    expect(useAppStore.getState().screen).toBe('orders')
+  })
+
+  test('a successful switch from the orders screen (not detail/history-detail) leaves screen untouched', async () => {
+    useAppStore.setState({ screen: 'orders' })
+    const { forceRerender } = renderApp()
+
+    openPopoverAndSelect('Uptown')
+    const { onSuccess } = branchSwitchMutate.mock.calls[0][1]
+    await act(async () => { onSuccess() })
+
+    await act(async () => { sseState.isConnected = false; forceRerender() })
+    await act(async () => { sseState.isConnected = true; forceRerender() })
+
+    expect(useAppStore.getState().screen).toBe('orders')
+  })
+})
+
+describe('app-branch-switch — POS remount on switch success (D-14/SCOPE-03)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    sseState.isConnected = true
+    branchSwitchMutate.mockReset()
+    posScreenState.cartEmpty = true
+    posScreenState.mounts = 0
+
+    useAuth.mockReturnValue({
+      signIn: vi.fn(),
+      coldStartBusy: false,
+      busy: false,
+      error: null,
+      token: 'test-token',
+      client: {},
+    })
+
+    useAppStore.setState({
+      isAuthenticated: true,
+      role: 'cashier',
+      screen: 'pos',
+      lang: 'ro',
+      currentBranch: { id: 'br-001', name: 'Downtown', isDefault: true, isActive: true },
+      toasts: [],
+    })
+  })
+
+  afterEach(() => {
+    useAppStore.setState({
+      isAuthenticated: false,
+      screen: 'orders',
+      currentBranch: null,
+      toasts: [],
+    })
+    vi.clearAllMocks()
+    vi.useRealTimers()
+  })
+
+  test('a currentBranch change remounts PosScreen (new key) and posCartEmpty resyncs to true', () => {
+    // Simulate a non-empty cart on the pre-switch branch.
+    posScreenState.cartEmpty = false
+    renderApp()
+    expect(posScreenState.mounts).toBe(1)
+
+    // The real useBranchSwitch() hook (mocked away in this suite) writes currentBranch only in
+    // its own onSuccess (D-05). Reproduce that store write directly to drive the
+    // key={currentBranch?.id} remount in isolation from the bridging/timeout machinery, which is
+    // covered by the tracer suite above. The freshly-mounted PosScreen starts with an empty cart.
+    posScreenState.cartEmpty = true
+    act(() => {
+      useAppStore.setState({ currentBranch: { id: 'br-002', name: 'Uptown', isDefault: false, isActive: true } })
+    })
+
+    expect(posScreenState.mounts).toBe(2)
+
+    // posCartEmpty resynced to true post-remount: a second branch-selection attempt from 'pos'
+    // now proceeds immediately with no cart-discard confirm, proving the gate reads the
+    // resynced value rather than the stale pre-remount cart state.
+    fireEvent.click(screen.getByTitle('Uptown'))
+    fireEvent.click(screen.getByText('Downtown'))
+
+    expect(screen.queryByText('Comanda curentă va fi anulată')).not.toBeInTheDocument()
+    expect(branchSwitchMutate).toHaveBeenCalledTimes(1)
+    expect(branchSwitchMutate.mock.calls[0][0]).toEqual({ id: 'br-001', name: 'Downtown', isDefault: true, isActive: true })
+  })
+})
+
+describe('app-branch-switch — bounded timeout completeness (D-09/SCOPE-04)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    sseState.isConnected = true
+    branchSwitchMutate.mockReset()
+    posScreenState.cartEmpty = true
+    posScreenState.mounts = 0
+
+    useAuth.mockReturnValue({
+      signIn: vi.fn(),
+      coldStartBusy: false,
+      busy: false,
+      error: null,
+      token: 'test-token',
+      client: {},
+    })
+
+    useAppStore.setState({
+      isAuthenticated: true,
+      role: 'cashier',
+      screen: 'orders',
+      lang: 'ro',
+      currentBranch: { id: 'br-001', name: 'Downtown', isDefault: true, isActive: true },
+      toasts: [],
+    })
+  })
+
+  afterEach(() => {
+    useAppStore.setState({
+      isAuthenticated: false,
+      screen: 'orders',
+      currentBranch: null,
+      toasts: [],
+    })
+    vi.clearAllMocks()
+    vi.useRealTimers()
+  })
+
+  test('mutations stay blocked (overlay up) for the full pending+bridging window up to the bounded timeout, which releases exactly once and ignores a later reconnect', async () => {
+    const { forceRerender } = renderApp()
+    openPopoverAndSelect('Uptown')
+
+    // Overlay is up for the whole pending window — Shell's screens are covered, so order
+    // mutations cannot land (SCOPE-04). Assert the overlay is present through pending...
+    expect(screen.getByText(/Se comută la/)).toBeInTheDocument()
+
+    const { onSuccess } = branchSwitchMutate.mock.calls[0][1]
+    await act(async () => { onSuccess() })
+
+    // ...and through bridging...
+    await act(async () => { sseState.isConnected = false; forceRerender() })
+    expect(screen.getByText(/Se comută la/)).toBeInTheDocument()
+
+    // ...until the bounded D-09 timeout releases it, exactly once.
+    await act(async () => { vi.advanceTimersByTime(6000) })
+
+    expect(screen.queryByText(/Se comută la/)).not.toBeInTheDocument()
+    expect(screen.getAllByText('Filială schimbată')).toHaveLength(1)
+
+    // A later isConnected recovery (well after the bounded release) must not fire a second toast.
+    await act(async () => { sseState.isConnected = true; forceRerender() })
+
+    expect(screen.getAllByText('Filială schimbată')).toHaveLength(1)
   })
 })
