@@ -2,17 +2,17 @@
 
 ## What This Is
 
-A Tauri v2 desktop application (macOS + Windows) for SiteCare restaurant staff to manage orders in real-time. The UI is a pixel-perfect port of the Claude Design prototype — same design system, same brand — backed by the live SiteCare API via `@charlyk/admin-client`. v1.0 shipped on 2026-05-22 with all 41 requirements delivered; v1.1 shipped on 2026-07-19, adding a dedicated Orders History screen (browse, filter, search, reprint, CSV export) across 13 requirements. The app is production-ready: native installers, macOS notarization, silent auto-updates, and thermal printer integration are in place.
+A Tauri v2 desktop application (macOS + Windows) for SiteCare restaurant staff to manage orders in real-time. The UI is a pixel-perfect port of the Claude Design prototype — same design system, same brand — backed by the live SiteCare API via `@charlyk/admin-client`. v1.0 shipped on 2026-05-22 with all 41 requirements delivered; v1.1 shipped on 2026-07-19, adding a dedicated Orders History screen (browse, filter, search, reprint, CSV export) across 13 requirements; v1.2 shipped on 2026-07-24, making the app branch-aware (sidebar branch switcher, per-branch cache scoping, SSE reconnect on switch, centralized branch-access 403 handling) across 15 requirements against the API's v2.6 Tenant Branching model. The app is production-ready: native installers, macOS notarization, silent auto-updates, and thermal printer integration are in place.
 
 ## Core Value
 
 Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks and feels exactly like the design prototype.
 
-## Current State (v1.1)
+## Current State (v1.2)
 
-**Shipped:** v1.0 on 2026-05-22 · v1.1 on 2026-07-19
-**Tech stack:** Tauri 2.x · React 18 · Vite 6 · Zustand 5 · TanStack Query 5 · @charlyk/admin-client v1.1.59+
-**Tests:** 487 (3 pre-existing v1.0 failures documented + deferred)
+**Shipped:** v1.0 on 2026-05-22 · v1.1 on 2026-07-19 · v1.2 on 2026-07-24
+**Tech stack:** Tauri 2.x · React 18 · Vite 6 · Zustand 5 · TanStack Query 5 · @charlyk/admin-client v1.1.67
+**Tests:** ~620 (1 pre-existing unrelated `build-pipeline` failure carried forward)
 **Platforms:** macOS arm64 (notarized), Windows x64 (unsigned MSI)
 
 **What works in production:**
@@ -27,6 +27,7 @@ Restaurant staff can see, accept, and advance orders in real-time from a native 
 - Thermal printer: configure USB/TCP, test print, print receipts via ESC/POS
 - Auto-update: silent in-app update delivery via tauri-plugin-updater
 - **Orders History (v1.1):** day-grouped archive with a client-computed summary strip; Today/7/30/custom period control; client-side status/type/search filters with live faceted counts; read-only order detail hydrated via `getOrder(id)`; printer-gated receipt reprint; accounting-grade CSV export via native Save dialog
+- **Branch Switching (v1.2):** sidebar-footer branch switcher (read-only for single-branch tenants, "default" badge); current branch seeded session-only from `getMe().selectedBranch` on sign-in + cold start + window-focus revalidation; all 7 data caches keyed per branch; non-optimistic switch flow bridging the SSE reconnect behind a blocking overlay with cart-discard/neutral-landing safety; centralized branch-access 403 recovery (toast + reopen for `BRANCH_INACTIVE`/`BRANCH_ACCESS_REVOKED`, full-screen block for `NO_BRANCH_ACCESS`); RO/EN toggle relocated to Settings → Afișaj
 
 ## Shipped: v1.1 Orders History Screen (2026-07-19)
 
@@ -41,25 +42,34 @@ The summary strip is computed client-side from the same `listAdminOrders` result
 `getAdminDashboard` dropped), and the inline expandable receipt was replaced by a read-only detail view reusing
 `screen-detail.jsx` (D-07). Full rationale in `.planning/milestones/v1.1-REQUIREMENTS.md`.
 
-## Current Milestone: v1.2 Branch Switching
+## Shipped: v1.2 Branch Switching (2026-07-24)
 
-**Goal:** Make the POS app branch-aware — staff can see and switch the active branch, and every screen plus the live SSE stream follow the selected branch.
+**Delivered:** The POS app is now branch-aware. A sidebar-footer switcher shows the current branch (read-only for
+single-branch tenants, "default" badge for the tenant default); the current branch is seeded session-only from
+`getMe().selectedBranch` on sign-in, cold start, and window-focus revalidation (never persisted). All 7 data caches
+are keyed per branch, the live SSE stream reconnects scoped to the new branch, and switching is non-optimistic —
+a blocking overlay bridges the reconnect with cart-discard/neutral-landing safety, and the branch updates only after
+`client.me.branches.switch` resolves. Every branch-access 403 (from the switch call or any later request) routes
+through one central handler: toast + reopened switcher for `BRANCH_INACTIVE`/`BRANCH_ACCESS_REVOKED`, a full-screen
+block for `NO_BRANCH_ACCESS`. The RO/EN toggle moved to Settings → Afișaj. All 15/15 requirements
+(BSTATE, SCOPE, SWCH, BERR, LANG) delivered across Phases 13–17.
 
-**Target features:**
-- Branch switcher in the sidebar footer (replacing the RO/EN toggle, which moves into Settings → Afișaj where a language control already exists). Shows the current branch name and a "default" badge; renders read-only when the tenant has a single branch.
-- Load the current selected branch on launch from the session (`user.selectedBranch`); populate the switcher from `client.me.branches()`.
-- Switch flow: `client.me.branches.switch({branchId})` → reconnect SSE → invalidate all branch-scoped caches → "switched to X" confirmation toast.
-- Branch-scoped data: key orders / history / menu (and POS / KDS) TanStack Query caches on `branchId` so a switch cleanly re-scopes every screen.
-- SSE reconnect on switch: the server closes the user's streams on switch, so `useSSE` must reconnect scoped to the new branch.
-- 403 handling: `BRANCH_INACTIVE` / `BRANCH_ACCESS_REVOKED` on switch *or* any later request → toast + reopen switcher + refetch branch list.
+**Closed `override_closeout`:** every requirement is code-complete and test-backed (~620 tests) with all cross-phase
+flows wired (integration checker: 0 broken), but the milestone closed with acknowledged deferred verification —
+Phases 15/16/17 carry live-account and pixel-fidelity checks that no available test tenant could exercise, and two
+open WINDOWS caveats. **The load-bearing follow-up is WINDOWS #1:** the branch-access 403 body shape
+(`{ error: '<CODE>' }`, REST + SSE) is UNVERIFIED against the live API — the whole BERR recovery parses an assumed
+envelope and degrades *silently* to a generic toast if the real shape differs. Re-capture and correct the matcher
+against a live tenant with a revocable branch before relying on the recovery path in production. Full detail:
+`.planning/milestones/v1.2-MILESTONE-AUDIT.md` and STATE.md → Deferred Items.
 
-**Key context (API v2.6 "Tenant Branching", shipped 2026-07-18):**
-- The active branch is **server-side session state** (`user.selected_branch_id`) — no `X-Branch-Id` header, no `branchId` query param. Every existing session-authed call (`orders.list`, `getOrder`, kitchen menu, POS create, SSE) auto-scopes to it. Endpoint paths and response shapes are **unchanged**.
-- SDK `@charlyk/admin-client` v1.1.67 is already installed; the only net-new calls are `client.me.branches()` (`GET /v1/me/branches` → `AccessibleBranch[]`, staff-accessible) and `client.me.branches.switch({branchId})` (`POST /v1/me/branches/switch` → `{ok, branchId}`).
-- Backward compatible: a single-branch tenant returns a one-entry list → read-only switcher, behaves exactly as pre-v2.6.
-- Reference PRD: `~/Developer/sitecare-orders-api/docs/RESTAURANT_DASHBOARD_PRD.md` §5, §7, §11 (owner-dashboard doc, but the branch-selection model and staff SSE rules are identical for this app).
+**Key context (API v2.6 "Tenant Branching"):** the active branch is server-side session state
+(`user.selected_branch_id`) — no header, no query param; every existing session-authed call auto-scopes to it.
+Net-new SDK calls: `client.me.branches.list()` and `client.me.branches.switch({ body: { branchId } })`.
 
-**Carry-forward candidates** (not yet scoped into v1.2) live under **Requirements → Active** below (Windows code signing, thermal-printer hardware validation, tax display), plus deferred features in the v1.1 requirements archive (owner dashboard, mobile screens, forgot-password, PDF export).
+**Carry-forward candidates** (not yet scoped) live under **Requirements → Active** below (Windows code signing,
+thermal-printer hardware validation, tax display), the two v1.2 WINDOWS caveats, plus deferred features in the v1.1
+requirements archive (owner dashboard, mobile screens, forgot-password, PDF export).
 
 ---
 
@@ -105,8 +115,29 @@ The summary strip is computed client-side from the same `listAdminOrders` result
 - ✓ Reprint receipt on historical orders — read-only detail view surfaces Print kitchen / Print customer, reusing the existing `handlePrint`/`print_receipt` path; greyed-out when no printer is configured — Validated in Phase 11 (HIST-11)
 - ✓ CSV export of the filtered history list — native Save dialog (`plugin-dialog`) + `writeTextFile` (`plugin-fs`), accounting-grade `buildCsv` with RFC-4180 escaping, UTF-8 BOM, and OWASP formula-injection guard on user-authored columns — Validated in Phase 11 (HIST-12)
 
-### Active (v1.1)
+### Validated (v1.2)
 
+- ✓ Current selected branch resolved from `getMe().selectedBranch` and held session-only (never persisted) on sign-in + cold start — Validated in Phase 13 (BSTATE-01)
+- ✓ Accessible-branches list via `client.me.branches.list()`, refetched on focus / after branch-access error, never cached indefinitely — Validated in Phase 13 (BSTATE-02)
+- ✓ All 7 branch-scoped caches (orders, order detail, stats, menu, history, restaurant settings, delivery areas) keyed on `branchId`; mutations invalidate only the active branch; every fetch error carries a matchable `err.code` — Validated in Phase 14 (SCOPE-01)
+- ✓ Live SSE stream reconnects scoped to the new branch on switch, snapshot replay stays silent (no sound burst) — Validated in Phase 15 (SCOPE-02) — *live two-session confirmation deferred*
+- ✓ POS cart reset + open order-detail exit on switch; no prior-branch working state carries forward — Validated in Phase 16 (SCOPE-03)
+- ✓ Order mutations (POS submit, accept/advance/cancel, reprint) blocked while a switch is pending — Validated in Phase 16 (SCOPE-04)
+- ✓ Sidebar-footer branch selector with current name + "default" badge — Validated in Phase 16 (SWCH-01)
+- ✓ Single-branch tenant renders the selector read-only (pre-v2.6 parity) — Validated in Phase 16 (SWCH-02)
+- ✓ Non-optimistic switch via `client.me.branches.switch`; disabled while pending; active branch updates only on success — Validated in Phase 16 (SWCH-03)
+- ✓ "Switched to `<branch>`" confirmation toast on success — Validated in Phase 16 (SWCH-04)
+- ✓ Central branch-access 403 recovery for `BRANCH_INACTIVE`/`BRANCH_ACCESS_REVOKED` (toast + reopen switcher + refetch) from the switch call or any later request — Validated in Phase 17 (BERR-01) — *assumed 403 envelope, see WINDOWS #1*
+- ✓ Rejected switch leaves app on previous branch, no change beyond the error notice — Validated in Phase 17 (BERR-02)
+- ✓ `NO_BRANCH_ACCESS` shows a distinct full-screen blocking state superseding all screens until access is restored — Validated in Phase 17 (BERR-03) — *assumed 403 envelope, see WINDOWS #1*
+- ✓ Selected branch revalidated on window focus, catching a remote branch change / access revocation — Validated in Phase 17 (BERR-04)
+- ✓ RO/EN toggle removed from sidebar footer; language remains changeable via Settings → Afișaj — Validated in Phase 16 (LANG-01)
+
+### Active (carry-forward)
+
+- [ ] **WINDOWS #1 (v1.2 follow-up):** re-capture the real branch-access 403 body shape (REST + SSE) against a live tenant with a revocable/deactivable branch and correct the `BRANCH_CODES` matcher / `extractBranchCodeFromSseBody` — the recovery path is UNVERIFIED and degrades silently if the assumed `{ error: '<CODE>' }` envelope is wrong
+- [ ] **WINDOWS #2 (v1.2 follow-up):** add a concurrent-error de-dup guard to `handleBranchError` (or accept the multi-toast edge via manual testing) — a burst of simultaneous branch-403s currently stacks N toasts
+- [ ] v1.2 live/visual UAT sign-off — Phases 15/16/17 backstops (live multi-branch switch, SSE cross-branch bleed, popover/overlay pixel fidelity, Retry spinner) need a real multi-branch account
 - [ ] Windows code signing — unsigned MSI; Azure Trusted Signing is the path forward (BILD-03 deferred)
 - [ ] Thermal printer hardware validation — approved-no-hardware for v1.0; real-device test needed
 - [ ] Tax display — server-authoritative total used; Romanian VAT (5%/9%/19%) display to be confirmed with SiteCare
@@ -167,6 +198,12 @@ The summary strip is computed client-side from the same `listAdminOrders` result
 | History period/filter/search selection in a session-only `historySelection` Zustand slice (D-01…D-04) | Selection must survive History→detail→Back but reset on any other exit; mirrors existing `selectedOrder`/`historyOrder` precedent | ✓ Good — Phase 12 lift; live-verified, resets correctly on leave |
 | Client-side CSV export with RFC-4180 + BOM + formula-injection guard | No server export endpoint; accounting opens in Excel with diacritics; user-authored columns are an injection surface | ✓ Good — Phase 11; `plugin-dialog`/`plugin-fs` with narrow capability grants |
 | **LOCKED — Design-fidelity exception to the generic UI grid/weight rules** | The shipped design system (`colors_and_type.css` + `styles.css`, 15 phases live) uses a fine-grained spacing scale (4/6/8/10-12/14-16/24/32) and 3 font weights (600 body, 700 label, 800 heading). Pixel-perfect parity with the prototype is a non-negotiable project constraint (see Constraints → Design, Context → Design fidelity). New UI **must extend these tokens verbatim**, not conform to a generic 4px-multiple grid or a 2-weight cap. | ✓ Locked 2026-07-23 — the UI-SPEC checker's Dimension 4 (2-weight cap) and Dimension 5 (4px-multiple grid) are **formally waived project-wide** for values that match the shipped system; a UI-SPEC that reuses existing spacing/weight tokens is compliant by this decision, not a violation |
+| `currentBranch` session-only, never persisted (v1.2 D-10) | Server re-validates `selected_branch_id` every request; a persisted stale value would flash the wrong branch before the first request self-corrects | ✓ Good — re-derived from `getMe()` on every cold start; excluded from `partialize` |
+| branchId-keyed query keys over `resetQueries()` (v1.2 Phase 14 D-01) | Race-safe by construction (immune to Pitfall 4), future-proof; `['orders', branchId]` uniformly across all 7 hooks | ✓ Good — SC2 sibling-branch-untouched proven by test; no `resetQueries` anywhere |
+| Non-optimistic switch; `setCurrentBranch` only in `onSuccess` (v1.2 D-05) | A rejected switch must leave the UI on the old branch with nothing changed beyond an error notice | ✓ Good — BERR-02 verified; overlay bridges the reconnect, no false offline flash in tests |
+| `enabled: !!client` as the sole gate on data hooks — never `!!branchId` (v1.2 Pitfall 11) | Single-branch tenants must see no first-paint delay; branch resolution is server-side | ✓ Good — SC5 single-branch first-paint parity preserved across all 5 phases |
+| Central 403 choke-point via QueryCache/MutationCache `onError` (v1.2 Phase 17) | One recovery path for the switch call, ordinary requests, SSE reconnect, and focus revalidation — not per-call-site handling | ✓ Good — 0 per-call-site `BRANCH_*` branching; ⚠ but the 403 envelope is UNVERIFIED (WINDOWS #1) — degrades silently if the assumed shape is wrong |
+| BRANCH_CODES matcher locked against an ASSUMED 403 shape (v1.2 Phase 17, WINDOWS #1) | Live 403 capture was infeasible (no test tenant with a revocable branch); shipping the recovery scaffold beat blocking the milestone | ⚠ Revisit — synthetic-test-locked only; re-capture the real REST+SSE body before production reliance |
 
 ## Evolution
 
@@ -187,4 +224,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-07-21 — v1.2 Branch Switching milestone started. Scope: make the POS app branch-aware (sidebar branch switcher, per-branch cache scoping, SSE reconnect on switch, 403 branch-access handling) against the API's v2.6 Tenant Branching model. Requirements and roadmap to follow.*
+*Last updated: 2026-07-24 after v1.2 Branch Switching milestone. Shipped branch-aware POS (sidebar switcher, per-branch cache scoping, SSE reconnect, centralized branch-access 403 handling, language relocation) — 15/15 requirements across Phases 13–17, closed `override_closeout` with deferred live/pixel verification and two open WINDOWS caveats (see Current State and Requirements → Active).*

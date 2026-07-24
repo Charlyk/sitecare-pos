@@ -1,5 +1,30 @@
 # Milestones: SiteCare POS Desktop App
 
+## v1.2 Branch Switching (Shipped: 2026-07-24)
+
+**Phases completed:** 5 phases, 16 plans, 30 tasks
+
+**Key accomplishments:**
+
+- Session-only `currentBranch` seeded from `getMe().selectedBranch` on both cold-start and sign-in, with a window-focus retry backstop and a corrected sidebar displayName — never persisted, never blocking a new spinner.
+- ['branches']-keyed TanStack Query hook over client.me.branches.list(), mirroring use-stats.js's {data,error} unwrap, with enabled:!!client and finite staleTime — the accessible-branches list data layer with no UI consumer yet (D-08)
+- Proved the branch-scoped cache pattern end-to-end on `useOrders` — `unwrapSdkResult()` helper, `['orders', branchId]` key, and lockstep invalidation — as the template for Plans 02–04 to mechanically expand to the remaining 6 hooks and invalidation sites.
+- Mechanically retrofitted `use-order-detail.js`, `use-stats.js`, and `use-menu.js` to Plan 14-01's proven branch-scoped cache pattern — branchId-keyed queryKey plus `unwrapSdkResult()` error routing — with a dedicated SC1 branch-key test per hook.
+- Mechanically retrofitted the final 3 fetch hooks to Plan 14-01's proven branch-scoped cache pattern — `use-restaurant-settings.js` and `use-delivery-areas.js` get key + `unwrapSdkResult()` error routing; `use-history-orders.js` gets a key-only change that preserves its live debug diagnostic — completing all 7 hooks for SCOPE-01.
+- Moved the three remaining mutation invalidation call sites (`use-order-actions.js`'s two mutations, `screen-pos.jsx` POS-submit, `screen-menu.jsx` stock-toggle) onto branch-scoped keys in lockstep with Plans 01-03's query-key retrofit, and proved SC2 — a branch-a mutation never touches branch-b's cache — with a dedicated automated test. This closes the final plan of Phase 14: all 7 query-key hooks and all 6 mutation-side invalidation sites are now branch-scoped.
+- useSSE now reconnects whenever `currentBranch?.id` changes — branchId is a real effect dependency (not a ref), every one of the seven SSE cache writes targets Phase 14's branch-scoped keys via a per-connection captured const, and a non-2xx onopen now logs the real 403 signal shape ahead of a Phase 17 spike.
+- `useBranchSwitch()` non-optimistic mutation wired end-to-end through a minimal multi-branch popover, a global blocking overlay bridging the SSE reconnect, and a release-gated success toast — plus deletion of the RO/EN footer toggle (LANG-01).
+- Expanded the tracer's bare branch selector into the full UI-SPEC-compliant control: single-branch read-only lock (SWCH-02), tenant "default" badge (SWCH-01), a collapsed-sidebar branch-initial chip (D-03), popover loading/error backstops (E3), and 22 new automated tests including a negative assertion that the RO/EN pill stays gone (LANG-01).
+- Cart-discard confirm gate (D-13), open-detail exit to Orders (D-14), and a `key={currentBranch?.id}` remount close the loop on no prior-branch working state surviving a switch — proven by 13 new integration tests, zero regressions in the 575-test suite (1 pre-existing unrelated failure).
+- Wired TanStack Query's global QueryCache/MutationCache `onError` to a new `handleBranchError(err, queryClient)` in `use-branches.js`, proving the one-central-path architecture end-to-end for `BRANCH_ACCESS_REVOKED` (toast + switcher reopen + `['branches']` refetch) before any expansion.
+- Blocking-human checkpoint resolved as "live capture infeasible" — the three-literal-string BRANCH_CODES matcher from 17-01 is kept unchanged and locked by a new regression test, with the REST/SSE 403 body shapes recorded as explicit UNVERIFIED assumptions (not confirmed facts) via a project decision and a broken-windows ledger entry for 17-05 to re-check.
+- `handleBranchError` now dispatches all three `BRANCH_CODES` (INACTIVE/REVOKED share copy-differentiated recovery via a `RECOVERABLE_CODE_COPY` map, `NO_BRANCH_ACCESS` sets a new `noBranchAccess` session flag), and `fireSwitch`'s own `onError` is trimmed with a `BRANCH_CODES` guard so a branch-code switch failure never doubles up with the central dispatcher's toast.
+- A box-less, full-viewport `NoBranchAccessBlock` now supersedes `<Shell>` entirely as app.jsx's third top-level gate whenever the session-only `noBranchAccess` flag is true, with a Retry button that clears the flag only on a server-confirmed non-null `selectedBranch`, never optimistically.
+- `use-sse.js`'s `onopen` now routes a branch-access SSE 403 through the same central `handleBranchError` dispatcher and returns without throwing — stopping `fetchEventSource`'s exponential-backoff retry loop against an inaccessible branch — while every non-branch non-2xx case (malformed body, non-branch code, non-403 status) keeps the exact prior warn+throw/retry behavior.
+- `auth.jsx`'s window-focus listener now always revalidates the selected branch via `getMe()` on every focus (the old `|| currentBranch` null-only guard is removed), silently adopting a benign remote branch change with a neutral "Now showing `<branch>`" toast, routing a revoked/zero-branch state to the same `NO_BRANCH_ACCESS` block as a live 403, no-opping when unchanged, and guarding rapid-focus races with an in-closure `inFlight` boolean.
+
+---
+
 ---
 
 ## ✅ v1.1 Orders History Screen — SHIPPED 2026-07-19

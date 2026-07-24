@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Branch Switching
-current_phase: 17
-current_phase_name: centralized-branch-access-error-handling
 current_plan: 1
-status: verifying
+status: completed
 stopped_at: Completed 17-06-PLAN.md
-last_updated: "2026-07-23T21:34:42.631Z"
-last_activity: 2026-07-23
-last_activity_desc: Phase 17 execution started
+last_updated: "2026-07-24T10:50:29.964Z"
+last_activity: 2026-07-24
+last_activity_desc: Milestone v1.2 completed and archived
 progress:
   total_phases: 5
   completed_phases: 5
   total_plans: 16
   completed_plans: 16
   percent: 100
+current_phase: 17
+current_phase_name: centralized-branch-access-error-handling
 ---
 
 # State: SiteCare POS Desktop App
@@ -29,7 +29,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-21 — v1.2 Branch Switching milestone started)
 
 **Core value:** Restaurant staff can see, accept, and advance orders in real-time from a native desktop app that looks exactly like the design prototype.
-**Current focus:** Phase 17 — centralized-branch-access-error-handling
+**Current focus:** v1.2 Branch Switching shipped 2026-07-24 — planning next milestone
 **Project file:** `.planning/PROJECT.md`
 **Roadmap:** `.planning/ROADMAP.md`
 **Milestones:** `.planning/MILESTONES.md`
@@ -48,16 +48,32 @@ Items acknowledged and deferred at v1.1 milestone close on 2026-07-19 (`override
 
 Both quick tasks are orphaned v1.0-era index entries (dated 2026-04-24, before v1.0 shipped 2026-05-22); v1.0 shipped complete with all 41 requirements. Phase 8's stale flag is benign git-hash staleness, not a functional gap — the milestone audit re-verified it as `passed`.
 
+Items acknowledged and deferred at v1.2 milestone close on 2026-07-24 (`override_closeout`):
+
+| Category | Item | Status |
+|----------|------|--------|
+| verification | Phase 15: 15-VERIFICATION.md | human_needed — SC2 live two-session confirmation (non-automatable) |
+| verification | Phase 16: 16-VERIFICATION.md | human_needed — 6 pixel/live backstops |
+| verification | Phase 17: 17-VERIFICATION.md | human_needed — 4 visual/live backstops |
+| uat | Phase 15: 15-UAT.md | testing — 0 pending scenarios |
+| uat | Phase 16: 16-UAT.md | testing — 6 pending scenarios |
+| uat | Phase 17: 17-UAT.md | testing — 4 pending scenarios |
+| debug | windows-history-network-error | investigating — pre-existing, predates v1.2 |
+| quick_task | kitchen-ticket-data-mapping (20260424) | missing — orphaned v1.0-era entry |
+| quick_task | order-card-item-groups (20260424) | missing — orphaned v1.0-era entry |
+| broken_window | WINDOWS #1 — BRANCH_* 403 envelope UNVERIFIED against live API (REST + SSE) | open — biggest residual risk; BERR recovery degrades silently if real shape differs |
+| broken_window | WINDOWS #2 — handleBranchError has no concurrent-error de-dup guard | open — burst of 403s stacks N toasts |
+
+All 15 v1.2 requirements are code-complete, test-backed (620/621 suite), and every cross-phase flow is wired (integration checker: 0 broken). The verification/UAT gaps are **live-account and pixel-fidelity checks only** — no test tenant with a switchable/revocable branch was available. WINDOWS #1 is the load-bearing follow-up: re-capture the real branch-access 403 body against a live tenant and correct the matcher/extractor before relying on the recovery path in production. The debug session and both quick tasks predate v1.2 (carried from prior milestones).
+
 ---
 
 ## Current Position
 
-Phase: 17 (centralized-branch-access-error-handling) — EXECUTING
-Plan: 6 of 6
-Status: Phase complete — ready for verification
-Last activity: 2026-07-23 — Phase 17 execution started
-
-Progress: [██████████] 100% (v1.2)
+Phase: Milestone v1.2 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-24 — Milestone v1.2 completed and archived
 
 ## Phase Summary
 
@@ -75,11 +91,11 @@ Progress: [██████████] 100% (v1.2)
 | 10 | Filters + Search | Complete — 4/4 plans, UAT 2/2 passed, human-verified 2026-07-18 — HIST-07, HIST-08, HIST-09 |
 | 11 | Reprint + CSV Export | Complete — 4/4 plans, human-verified 2026-07-19 — HIST-11, HIST-12 |
 | 12 | Tech-Debt Closeout | Complete — 4/4 plans, human-verified 2026-07-19 — milestone audit re-derived to `passed` |
-| 13 | Branch State & Launch Seeding Foundation | Not started — BSTATE-01, BSTATE-02 |
-| 14 | Branch-Scoped Cache Re-Scoping | Not started — SCOPE-01 |
-| 15 | SSE Branch-Aware Reconnect | Not started — SCOPE-02 |
-| 16 | Branch Switcher UI, Switch Flow & Language Relocation | Not started — SWCH-01, SWCH-02, SWCH-03, SWCH-04, SCOPE-03, SCOPE-04, LANG-01 |
-| 17 | Centralized Branch-Access Error Handling | Not started — BERR-01, BERR-02, BERR-03, BERR-04 |
+| 13 | Branch State & Launch Seeding Foundation | Complete — 2/2 plans, verified passed 2026-07-22 — BSTATE-01, BSTATE-02 |
+| 14 | Branch-Scoped Cache Re-Scoping | Complete — 4/4 plans, verified passed 2026-07-22 — SCOPE-01 |
+| 15 | SSE Branch-Aware Reconnect | Complete — 1/1 plans, code-verified (SC2 live check deferred) 2026-07-23 — SCOPE-02 |
+| 16 | Branch Switcher UI, Switch Flow & Language Relocation | Complete — 3/3 plans, 5/5 SC verified (pixel/live backstops deferred) 2026-07-23 — SWCH-01…04, SCOPE-03/04, LANG-01 |
+| 17 | Centralized Branch-Access Error Handling | Complete — 6/6 plans, 4/4 SC verified (live 403 shape UNVERIFIED, WINDOWS #1) 2026-07-24 — BERR-01…04 |
 
 ---
 
@@ -89,10 +105,10 @@ Progress: [██████████] 100% (v1.2)
 |--------|-------|
 | Phases completed (v1.0) | 6 / 6 |
 | Phases completed (v1.1) | 6 / 6 |
-| Phases completed (v1.2) | 0 / 5 |
+| Phases completed (v1.2) | 5 / 5 |
 | Requirements done (v1.0) | 41 / 41 |
 | Requirements done (v1.1) | 13 / 13 |
-| Requirements done (v1.2) | 0 / 15 |
+| Requirements done (v1.2) | 15 / 15 |
 | Sessions | 14 |
 
 ---
@@ -282,7 +298,7 @@ Progress: [██████████] 100% (v1.2)
   own prior no-op frontmatter-patch timestamp bump was present). One tooling quirk, noted rather
   than fought: `gsd-tools query state.patch '{"status":"..."}'` accepted the write but the frontmatter
   `status:` key reverted to its prior value (`ready_to_execute`) on the next save — `syncStateFrontmatter`
-  derives that key from a body-level `Status:`/`**Status:**Phase complete — ready for verification
+  derives that key from a body-level `Status:`/`**Status:**v1.2 milestone complete
   not use (it uses `**Overall Status:**` prose instead), so a bare frontmatter patch with no matching
   body-field change is preservation-reverted by design. `current_plan`/`stopped_at`/progress counts all
   sync correctly via their own body fields (`**Current Plan:**1
@@ -434,4 +450,4 @@ Progress: [██████████] 100% (v1.2)
 
 ## Operator Next Steps
 
-- Plan Phase 13 with `/gsd-plan-phase 13` (Branch State & Launch Seeding Foundation — BSTATE-01, BSTATE-02)
+- Start the next milestone with /gsd-new-milestone
