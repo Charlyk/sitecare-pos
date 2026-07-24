@@ -23,6 +23,8 @@
 - `use-sse.js`'s `onopen` now routes a branch-access SSE 403 through the same central `handleBranchError` dispatcher and returns without throwing — stopping `fetchEventSource`'s exponential-backoff retry loop against an inaccessible branch — while every non-branch non-2xx case (malformed body, non-branch code, non-403 status) keeps the exact prior warn+throw/retry behavior.
 - `auth.jsx`'s window-focus listener now always revalidates the selected branch via `getMe()` on every focus (the old `|| currentBranch` null-only guard is removed), silently adopting a benign remote branch change with a neutral "Now showing `<branch>`" toast, routing a revoked/zero-branch state to the same `NO_BRANCH_ACCESS` block as a live 403, no-opping when unchanged, and guarding rapid-focus races with an in-closure `inFlight` boolean.
 
+**Closeout:** `override_closeout` — 15/15 requirements code-complete and test-backed (~620 tests), all cross-phase flows wired (integration checker: 0 broken). **Known verification overrides: 11** (see STATE.md → Deferred Items): Phases 15/16/17 closed `human_needed` with 10 deferred UAT/verification items (live-account + pixel-fidelity checks; no test tenant with a switchable/revocable branch was available) plus 1 pre-existing debug session. **Open WINDOWS caveats: 2** — #1 the branch-access 403 envelope (REST + SSE) is UNVERIFIED against the live API (BERR recovery degrades silently if the assumed shape is wrong — load-bearing follow-up), #2 no concurrent-error de-dup guard. Stats: 41 src files changed (+3,938 / −116); ~620 tests (1 pre-existing unrelated `build-pipeline` failure). Audit: `.planning/milestones/v1.2-MILESTONE-AUDIT.md`.
+
 ---
 
 ---
